@@ -51,3 +51,73 @@ button:hover {
   margin-top: 5px;
   font-style: italic;
 }
+
+/* New section for contact list page */
+#contact-list-page {
+  width: 300px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #fff;
+  border: 1px solid #000;
+}
+
+#contact-list-page h2 {
+  text-align: center;
+  color: #333;
+}
+
+#contact-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+#contact-list li {
+  padding: 10px;
+  margin: 5px 0;
+  background-color: #f9f9f9;
+  border-radius: 5px;
+  text-align: center;
+}
+
+#contact-list li.online {
+  color: green;
+  font-weight: bold;
+}
+
+#contact-list li.offline {
+  color: gray;
+  font-style: italic;
+}
+
+/* New chat window styling */
+.chat-window {
+  width: 400px;
+  padding: 20px;
+  margin: 20px auto;
+  border: 1px solid #000;
+  background-color: #fff;
+}
+
+.chat-window-header {
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.chat-window-messages {
+  height: 250px;
+  overflow-y: auto;
+  background-color: #f1f1f1;
+  border: 1px solid #ddd;
+  margin-bottom: 10px;
+  padding: 10px;
+}
+
+.chat-window-input {
+  width: calc(100% - 20px);
+  margin-bottom: 10px;
+}
+
+.chat-window button {
+  width: 100%;
+  padding: 8px 10px;
+}
