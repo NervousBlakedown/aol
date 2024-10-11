@@ -201,7 +201,8 @@ function displayMessage(username, message) {
 
 // Send a chat message
 function sendMessage() {
-  const message = document.getElementById('message').value.trim();
+  const messageInput = document.getElementById('message');
+  const message = messageInput ? messageInput.value.trim() : '';
 
   if (message === '') {
     return; // Avoid sending empty messages
@@ -222,12 +223,12 @@ function sendMessage() {
   playAOLSound();
 
   // Clear the input field
-  document.getElementById('message').value = '';
+  messageInput.value = '';
 }
 
 // Send typing notifications
 function sendTypingNotification() {
-  if (socket && socket.connected) {
+  if (socket && socket.connected && currentRoom) {
     socket.emit('typing', {
       username: username,
       room: currentRoom // Send typing status to the current chat room
@@ -246,27 +247,26 @@ function sendTypingNotification() {
 // Play the login success sound
 function playLoginSound() {
   const loginSound = document.getElementById('login_sound');
-  loginSound.play();
+  if (loginSound) {
+    loginSound.play();
+  }
 }
 
 // Play the message receive sound
 function playMessageReceiveSound() {
   const messageReceiveSound = document.getElementById('message_receive_sound');
-  messageReceiveSound.play();
+  if (messageReceiveSound) {
+    messageReceiveSound.play();
+  }
 }
 
 // Play the AOL message sent sound
 function playAOLSound() {
   const aolSound = document.getElementById('message_sent_sound');
-  aolSound.play();
-}
-
-// Add event listener for 'Enter' key to send message
-document.getElementById('message').addEventListener('keydown', function (event) {
-  if (event.key === 'Enter') {
-    sendMessage();
+  if (aolSound) {
+    aolSound.play();
   }
-});
+}
 
 // Add event listeners after DOM content is loaded
 document.addEventListener('DOMContentLoaded', function () {
@@ -294,5 +294,16 @@ document.addEventListener('DOMContentLoaded', function () {
     startGroupChatButton.addEventListener('click', startGroupChat);
   }
 
-  // Additional event listeners as needed
+  // Add event listener for 'Enter' key to send message
+  const messageInput = document.getElementById('message');
+  if (messageInput) {
+    messageInput.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter') {
+        sendMessage();
+      }
+    });
+
+    // Add event listener for input to send typing notifications
+    messageInput.addEventListener('input', sendTypingNotification);
+  }
 });
