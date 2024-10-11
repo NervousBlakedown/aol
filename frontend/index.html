@@ -2,35 +2,50 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AOL Instant Messenger Clone</title>
   <link rel="stylesheet" href="styles.css">
+  <!-- Include the Socket.IO client library -->
+  <script src="https://cdn.socket.io/4.5.1/socket.io.min.js"></script>
 </head>
 <body>
   <!-- 'login' div -->
   <div id="login">
     <label for="username">Screen Name:</label>
-    <input type="text" id="username" placeholder="Get a Screen Name">
+    <input type="text" id="username" placeholder="Enter Screen Name">
     <label for="password">Password:</label>
     <input type="password" id="password">
-    <button onclick="login()">Sign On</button>
-    <!-- 'startup' sound when application opens -->
-    <audio id = "startup_sound" src = "./assets/sounds/aol_dialup.mp3" preload = "auto"></audio>
-    <!-- 'login success' sound-->
-    <audio id = "login_sound" src = "./assets/sounds/windows_95_startup.mp3" preload = "auto"></audio>
+    <button id="login-button">Sign On</button>
+    <audio id="startup_sound" src="./assets/sounds/retro_console_startup.mp3" preload="auto"></audio>
+    <audio id="login_sound" src="./assets/sounds/windows_95_startup.mp3" preload="auto"></audio>
+  </div>
+
+  <!-- 'contacts' div -->
+  <div id="contacts" style="display:none;">
+    <h3>Contacts</h3>
+
+    <!-- Status selector dropdown for changing user status -->
+    <div id="status-selector">
+      <label for="status">Status: </label>
+      <select id="status" onchange="updateStatus(this.value)">
+        <option value="Online">Online</option>
+        <option value="Away">Away</option>
+        <option value="Do Not Disturb">Do Not Disturb</option>
+      </select>
+    </div>
+
+    <ul id="contacts-list"></ul>
+    <button id="start-group-chat-button">Start Group Chat</button>
   </div>
 
   <!-- 'chat' div -->
   <div id="chat" style="display:none;">
     <div id="messages"></div>
     <input type="text" id="message" placeholder="Type a message..." oninput="sendTypingNotification()">
-    <button onclick="sendMessage()">Send</button>
+    <button id="send-message-button">Send</button>
     <div id="typing" style="color: grey; font-size: 0.8em;"></div>
-    <!-- 'message sent' sound -->
     <audio id="message_sent_sound" src="./assets/sounds/mail_sent.mp3" preload="auto"></audio>
-    <!-- 'message received' sound -->
     <audio id="message_receive_sound" src="./assets/sounds/aol_message_received_one.mp3" preload="auto"></audio>
-</div>
+  </div>
 
   <script src="app.js"></script>
 </body>

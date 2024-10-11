@@ -1,20 +1,31 @@
-import asyncio
-import websockets
-import sqlite3
-import json
-from flask import Flask, request, jsonify, send_from_directory
+# server.py
+
 import bcrypt
-import os
+from collections import defaultdict
+from flask import Flask, request, jsonify, send_from_directory
+from flask_socketio import SocketIO, emit, join_room, leave_room
 import logging
-logging.basicConfig(level = logging.DEBUG)
+import os
+import sqlite3
+
+logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__, static_folder='../frontend', static_url_path='')
+socketio = SocketIO(app)
+
+connected_users = {}
+user_status = {}  # Store each user's status (Online, Away, Do Not Disturb)
+rooms = defaultdict(list)
 
 # Database connection function
 def get_db_connection():
-    conn = sqlite3.connect('db/db.sqlite3')
-    conn.row_factory = sqlite3.Row
-    return conn
+    try:
+        conn = sqlite3.connect('../db/db.sqlite3')
+        conn.row_factory = sqlite3.Row
+        return conn
+    except sqlite3.OperationalError as e:
+        print(f"Error connecting to database: {e}")
+        raise
 
 # Serve static files or index.html by default
 @app.route('/', defaults={'path': ''})
@@ -48,8 +59,10 @@ def signup():
         return jsonify({'success': False, 'message': 'Username or email already exists!'})
 
     try:
-        cursor.execute('INSERT INTO users (email, username, password) VALUES (?, ?, ?)',
-                       (email, username, hashed_password))
+        cursor.execute(
+            'INSERT INTO users (email, username, password) VALUES (?, ?, ?)',
+            (email, username, hashed_password),
+        )
         conn.commit()
     except Exception as e:
         print("Error:", e)
@@ -74,53 +87,81 @@ def login():
         cursor.execute('SELECT * FROM users WHERE username = ?', (username,))
         user = cursor.fetchone()
 
-        if user:
-            if bcrypt.checkpw(password.encode('utf-8'), user['password']):
-                return jsonify({'success': True, 'message': 'Login successful!'})
-            else:
-                return jsonify({'success': False, 'message': 'Invalid password.'})
+        if user and bcrypt.checkpw(password.encode('utf-8'), user['password']):
+            return jsonify({'success': True, 'message': 'Login successful!'})
         else:
-            return jsonify({'success': False, 'message': 'User not found.'})
+            return jsonify({'success': False, 'message': 'Invalid credentials.'})
     except Exception as e:
-        # Log or handle the error as needed
         print("Error during login:", e)
         return jsonify({'success': False, 'message': 'An error occurred during login.'})
     finally:
-        # Always close the connection
         conn.close()
-    logging.debug("Login attempt finished.")
 
-connected_users = set()
+# Handle user login via Socket.IO
+@socketio.on('login')
+def handle_login(data):
+    username = data['username']
+    connected_users[username] = request.sid
+    user_status[username] = 'Online'  # Set status to Online by default
+    emit('user_list', {'users': get_users_with_status()}, broadcast=True)
+    print(f"{username} connected")
 
-async def handle_socket_connection(websocket, path):
-    connected_users.add(websocket)
-    try:
-        async for message in websocket:
-            data = json.loads(message)
-            if data['type'] == 'message':
-                await broadcast_message(data, websocket)
-            elif data['type'] == 'typing':
-                await broadcast_typing(data, websocket, is_typing=True)
-            elif data['type'] == 'stop_typing':
-                await broadcast_typing(data, websocket, is_typing=False)
-    finally:
-        connected_users.remove(websocket)
+# WebSocket handler for disconnecting users
+@socketio.on('disconnect')
+def handle_disconnect():
+    sid = request.sid
+    username_to_remove = None
+    for username, sid_value in connected_users.items():
+        if sid_value == sid:
+            username_to_remove = username
+            break
+    if username_to_remove:
+        del connected_users[username_to_remove]
+        del user_status[username_to_remove]
+        emit('user_list', {'users': get_users_with_status()}, broadcast=True)
+        print(f"{username_to_remove} disconnected")
 
-async def broadcast_message(data, sender):
-    msg_data = json.dumps({'type': 'message', 'username': data['username'], 'message': data['message']})
-    for user in connected_users:
-        if user != sender:
-            await user.send(msg_data)
+# Handle status change requests
+@socketio.on('status_change')
+def handle_status_change(data):
+    username = data['username']
+    new_status = data['status']
+    user_status[username] = new_status  # Update the user's status
+    emit('user_list', {'users': get_users_with_status()}, broadcast=True)
 
-async def broadcast_typing(data, sender, is_typing):
-    typing_data = json.dumps({'type': 'typing' if is_typing else 'stop_typing', 'username': data['username']})
-    for user in connected_users:
-        if user != sender:
-            await user.send(typing_data)
+# Helper function to get users with their statuses
+def get_users_with_status():
+    return [{'username': user, 'status': user_status[user]} for user in connected_users]
 
-async def start_websocket_server():
-    async with websockets.serve(handle_socket_connection, "127.0.0.1", 8080):
-        await asyncio.Future()
+# Start a one-on-one or group chat
+@socketio.on('start_chat')
+def start_chat(data):
+    usernames = data['users']
+    room_name = '_'.join(sorted(usernames))  # Create unique room name based on users
+    for username in usernames:
+        if username in connected_users:
+            join_room(room_name, sid=connected_users[username])
+    rooms[room_name].extend(usernames)
+    emit('chat_started', {'room': room_name, 'users': usernames}, room=room_name)
 
-if __name__ == "__main__":
-    asyncio.run(start_websocket_server())
+# Handle sending messages
+@socketio.on('send_message')
+def handle_send_message(data):
+    room = data['room']
+    message = data['message']
+    username = data['username']
+    emit('message', {'msg': message, 'username': username}, room=room)
+
+# Typing notifications
+@socketio.on('typing')
+def handle_typing(data):
+    room = data['room']
+    emit('typing', {'username': data['username']}, room=room, include_self=False)
+
+@socketio.on('stop_typing')
+def handle_stop_typing(data):
+    room = data['room']
+    emit('stop_typing', {'username': data['username']}, room=room, include_self=False)
+
+if __name__ == '__main__':
+    socketio.run(app, host='0.0.0.0', port=5000, debug=True)
