@@ -1,15 +1,14 @@
 import asyncio
 import websockets
 import sqlite3
-import http.server
-import socketserver
-import threading
-import os
 import json
-from flask import Flask, request, jsonify, render_template, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory
 import bcrypt
+import os
+import logging
+logging.basicConfig(level = logging.DEBUG)
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='../frontend', static_url_path='')
 
 # Database connection function
 def get_db_connection():
@@ -17,50 +16,53 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
-# Signup page (GET request)
+# Serve static files or index.html by default
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve(path):
+    if path and os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
+
+# Signup route for GET requests (serves the signup page)
 @app.route('/signup', methods=['GET'])
 def signup_page():
-    return send_from_directory('frontend', 'signup.html')
+    return send_from_directory(app.static_folder, 'signup.html')
 
-# Signup page (POST request)
+# Signup route for POST requests (handles account creation)
 @app.route('/signup', methods=['POST'])
 def signup():
     data = request.get_json()
     email = data['email']
     username = data['username']
-    password = data['password'] 
+    password = data['password']
 
-    # hashing password
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Check if username or email already exists
     cursor.execute('SELECT * FROM users WHERE username = ? OR email = ?', (username, email))
     if cursor.fetchone():
         return jsonify({'success': False, 'message': 'Username or email already exists!'})
 
-    # Insert the new user into the database
-    cursor.execute('INSERT INTO users (email, username, password) VALUES (?, ?, ?)',
-                   (email, username, password))
-    conn.commit()
-    conn.close()
+    try:
+        cursor.execute('INSERT INTO users (email, username, password) VALUES (?, ?, ?)',
+                       (email, username, hashed_password))
+        conn.commit()
+    except Exception as e:
+        print("Error:", e)
+        return jsonify({'success': False, 'message': 'Error occurred while creating account.'})
+    finally:
+        conn.close()
 
     return jsonify({'success': True})
 
-# To serve static assets (like CSS, JS, sounds)
-@app.route('/assets/<path:filename>')
-def assets(filename):
-    return send_from_directory('frontend/assets', filename)
-
-# Route to serve the login page
-@app.route('/')
-def index():
-    return send_from_directory('frontend', 'index.html')
-
+# Login route
 @app.route('/login', methods=['POST'])
 def login():
+    logging.debug("Login attempt started.")
     data = request.get_json()
     username = data['username']
     password = data['password']
@@ -68,26 +70,28 @@ def login():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Check if the user exists
-    cursor.execute('SELECT * FROM users WHERE username = ?', (username,))
-    user = cursor.fetchone()
+    try:
+        cursor.execute('SELECT * FROM users WHERE username = ?', (username,))
+        user = cursor.fetchone()
 
-    if user:
-        # Verify the password
-        stored_hashed_password = user['password']
-        if bcrypt.checkpw(password.encode('utf-8'), stored_hashed_password):
-            return jsonify({'success': True, 'message': 'Login successful!'})
+        if user:
+            if bcrypt.checkpw(password.encode('utf-8'), user['password']):
+                return jsonify({'success': True, 'message': 'Login successful!'})
+            else:
+                return jsonify({'success': False, 'message': 'Invalid password.'})
         else:
-            return jsonify({'success': False, 'message': 'Invalid password.'})
-    else:
-        return jsonify({'success': False, 'message': 'User not found.'})
-
-    conn.close()
-
+            return jsonify({'success': False, 'message': 'User not found.'})
+    except Exception as e:
+        # Log or handle the error as needed
+        print("Error during login:", e)
+        return jsonify({'success': False, 'message': 'An error occurred during login.'})
+    finally:
+        # Always close the connection
+        conn.close()
+    logging.debug("Login attempt finished.")
 
 connected_users = set()
 
-# Handle WebSocket connections
 async def handle_socket_connection(websocket, path):
     connected_users.add(websocket)
     try:
@@ -103,47 +107,20 @@ async def handle_socket_connection(websocket, path):
         connected_users.remove(websocket)
 
 async def broadcast_message(data, sender):
-    msg_data = json.dumps({
-        'type': 'message',
-        'username': data['username'],
-        'message': data['message']
-    })
+    msg_data = json.dumps({'type': 'message', 'username': data['username'], 'message': data['message']})
     for user in connected_users:
         if user != sender:
             await user.send(msg_data)
 
 async def broadcast_typing(data, sender, is_typing):
-    typing_data = json.dumps({
-        'type': 'typing' if is_typing else 'stop_typing',
-        'username': data['username']
-    })
+    typing_data = json.dumps({'type': 'typing' if is_typing else 'stop_typing', 'username': data['username']})
     for user in connected_users:
         if user != sender:
             await user.send(typing_data)
 
-# Start the WebSocket server
 async def start_websocket_server():
-    server = await websockets.serve(handle_socket_connection, "127.0.0.1", 8080)
-    print("WebSocket server started on ws://127.0.0.1:8080")
-    await server.wait_closed()
-
-# Serve the static HTML/CSS/JS files using Python's built-in HTTP server
-def start_http_server():
-    os.chdir("C:\\Users\\blake\\Documents\\github\\aol\\frontend") 
-    handler = http.server.SimpleHTTPRequestHandler
-    httpd = socketserver.TCPServer(("", 8000), handler)
-    print("HTTP server started on http://127.0.0.1:8000")
-    httpd.serve_forever()
-
-# Run both servers concurrently using threading and asyncio
-def main():
-    # Start the HTTP server in a separate thread
-    http_thread = threading.Thread(target=start_http_server)
-    http_thread.daemon = True  # Ensures the thread exits when the main program exits
-    http_thread.start()
-
-    # Start the WebSocket server using asyncio
-    asyncio.run(start_websocket_server())
+    async with websockets.serve(handle_socket_connection, "127.0.0.1", 8080):
+        await asyncio.Future()
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(start_websocket_server())
