@@ -7,7 +7,7 @@ import threading
 import os
 import json
 from flask import Flask, request, jsonify, render_template, send_from_directory
-# from websocket_server import WebsocketServer
+import bcrypt
 
 app = Flask(__name__)
 
@@ -28,7 +28,10 @@ def signup():
     data = request.get_json()
     email = data['email']
     username = data['username']
-    password = data['password']  # In real applications, hash passwords!
+    password = data['password'] 
+
+    # hashing password
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -55,6 +58,32 @@ def assets(filename):
 @app.route('/')
 def index():
     return send_from_directory('frontend', 'index.html')
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    username = data['username']
+    password = data['password']
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Check if the user exists
+    cursor.execute('SELECT * FROM users WHERE username = ?', (username,))
+    user = cursor.fetchone()
+
+    if user:
+        # Verify the password
+        stored_hashed_password = user['password']
+        if bcrypt.checkpw(password.encode('utf-8'), stored_hashed_password):
+            return jsonify({'success': True, 'message': 'Login successful!'})
+        else:
+            return jsonify({'success': False, 'message': 'Invalid password.'})
+    else:
+        return jsonify({'success': False, 'message': 'User not found.'})
+
+    conn.close()
+
 
 connected_users = set()
 
