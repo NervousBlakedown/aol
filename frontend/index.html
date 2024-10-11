@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AOL Instant Messenger Clone</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="login">
+    <label for="username">Screen Name:</label>
+    <input type="text" id="username" placeholder="Get a Screen Name">
+    <label for="password">Password:</label>
+    <input type="password" id="password">
+    <button onclick="login()">Sign On</button>
+  </div>
+
+  <div id="chat" style="display:none;">
+    <div id="messages"></div>
+    <input type="text" id="message" placeholder="Type a message..." oninput="sendTypingNotification()">
+    <button onclick="sendMessage()">Send</button>
+    <div id="typing" style="color: grey; font-size: 0.8em;"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
