@@ -1,6 +1,46 @@
 let websocket;
 let typingTimeout;
 
+// account creation
+function createAccount() {
+  const email = document.getElementById('email').value.trim();
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value.trim();
+
+  if (!email || !username || !password) {
+    alert('All fields are required.');
+    return;
+  }
+
+  // Send the signup details to the server
+  fetch('/signup', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      email: email,
+      username: username,
+      password: password
+    }),
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert('Account created successfully!');
+      // Redirect to login page
+      window.location.href = 'index.html';
+    } else {
+      alert('Failed to create account: ' + data.message);
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Error occurred while creating account.');
+  });
+}
+
+
 // Handle the login process
 function login() {
   const username = document.getElementById('username').value;
@@ -11,10 +51,9 @@ function login() {
   }
 
   // Establish a WebSocket connection
-  websocket = new WebSocket("ws://localhost:8080") 
-  // websocket = new WebSocket("wss://huge-sloths-drive.loca.lt");
+  // websocket = new WebSocket("ws://localhost:8080");
+  websocket = new WebSocket("ws://127.0.0.1:8080");
 
-  // websocket = new WebSocket("ws://127.0.0.1:8080");
 
   websocket.onopen = function() {
     console.log("Connected to WebSocket server.");
@@ -50,6 +89,24 @@ function login() {
   };
 }
 
+// Function to play login success sound
+function playLoginSound() {
+  const loginSound = document.getElementById("login_sound");
+  loginSound.play();
+}
+
+// Function to play the message receive sound
+function playMessageReceiveSound() {
+  const messageReceiveSound = document.getElementById("message_receive_sound");
+  messageReceiveSound.play();
+}
+
+// Play the AOL sound when a message is sent
+function playAOLSound() {
+  const aolSound = document.getElementById("message_sent_sound");
+  aolSound.play();
+}
+
 // Send a chat message
 function sendMessage() {
   const message = document.getElementById('message').value.trim();
@@ -58,7 +115,7 @@ function sendMessage() {
     return; // Avoid sending empty messages
   }
 
-  // Display the sent message immediately (optimistic UI update)
+  // Display the sent message immediately
   displayMessage(document.getElementById('username').value, message);
 
   // Send the message over the WebSocket connection
@@ -69,7 +126,11 @@ function sendMessage() {
     message: message
   }));
 
-  document.getElementById('message').value = ''; // Clear the input field
+  // Play the AOL sound effect
+  playAOLSound();
+
+  // Clear the input field
+  document.getElementById('message').value = '';
 }
 
 // Display messages in the chat area
@@ -101,7 +162,7 @@ function sendTypingNotification() {
   }
 }
 
-  // Add event listener for 'Enter' key to send message
+// Add event listener for 'Enter' key to send message
 document.getElementById('message').addEventListener('keydown', function(event) {
   if (event.key === 'Enter') {
     sendMessage();

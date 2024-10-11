@@ -6,6 +6,55 @@ import socketserver
 import threading
 import os
 import json
+from flask import Flask, request, jsonify, render_template, send_from_directory
+# from websocket_server import WebsocketServer
+
+app = Flask(__name__)
+
+# Database connection function
+def get_db_connection():
+    conn = sqlite3.connect('db/db.sqlite3')
+    conn.row_factory = sqlite3.Row
+    return conn
+
+# Signup page (GET request)
+@app.route('/signup', methods=['GET'])
+def signup_page():
+    return send_from_directory('frontend', 'signup.html')
+
+# Signup page (POST request)
+@app.route('/signup', methods=['POST'])
+def signup():
+    data = request.get_json()
+    email = data['email']
+    username = data['username']
+    password = data['password']  # In real applications, hash passwords!
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # Check if username or email already exists
+    cursor.execute('SELECT * FROM users WHERE username = ? OR email = ?', (username, email))
+    if cursor.fetchone():
+        return jsonify({'success': False, 'message': 'Username or email already exists!'})
+
+    # Insert the new user into the database
+    cursor.execute('INSERT INTO users (email, username, password) VALUES (?, ?, ?)',
+                   (email, username, password))
+    conn.commit()
+    conn.close()
+
+    return jsonify({'success': True})
+
+# To serve static assets (like CSS, JS, sounds)
+@app.route('/assets/<path:filename>')
+def assets(filename):
+    return send_from_directory('frontend/assets', filename)
+
+# Route to serve the login page
+@app.route('/')
+def index():
+    return send_from_directory('frontend', 'index.html')
 
 connected_users = set()
 

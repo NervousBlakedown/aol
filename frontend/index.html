@@ -7,20 +7,30 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <!-- 'login' div -->
   <div id="login">
     <label for="username">Screen Name:</label>
     <input type="text" id="username" placeholder="Get a Screen Name">
     <label for="password">Password:</label>
     <input type="password" id="password">
     <button onclick="login()">Sign On</button>
+    <!-- 'startup' sound when application opens -->
+    <audio id = "startup_sound" src = "./assets/sounds/aol_dialup.mp3" preload = "auto"></audio>
+    <!-- 'login success' sound-->
+    <audio id = "login_sound" src = "./assets/sounds/windows_95_startup.mp3" preload = "auto"></audio>
   </div>
 
+  <!-- 'chat' div -->
   <div id="chat" style="display:none;">
     <div id="messages"></div>
     <input type="text" id="message" placeholder="Type a message..." oninput="sendTypingNotification()">
     <button onclick="sendMessage()">Send</button>
     <div id="typing" style="color: grey; font-size: 0.8em;"></div>
-  </div>
+    <!-- 'message sent' sound -->
+    <audio id="message_sent_sound" src="./assets/sounds/mail_sent.mp3" preload="auto"></audio>
+    <!-- 'message received' sound -->
+    <audio id="message_receive_sound" src="./assets/sounds/aol_message_received_one.mp3" preload="auto"></audio>
+</div>
 
   <script src="app.js"></script>
 </body>

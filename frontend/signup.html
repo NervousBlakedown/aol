@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BlakeOL Signup</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="signup">
+    <h2>Create a BlakeOL Account</h2>
+    <label for="email">Email Address:</label>
+    <input type="email" id="email" placeholder="Enter your email" required>
+    <label for="username">Screen Name:</label>
+    <input type="text" id="username" placeholder="Choose a screen name" required>
+    <label for="password">Password:</label>
+    <input type="password" id="password" placeholder="Choose a password" required>
+    <button onclick="createAccount()">Create BlakeOL Account</button>
+  </div>
+
+  <!-- Audio element for signup load sound -->
+  <audio id="signup_sound" src="./assets/sounds/retro_console_startup.mp3" preload="auto"></audio>
+
+  <script src="app.js"></script>
+  <script>
+    // Play sound as soon as the page loads
+    window.onload = function() {
+      const signupSound = document.getElementById("signup_sound");
+      signupSound.play();
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+# Ignore the virtual environment folder
+venv/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+
+# Byte-compiled / optimized / DLL files
+*.pyc
+*.pyo
+*.pyd
+
+# Logs and databases
+*.log
+*.sqlite3
+
+# Environment variable files
+.env
+
+# Ignore IDE-specific files
+.vscode/
+.idea/
+
+# Ignore macOS system files
+.DS_Store
+
