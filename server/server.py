@@ -150,7 +150,7 @@ def handle_send_message(data):
     room = data['room']
     message = data['message']
     username = data['username']
-    emit('message', {'msg': message, 'username': username}, room=room)
+    emit('message', {'msg': message, 'username': username}, room=room, include_self = False)
 
 # Typing notifications
 @socketio.on('typing')
