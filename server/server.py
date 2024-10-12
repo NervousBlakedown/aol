@@ -1,14 +1,13 @@
 # server.py
-
-import bcrypt
+from argon2 import PasswordHasher
 from collections import defaultdict
 from flask import Flask, request, jsonify, send_from_directory
 from flask_socketio import SocketIO, emit, join_room, leave_room
 import logging
 import os
 import sqlite3
-
 logging.basicConfig(level=logging.DEBUG)
+ph = PasswordHasher()
 
 app = Flask(__name__, static_folder='../frontend', static_url_path='')
 socketio = SocketIO(app)
@@ -48,15 +47,15 @@ def signup():
     email = data['email']
     username = data['username']
     password = data['password']
-
-    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+    hashed_password = ph.hash(password)
+    # hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
     conn = get_db_connection()
     cursor = conn.cursor()
 
     cursor.execute('SELECT * FROM users WHERE username = ? OR email = ?', (username, email))
     if cursor.fetchone():
-        return jsonify({'success': False, 'message': 'Username or email already exists!'})
+        return jsonify({'success': False, 'message': 'Username or email already exists.'})
 
     try:
         cursor.execute(
@@ -87,8 +86,8 @@ def login():
         cursor.execute('SELECT * FROM users WHERE username = ?', (username,))
         user = cursor.fetchone()
 
-        if user and bcrypt.checkpw(password.encode('utf-8'), user['password']):
-            return jsonify({'success': True, 'message': 'Login successful!'})
+        if user and ph.verify(user['password'], password): #bcrypt.checkpw(password.encode('utf-8'), user['password']):
+            return jsonify({'success': True, 'message': 'Login successful.'})
         else:
             return jsonify({'success': False, 'message': 'Invalid credentials.'})
     except Exception as e:

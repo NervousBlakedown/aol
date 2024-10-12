@@ -1,5 +1,8 @@
 import sqlite3
 import os
+from argon2 import PasswordHasher
+
+ph = PasswordHasher()
 
 # Function to initialize the database and create tables
 def initialize_db():
@@ -53,6 +56,10 @@ def initialize_db():
     cursor.execute('SELECT COUNT(*) FROM users')
     if cursor.fetchone()[0] == 0:
         print("Seeding initial data...")
+        # argon2 hash/rehash old bcrypt passwords
+        users = [
+            ('user1', ph.hash('password1'), 'user1@example.com')
+        ]
         cursor.executemany('''
             INSERT INTO users (username, password, email) VALUES (?, ?, ?)
         ''', [
