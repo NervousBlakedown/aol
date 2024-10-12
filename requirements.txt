@@ -1,7 +1,6 @@
 altgraph==0.17.4
 argon2-cffi==23.1.0
 argon2-cffi-bindings==21.2.0
-bcrypt==4.2.0
 bidict==0.23.1
 blinker==1.8.2
 cffi==1.17.1
@@ -9,6 +8,7 @@ click==8.1.7
 colorama==0.4.6
 Flask==3.0.3
 Flask-SocketIO==5.4.1
+gunicorn==23.0.0
 h11==0.14.0
 itsdangerous==2.2.0
 Jinja2==3.1.4
@@ -21,7 +21,6 @@ pyinstaller-hooks-contrib==2024.8
 python-engineio==4.9.1
 python-socketio==5.11.4
 pywin32-ctypes==0.2.3
-scrypt==0.8.27
 setuptools==75.1.0
 simple-websocket==1.1.0
 websockets==13.1
