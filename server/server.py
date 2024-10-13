@@ -62,6 +62,7 @@ def signup():
             conn.commit()
             return {'success': True, 'message': 'Account created successfully.'}
         except Exception as e:
+            logging.error(f"Database error: {e}")
             return {'success': False, 'message': str(e)}
         finally:
             cursor.close()
