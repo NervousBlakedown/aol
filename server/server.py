@@ -1,6 +1,7 @@
 # server.py
 import eventlet
-eventlet.monkey_patch()
+eventlet.monkey_patch() # must go first
+
 from argon2 import PasswordHasher
 from collections import defaultdict
 from flask import Flask, request, jsonify, send_from_directory
@@ -9,6 +10,7 @@ import logging
 import os
 import sqlite3
 import threading
+
 logging.basicConfig(level=logging.DEBUG)
 ph = PasswordHasher()
 
@@ -56,6 +58,43 @@ def signup():
     username = data['username']
     password = data['password']
 
+    # Hash the password
+    hashed_password = ph.hash(password)
+
+    # This function performs the database operations
+    def db_task():
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+
+            # Check if the username or email already exists
+            cursor.execute('SELECT * FROM users WHERE username = ? OR email = ?', (username, email))
+            if cursor.fetchone():
+                return {'success': False, 'message': 'Username or email already exists.'}
+
+            # Insert the new user into the database
+            cursor.execute(
+                'INSERT INTO users (email, username, password) VALUES (?, ?, ?)',
+                (email, username, hashed_password),
+            )
+            conn.commit()
+            return {'success': True}
+        except Exception as e:
+            logging.error(f"Database error: {e}")
+            return {'success': False, 'message': 'Error occurred while creating account.'}
+        finally:
+            conn.close()
+
+    # Run the database task using eventlet's tpool (thread pool)
+    result = eventlet.tpool.execute(db_task)
+    
+    return jsonify(result)
+"""def signup():
+    data = request.get_json()
+    email = data['email']
+    username = data['username']
+    password = data['password']
+
     hashed_password = ph.hash(password)
 
     def db_task():
@@ -82,8 +121,8 @@ def signup():
 
     # Run the database task in a separate thread
     result = threading.Thread(target=db_task).start()
-    return jsonify(result)
-    
+    return jsonify(result)"""
+
 """@app.route('/signup', methods=['POST'])
 def signup():
     data = request.get_json()
