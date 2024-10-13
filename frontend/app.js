@@ -16,6 +16,12 @@ function createAccount() {
     return;
   }
 
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailPattern.test(email)) {
+    alert('Please enter a valid email address.');
+    return;
+  }
+
   // Send the signup details to the server
   fetch('/signup', {
     method: 'POST',
@@ -33,7 +39,7 @@ function createAccount() {
       if (data.success) {
         alert('Account created successfully!');
         // Redirect to login page
-        window.location.href = 'index.html';
+        window.location.href = '/login';  // Fixed to go to login page
       } else {
         alert('Failed to create account: ' + data.message);
       }
@@ -46,14 +52,19 @@ function createAccount() {
 
 // Handle the login process
 function login() {
-  username = document.getElementById('username').value;
+  username = document.getElementById('username').value.trim();
 
   if (!username) {
     alert('Please enter a screen name.');
     return;
   }
 
-  const password = document.getElementById('password').value;
+  const password = document.getElementById('password').value.trim();  // Ensure trimmed password
+
+  if (!password) {
+    alert('Please enter a password.');
+    return;
+  }
 
   // Fetch request to the server for authentication
   fetch('/login', {
@@ -74,7 +85,9 @@ function login() {
 
         socket.on('connect', function () {
           console.log('Connected to Socket.IO server.');
-          socket.emit('login', { username: username });
+          if (username) {
+            socket.emit('login', { username: username }); // Only emit if username is not null
+          }
           // Update UI
           document.getElementById('login').style.display = 'none';
           document.getElementById('contacts').style.display = 'block';

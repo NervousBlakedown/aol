@@ -9,7 +9,6 @@ from flask_socketio import SocketIO, emit, join_room, leave_room
 import logging
 import os
 import sqlite3
-import threading
 
 logging.basicConfig(level=logging.DEBUG)
 ph = PasswordHasher()
@@ -30,25 +29,18 @@ def get_db_connection():
         conn.row_factory = sqlite3.Row
         return conn
     except sqlite3.OperationalError as e:
-        print(f"Error connecting to database: {e}")
+        logging.error(f"Error connecting to database: {e}")
         raise
 
-# Serve signup page by default
+# Serve signup page by default (root route)
 @app.route('/', methods = ['GET'])
 def default():
     return send_from_directory(app.static_folder, 'signup.html')
-"""@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def serve(path):
-    if path and os.path.exists(os.path.join(app.static_folder, path)):
-        return send_from_directory(app.static_folder, path)
-    else:
-        return send_from_directory(app.static_folder, 'index.html')"""
 
-"""# Signup route for GET requests (serves the signup page)
-@app.route('/signup', methods=['GET'])
-def signup_page():
-    return send_from_directory(app.static_folder, 'signup.html')"""
+# Serve login page when user clicks "Already have an account? Log in"
+@app.route('/login', methods=['GET'])
+def login_page():
+    return send_from_directory(app.static_folder, 'index.html')  # index.html is login page
 
 # Signup page for POST requests (handles account creation)
 @app.route('/signup', methods=['POST'])
@@ -72,7 +64,7 @@ def signup():
             if cursor.fetchone():
                 return {'success': False, 'message': 'Username or email already exists.'}
 
-            # Insert the new user into the database
+            # Insert new user into the database
             cursor.execute(
                 'INSERT INTO users (email, username, password) VALUES (?, ?, ?)',
                 (email, username, hashed_password),
@@ -85,77 +77,14 @@ def signup():
         finally:
             conn.close()
 
-    # Run the database task using eventlet's tpool (thread pool)
+    # Run the database task using eventlet's thread pool
     result = eventlet.tpool.execute(db_task)
 
     # check result before returning it to client
     if result['success']:
         return jsonify(result), 201 # HTTP 201 created
     else:
-        return jsonify(result)
-    
-"""def signup():
-    data = request.get_json()
-    email = data['email']
-    username = data['username']
-    password = data['password']
-
-    hashed_password = ph.hash(password)
-
-    def db_task():
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute('SELECT * FROM users WHERE username = ? OR email = ?', (username, email))
-        if cursor.fetchone():
-            return {'success': False, 'message': 'Username or email already exists.'}
-        
-        try:
-            cursor.execute(
-                'INSERT INTO users (email, username, password) VALUES (?, ?, ?)',
-                (email, username, hashed_password),
-            )
-            conn.commit()
-        except Exception as e:
-            print(f"Database error: {e}")
-            return {'success': False, 'message': 'Error occurred while creating account.'}
-        finally:
-            conn.close()
-        
-        return {'success': True}
-
-    # Run the database task in a separate thread
-    result = threading.Thread(target=db_task).start()
-    return jsonify(result)"""
-
-"""@app.route('/signup', methods=['POST'])
-def signup():
-    data = request.get_json()
-    email = data['email']
-    username = data['username']
-    password = data['password']
-    hashed_password = ph.hash(password)
-
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    cursor.execute('SELECT * FROM users WHERE username = ? OR email = ?', (username, email))
-    if cursor.fetchone():
-        return jsonify({'success': False, 'message': 'Username or email already exists.'})
-
-    try:
-        cursor.execute(
-            'INSERT INTO users (email, username, password) VALUES (?, ?, ?)',
-            (email, username, hashed_password),
-        )
-        conn.commit()
-    except Exception as e:
-        print("Error:", e)
-        return jsonify({'success': False, 'message': 'Error occurred while creating account.'})
-    finally:
-        conn.close()
-
-    return jsonify({'success': True})"""
+        return jsonify(result), 400 # HTTP 400 bad request
 
 
 # Login page
@@ -173,12 +102,12 @@ def login():
         cursor.execute('SELECT * FROM users WHERE username = ?', (username,))
         user = cursor.fetchone()
 
-        if user and ph.verify(user['password'], password): #bcrypt.checkpw(password.encode('utf-8'), user['password']):
+        if user and ph.verify(user['password'], password):
             return jsonify({'success': True, 'message': 'Login successful.'})
         else:
             return jsonify({'success': False, 'message': 'Invalid credentials.'})
     except Exception as e:
-        print("Error during login:", e)
+        logging.error("Error during login:", e)
         return jsonify({'success': False, 'message': 'An error occurred during login.'})
     finally:
         conn.close()
@@ -190,7 +119,7 @@ def handle_login(data):
     connected_users[username] = request.sid
     user_status[username] = 'Online'  # Set status to Online by default
     emit('user_list', {'users': get_users_with_status()}, broadcast=True)
-    print(f"{username} connected")
+    logging.debug(f"{username} connected")
 
 # WebSocket handler for disconnecting users
 @socketio.on('disconnect')
@@ -205,14 +134,14 @@ def handle_disconnect():
         del connected_users[username_to_remove]
         del user_status[username_to_remove]
         emit('user_list', {'users': get_users_with_status()}, broadcast=True)
-        print(f"{username_to_remove} disconnected")
+        logging.debug(f"{username_to_remove} disconnected.")
 
 # Handle status change requests
 @socketio.on('status_change')
 def handle_status_change(data):
     username = data['username']
     new_status = data['status']
-    user_status[username] = new_status  # Update the user's status
+    user_status[username] = new_status  
     emit('user_list', {'users': get_users_with_status()}, broadcast=True)
 
 # Helper function to get users with their statuses
