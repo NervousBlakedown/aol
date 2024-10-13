@@ -169,7 +169,7 @@ def handle_send_message(data):
     room = data['room']
     message = data['message']
     username = data['username']
-    print(f"Message from {username} in room {room}: {message}")
+    print(f"Message sent from {username} in room {room}.")
     emit('message', {'msg': message, 'username': username}, room=room, include_self = False)
 
 
