@@ -87,8 +87,13 @@ def signup():
 
     # Run the database task using eventlet's tpool (thread pool)
     result = eventlet.tpool.execute(db_task)
+
+    # check result before returning it to client
+    if result['success']:
+        return jsonify(result), 201 # HTTP 201 created
+    else:
+        return jsonify(result)
     
-    return jsonify(result)
 """def signup():
     data = request.get_json()
     email = data['email']
