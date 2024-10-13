@@ -40,10 +40,10 @@ def serve(path):
     else:
         return send_from_directory(app.static_folder, 'index.html')"""
 
-# Signup route for GET requests (serves the signup page)
+"""# Signup route for GET requests (serves the signup page)
 @app.route('/signup', methods=['GET'])
 def signup_page():
-    return send_from_directory(app.static_folder, 'signup.html')
+    return send_from_directory(app.static_folder, 'signup.html')"""
 
 # Signup route for POST requests (handles account creation)
 @app.route('/signup', methods=['POST'])
