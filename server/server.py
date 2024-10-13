@@ -21,7 +21,9 @@ rooms = defaultdict(list)
 # Database connection function
 def get_db_connection():
     try:
-        conn = sqlite3.connect('../db/db.sqlite3')
+        base_dir = os.path.abspath(os.path.dirname(__file__))
+        db_path = os.path.join(base_dir, '../db/db.sqlite3')
+        conn = sqlite3.connect(db_path)
         conn.row_factory = sqlite3.Row
         return conn
     except sqlite3.OperationalError as e:
@@ -45,7 +47,7 @@ def serve(path):
 def signup_page():
     return send_from_directory(app.static_folder, 'signup.html')"""
 
-# Signup route for POST requests (handles account creation)
+# Signup page for POST requests (handles account creation)
 @app.route('/signup', methods=['POST'])
 def signup():
     data = request.get_json()
@@ -53,7 +55,6 @@ def signup():
     username = data['username']
     password = data['password']
     hashed_password = ph.hash(password)
-    # hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -76,7 +77,8 @@ def signup():
 
     return jsonify({'success': True})
 
-# Login route
+
+# Login page
 @app.route('/login', methods=['POST'])
 def login():
     logging.debug("Login attempt started.")
