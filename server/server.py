@@ -1,4 +1,6 @@
 # server.py
+import eventlet
+eventlet.monkey_patch()
 from argon2 import PasswordHasher
 from collections import defaultdict
 from flask import Flask, request, jsonify, send_from_directory
