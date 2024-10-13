@@ -4,18 +4,13 @@ from argon2 import PasswordHasher
 
 ph = PasswordHasher()
 
-# Function to initialize the database and create tables
-def initialize_db():
-    # Path to the SQLite database file
-    db_path = 'C:\\Users\\blake\\Documents\\github\\aol\\db\\db.sqlite3'
-
+def get_db_connection(db_path):
     # Ensure the db/ folder exists
     os.makedirs(os.path.dirname(db_path), exist_ok=True)
-
     # Connect to the SQLite database (it will be created if it doesn't exist)
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
+    return sqlite3.connect(db_path)
 
+def create_tables(cursor):
     # Create the 'users' table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS users (
@@ -52,37 +47,46 @@ def initialize_db():
         )
     ''')
 
-    # Seed the database with initial data (only if the users table is empty)
+def seed_data(cursor):
+    # Check if the users table is empty and seed data if it is
     cursor.execute('SELECT COUNT(*) FROM users')
     if cursor.fetchone()[0] == 0:
         print("Seeding initial data...")
-        # argon2 hash/rehash old bcrypt passwords
         users = [
-            ('user1', ph.hash('password1'), 'user1@example.com')
+            ('user1', ph.hash('password1'), 'user1@example.com'),
+            ('user2', ph.hash('password2'), 'user2@example.com')
         ]
         cursor.executemany('''
             INSERT INTO users (username, password, email) VALUES (?, ?, ?)
-        ''', [
-            ('user1', 'password1', 'user1@example.com'),
-            ('user2', 'password2', 'user2@example.com')
-        ])
+        ''', users)
 
+        contacts = [
+            (1, 2), (2, 1)
+        ]
         cursor.executemany('''
             INSERT INTO contacts (user_id, contact_id) VALUES (?, ?)
-        ''', [
-            (1, 2), (2, 1)
-        ])
+        ''', contacts)
 
-        cursor.executemany('''
-            INSERT INTO messages (sender_id, receiver_id, message) VALUES (?, ?, ?)
-        ''', [
+        messages = [
             (1, 2, 'Hello, how are you?'),
             (2, 1, 'I am good, thanks!')
-        ])
+        ]
+        cursor.executemany('''
+            INSERT INTO messages (sender_id, receiver_id, message) VALUES (?, ?, ?)
+        ''', messages)
 
-    # Commit changes and close the connection
-    conn.commit()
-    conn.close()
+def initialize_db():
+    db_path = 'db/db.sqlite3'  # Relative path to the database
+    conn = get_db_connection(db_path)
+    try:
+        cursor = conn.cursor()
+        create_tables(cursor)
+        seed_data(cursor)
+        conn.commit()
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    finally:
+        conn.close()
     print("Database initialization complete.")
 
 if __name__ == "__main__":
