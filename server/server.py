@@ -28,14 +28,17 @@ def get_db_connection():
         print(f"Error connecting to database: {e}")
         raise
 
-# Serve static files or index.html by default
-@app.route('/', defaults={'path': ''})
+# Serve signup page by default
+@app.route('/', methods = ['GET'])
+def default():
+    return send_from_directory(app.static_folder, 'signup.html')
+"""@app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve(path):
     if path and os.path.exists(os.path.join(app.static_folder, path)):
         return send_from_directory(app.static_folder, path)
     else:
-        return send_from_directory(app.static_folder, 'index.html')
+        return send_from_directory(app.static_folder, 'index.html')"""
 
 # Signup route for GET requests (serves the signup page)
 @app.route('/signup', methods=['GET'])
