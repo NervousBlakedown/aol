@@ -185,30 +185,7 @@ function startGroupChat() {
   // start chat with selected users
   startChat(selectedUsers);
 }
-  /*// Ensure at least one contact is selected for a chat
-  if (selectedUsers.length < 1) {
-    alert('You must select at least one contact to start a chat.');
-    return; 
-  }
 
-  // Add the current user to the group chat
-  selectedUsers.push(username);
-
-  // Start a group chat with the selected users
-  startChat(selectedUsers);
-}*/
-
-/*// Display messages in the chat area
-function displayMessage(username, message) {
-  let messages = document.getElementById('messages');
-  let messageDiv = document.createElement('div');
-  messageDiv.textContent = `${username}: ${message}`;
-  messages.appendChild(messageDiv);
-
-  // Scroll to the latest message
-  messages.scrollTop = messages.scrollHeight;
-  playMessageReceiveSound(); // Play sound when a new message is received
-} */
 
 // Send a chat message
 function sendMessage() {
@@ -236,6 +213,19 @@ function sendMessage() {
   // Clear the input field
   messageInput.value = '';
 }
+
+// Display messages in the chat area
+function displayMessage(username, message) {
+  let messages = document.getElementById('messages');
+  let messageDiv = document.createElement('div');
+  messageDiv.textContent = `${username}: ${message}`;
+  messages.appendChild(messageDiv);
+
+  // Scroll to the latest message
+  messages.scrollTop = messages.scrollHeight;
+  playMessageReceiveSound(); // Play sound when a new message is received
+}
+
 
 // Send typing notifications
 function sendTypingNotification() {
