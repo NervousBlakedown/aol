@@ -37,9 +37,9 @@ function createAccount() {
     .then(response => response.json())
     .then(data => {
       if (data.success) {
-        alert('Account created successfully!');
+        alert('Account created successfully.');
         // Redirect to login page
-        window.location.href = '/login';  // Fixed to go to login page
+        window.location.href = '/login'; 
       } else {
         alert('Failed to create account: ' + data.message);
       }
@@ -52,7 +52,7 @@ function createAccount() {
 
 // Handle the login process
 function login() {
-  const username = document.getElementById('username').value.trim();
+  username = document.getElementById('username').value.trim(); // store logged-in user
   const password = document.getElementById('password').value.trim();
 
   if (!username || !password) {
@@ -74,7 +74,7 @@ function login() {
   .then(response => response.json())
   .then(data => {
     if (data.success) {
-      alert('Login successful!');
+      alert('Login successful.');
       // Establish a Socket.IO connection on successful login
       socket = io();
 
@@ -159,8 +159,12 @@ function updateContactsList(users) {
   });
 }
 
-// Start a chat (for one-on-one or group)
+// Start a chat
 function startChat(users) {
+  if (!users || users.length == 0) {
+    alert('You must select at least one user to start chatting...obviously.');
+    return;
+  }
   currentRoom = users.join('_'); // Use usernames to create a unique room ID
   socket.emit('start_chat', {
     users: users
@@ -179,7 +183,7 @@ function startGroupChat() {
 
   // Ensure at least one contact is selected for a chat
   if (selectedUsers.length < 1) {
-    alert('Please select at least one contact to start a chat.');
+    alert('You must select at least one contact to start a chat.');
     return;
   }
 
@@ -273,28 +277,28 @@ function playAOLSound() {
 
 // Add event listeners after DOM content is loaded
 document.addEventListener('DOMContentLoaded', function () {
-  // For login button
+  // For 'login' button
   const loginButton = document.getElementById('login-button');
   if (loginButton) {
     loginButton.addEventListener('click', login);
   }
 
-  // For create account button
+  // For 'create account' button
   const createAccountButton = document.getElementById('create-account-button');
   if (createAccountButton) {
     createAccountButton.addEventListener('click', createAccount);
   }
 
-  // For send message button
+  // For 'send message' button
   const sendMessageButton = document.getElementById('send-message-button');
   if (sendMessageButton) {
     sendMessageButton.addEventListener('click', sendMessage);
   }
 
-  // For start group chat button
-  const startGroupChatButton = document.getElementById('start-group-chat-button');
-  if (startGroupChatButton) {
-    startGroupChatButton.addEventListener('click', startGroupChat);
+  // For 'start chat' button
+  const startChatButton = document.getElementById('start-chat-button');
+  if (startChatButton) {
+    startChatButton.addEventListener('click', startGroupChat);
   }
 
   // Add event listener for 'Enter' key to send message

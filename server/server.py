@@ -156,6 +156,7 @@ def start_chat(data):
     for username in usernames:
         if username in connected_users:
             join_room(room_name, sid=connected_users[username])
+    logging.debug(f"Room {room_name} created with users: {', '.join(usernames)}")
     rooms[room_name].extend(usernames)
     emit('chat_started', {'room': room_name, 'users': usernames}, room=room_name)
 
