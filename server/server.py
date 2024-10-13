@@ -8,6 +8,7 @@ from flask_socketio import SocketIO, emit, join_room, leave_room
 import logging
 import os
 import sqlite3
+import threading
 logging.basicConfig(level=logging.DEBUG)
 ph = PasswordHasher()
 
@@ -23,7 +24,7 @@ def get_db_connection():
     try:
         base_dir = os.path.abspath(os.path.dirname(__file__))
         db_path = os.path.join(base_dir, '../db/db.sqlite3')
-        conn = sqlite3.connect(db_path)
+        conn = sqlite3.connect(db_path, check_same_thread = False)
         conn.row_factory = sqlite3.Row
         return conn
     except sqlite3.OperationalError as e:
@@ -54,6 +55,41 @@ def signup():
     email = data['email']
     username = data['username']
     password = data['password']
+
+    hashed_password = ph.hash(password)
+
+    def db_task():
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT * FROM users WHERE username = ? OR email = ?', (username, email))
+        if cursor.fetchone():
+            return {'success': False, 'message': 'Username or email already exists.'}
+        
+        try:
+            cursor.execute(
+                'INSERT INTO users (email, username, password) VALUES (?, ?, ?)',
+                (email, username, hashed_password),
+            )
+            conn.commit()
+        except Exception as e:
+            print(f"Database error: {e}")
+            return {'success': False, 'message': 'Error occurred while creating account.'}
+        finally:
+            conn.close()
+        
+        return {'success': True}
+
+    # Run the database task in a separate thread
+    result = threading.Thread(target=db_task).start()
+    return jsonify(result)
+    
+"""@app.route('/signup', methods=['POST'])
+def signup():
+    data = request.get_json()
+    email = data['email']
+    username = data['username']
+    password = data['password']
     hashed_password = ph.hash(password)
 
     conn = get_db_connection()
@@ -75,7 +111,7 @@ def signup():
     finally:
         conn.close()
 
-    return jsonify({'success': True})
+    return jsonify({'success': True})"""
 
 
 # Login page
