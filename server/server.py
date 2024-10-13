@@ -153,10 +153,12 @@ def get_users_with_status():
 def start_chat(data):
     usernames = data['users']
     room_name = '_'.join(sorted(usernames))  # Create unique room name based on users
+    print(f"Starting chat in room: {room_name} with users: {', '.join(usernames)}")
+
     for username in usernames:
         if username in connected_users:
             join_room(room_name, sid=connected_users[username])
-    logging.debug(f"Room {room_name} created with users: {', '.join(usernames)}")
+
     rooms[room_name].extend(usernames)
     emit('chat_started', {'room': room_name, 'users': usernames}, room=room_name)
 
@@ -167,6 +169,7 @@ def handle_send_message(data):
     room = data['room']
     message = data['message']
     username = data['username']
+    print(f"Message from {username} in room {room}: {message}")
     emit('message', {'msg': message, 'username': username}, room=room, include_self = False)
 
 

@@ -165,10 +165,12 @@ function startChat(users) {
     alert('You must select at least one user to start chatting...obviously.');
     return;
   }
+  // add current user to the chat to ensure you're part of the chat
+  users.push(username);
+
   currentRoom = users.join('_'); // Use usernames to create a unique room ID
-  socket.emit('start_chat', {
-    users: users
-  });
+  socket.emit('start_chat', { users });
+  console.log('Starting chat with: ${users.join(', ')} in room: ${currentRoom}');
 }
 
 // Function to initiate a group chat
@@ -180,11 +182,13 @@ function startGroupChat() {
   checkboxes.forEach(function (checkbox) {
     selectedUsers.push(checkbox.value);
   });
-
-  // Ensure at least one contact is selected for a chat
+  // start chat with selected users
+  startChat(selectedUsers);
+}
+  /*// Ensure at least one contact is selected for a chat
   if (selectedUsers.length < 1) {
     alert('You must select at least one contact to start a chat.');
-    return;
+    return; 
   }
 
   // Add the current user to the group chat
@@ -192,9 +196,9 @@ function startGroupChat() {
 
   // Start a group chat with the selected users
   startChat(selectedUsers);
-}
+}*/
 
-// Display messages in the chat area
+/*// Display messages in the chat area
 function displayMessage(username, message) {
   let messages = document.getElementById('messages');
   let messageDiv = document.createElement('div');
@@ -204,7 +208,7 @@ function displayMessage(username, message) {
   // Scroll to the latest message
   messages.scrollTop = messages.scrollHeight;
   playMessageReceiveSound(); // Play sound when a new message is received
-}
+} */
 
 // Send a chat message
 function sendMessage() {
