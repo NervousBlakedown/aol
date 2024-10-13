@@ -8,7 +8,6 @@ from flask_socketio import SocketIO, emit, join_room, leave_room
 import logging
 import os
 import sqlite3
-
 logging.basicConfig(level=logging.DEBUG)
 ph = PasswordHasher()
 
@@ -21,25 +20,24 @@ rooms = defaultdict(list)
 
 # Database connection function
 def get_db_connection():
-    try:
-        base_dir = os.path.abspath(os.path.dirname(__file__))
-        db_path = os.path.join(base_dir, '../db/db.sqlite3')
-        conn = sqlite3.connect(db_path, check_same_thread = False)
-        conn.row_factory = sqlite3.Row
-        return conn
-    except sqlite3.OperationalError as e:
-        logging.error(f"Error connecting to database: {e}")
-        raise
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    db_path = os.path.join(base_dir, '../db/db.sqlite3')
+    conn = sqlite3.connect(db_path, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    return conn
+
 
 # Serve signup page by default (root route)
 @app.route('/', methods = ['GET'])
 def default():
     return send_from_directory(app.static_folder, 'signup.html')
 
+
 # Serve login page when user clicks "Already have an account? Log in"
 @app.route('/login', methods=['GET'])
 def login_page():
     return send_from_directory(app.static_folder, 'index.html')  # index.html is login page
+
 
 # Signup page for POST requests (handles account creation)
 @app.route('/signup', methods=['POST'])
@@ -47,43 +45,34 @@ def signup():
     data = request.get_json()
     email = data['email']
     username = data['username']
-    password = data['password']
+    password = ph.hash(data['password']) 
 
-    # Hash the password
-    hashed_password = ph.hash(password)
-
-    # This function performs the database operations
     def db_task():
+        conn = get_db_connection()
+        cursor = conn.cursor()
         try:
-            conn = get_db_connection()
-            cursor = conn.cursor()
-
-            # Check if the username or email already exists
             cursor.execute('SELECT * FROM users WHERE username = ? OR email = ?', (username, email))
             if cursor.fetchone():
                 return {'success': False, 'message': 'Username or email already exists.'}
 
-            # Insert new user into the database
             cursor.execute(
                 'INSERT INTO users (email, username, password) VALUES (?, ?, ?)',
-                (email, username, hashed_password),
+                (email, username, password)
             )
             conn.commit()
-            return {'success': True}
+            return {'success': True, 'message': 'Account created successfully.'}
         except Exception as e:
-            logging.error(f"Database error: {e}")
-            return {'success': False, 'message': 'Error occurred while creating account.'}
+            return {'success': False, 'message': str(e)}
         finally:
+            cursor.close()
             conn.close()
 
-    # Run the database task using eventlet's thread pool
-    result = eventlet.tpool.execute(db_task)
+    result = eventlet.spawn(db_task).wait()
 
-    # check result before returning it to clientf
     if result['success']:
-        return jsonify(result), 201 # HTTP 201 created
+        return jsonify(result), 201
     else:
-        return jsonify(result), 400 # HTTP 400 bad request
+        return jsonify(result), 400
 
 
 # Login page
@@ -101,44 +90,32 @@ def login():
         try:
             cursor.execute('SELECT * FROM users WHERE username = ?', (username,))
             user = cursor.fetchone()
-
             if user and ph.verify(user['password'], password):
                 return {'success': True, 'message': 'Login successful.'}
             else:
                 return {'success': False, 'message': 'Invalid credentials.'}
-        except Exception as e:
-            logging.error("Error during login:", e)
-            return {'success': False, 'message': 'An error occurred during login.'}
         finally:
+            cursor.close()
             conn.close()
 
     # Run the database task using eventlet's thread pool
-    result = eventlet.tpool.execute(db_task)
+    result = eventlet.spawn(db_task).wait()
 
     # Check result before returning it to the client
     if result['success']:
-        return jsonify(result), 200  # HTTP 200 OK
+        return jsonify(result), 200  
     else:
-        return jsonify(result), 400  # HTTP 400 bad request
+        return jsonify(result), 400
 
 # Handle user login via Socket.IO
 @socketio.on('login')
 def handle_login(data):
     username = data['username']
-
-    def db_task():
-        conn = get_db_connection()
-        # You can include any additional database operations here, if necessary
-        conn.close()
-
-    # Run the database task using eventlet's thread pool
-    eventlet.tpool.execute(db_task)
-
-    # Continue with user login and socket management
     connected_users[username] = request.sid
     user_status[username] = 'Online'  # Set status to Online by default
     emit('user_list', {'users': get_users_with_status()}, broadcast=True)
     logging.debug(f"{username} connected")
+
 
 # WebSocket handler for disconnecting users
 @socketio.on('disconnect')
