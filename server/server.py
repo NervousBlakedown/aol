@@ -80,7 +80,7 @@ def signup():
     # Run the database task using eventlet's thread pool
     result = eventlet.tpool.execute(db_task)
 
-    # check result before returning it to client
+    # check result before returning it to clientf
     if result['success']:
         return jsonify(result), 201 # HTTP 201 created
     else:

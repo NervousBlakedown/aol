@@ -52,17 +52,11 @@ function createAccount() {
 
 // Handle the login process
 function login() {
-  username = document.getElementById('username').value.trim();
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value.trim();
 
-  if (!username) {
-    alert('Please enter a screen name.');
-    return;
-  }
-
-  const password = document.getElementById('password').value.trim();  // Ensure trimmed password
-
-  if (!password) {
-    alert('Please enter a password.');
+  if (!username || !password) {
+    alert('Please enter both your screen name and password.');
     return;
   }
 
@@ -77,23 +71,20 @@ function login() {
       password: password
     })
   })
-    .then(response => response.json())
-    .then(data => {
-      if (data.success) {
-        // Establish a Socket.IO connection on successful login
-        socket = io();
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert('Login successful!');
+      // Establish a Socket.IO connection on successful login
+      socket = io();
 
-        socket.on('connect', function () {
-          console.log('Connected to Socket.IO server.');
-          if (username) {
-            socket.emit('login', { username: username }); // Only emit if username is not null
-          }
-          // Update UI
-          document.getElementById('login').style.display = 'none';
-          document.getElementById('contacts').style.display = 'block';
-          document.getElementById('chat').style.display = 'block';
-          playLoginSound();
-        });
+      socket.on('connect', function() {
+        console.log('Connected to Socket.IO server.');
+        socket.emit('login', { username: username });
+        document.getElementById('login').style.display = 'none';
+        document.getElementById('contacts').style.display = 'block';
+        document.getElementById('chat').style.display = 'block';
+        playLoginSound();
 
         // Handle incoming messages
         socket.on('message', function (data) {
@@ -127,16 +118,15 @@ function login() {
         socket.on('connect_error', function (err) {
           console.error('Socket.IO connect error:', err);
         });
-
-        // Add other event handlers as needed
-      } else {
-        alert('Login failed: ' + data.message);
-      }
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      alert('Error occurred during login.');
-    });
+      });
+    } else {
+      alert('Login failed: ' + data.message);
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Error occurred during login.');
+  });
 }
 
 // Function to update the list of online users (contacts) with checkboxes for group selection
