@@ -1,7 +1,6 @@
 # server.py
 import eventlet
-eventlet.monkey_patch() # must go first
-
+eventlet.monkey_patch() 
 from argon2 import PasswordHasher
 from collections import defaultdict
 from flask import Flask, request, jsonify, send_from_directory
@@ -95,27 +94,47 @@ def login():
     username = data['username']
     password = data['password']
 
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    # This function performs the login-related database query
+    def db_task():
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            cursor.execute('SELECT * FROM users WHERE username = ?', (username,))
+            user = cursor.fetchone()
 
-    try:
-        cursor.execute('SELECT * FROM users WHERE username = ?', (username,))
-        user = cursor.fetchone()
+            if user and ph.verify(user['password'], password):
+                return {'success': True, 'message': 'Login successful.'}
+            else:
+                return {'success': False, 'message': 'Invalid credentials.'}
+        except Exception as e:
+            logging.error("Error during login:", e)
+            return {'success': False, 'message': 'An error occurred during login.'}
+        finally:
+            conn.close()
 
-        if user and ph.verify(user['password'], password):
-            return jsonify({'success': True, 'message': 'Login successful.'})
-        else:
-            return jsonify({'success': False, 'message': 'Invalid credentials.'})
-    except Exception as e:
-        logging.error("Error during login:", e)
-        return jsonify({'success': False, 'message': 'An error occurred during login.'})
-    finally:
-        conn.close()
+    # Run the database task using eventlet's thread pool
+    result = eventlet.tpool.execute(db_task)
+
+    # Check result before returning it to the client
+    if result['success']:
+        return jsonify(result), 200  # HTTP 200 OK
+    else:
+        return jsonify(result), 400  # HTTP 400 bad request
 
 # Handle user login via Socket.IO
 @socketio.on('login')
 def handle_login(data):
     username = data['username']
+
+    def db_task():
+        conn = get_db_connection()
+        # You can include any additional database operations here, if necessary
+        conn.close()
+
+    # Run the database task using eventlet's thread pool
+    eventlet.tpool.execute(db_task)
+
+    # Continue with user login and socket management
     connected_users[username] = request.sid
     user_status[username] = 'Online'  # Set status to Online by default
     emit('user_list', {'users': get_users_with_status()}, broadcast=True)
@@ -136,6 +155,7 @@ def handle_disconnect():
         emit('user_list', {'users': get_users_with_status()}, broadcast=True)
         logging.debug(f"{username_to_remove} disconnected.")
 
+
 # Handle status change requests
 @socketio.on('status_change')
 def handle_status_change(data):
@@ -144,9 +164,11 @@ def handle_status_change(data):
     user_status[username] = new_status  
     emit('user_list', {'users': get_users_with_status()}, broadcast=True)
 
+
 # Helper function to get users with their statuses
 def get_users_with_status():
     return [{'username': user, 'status': user_status[user]} for user in connected_users]
+
 
 # Start a one-on-one or group chat
 @socketio.on('start_chat')
@@ -159,6 +181,7 @@ def start_chat(data):
     rooms[room_name].extend(usernames)
     emit('chat_started', {'room': room_name, 'users': usernames}, room=room_name)
 
+
 # Handle sending messages
 @socketio.on('send_message')
 def handle_send_message(data):
@@ -167,11 +190,13 @@ def handle_send_message(data):
     username = data['username']
     emit('message', {'msg': message, 'username': username}, room=room, include_self = False)
 
+
 # Typing notifications
 @socketio.on('typing')
 def handle_typing(data):
     room = data['room']
     emit('typing', {'username': data['username']}, room=room, include_self=False)
+
 
 @socketio.on('stop_typing')
 def handle_stop_typing(data):
