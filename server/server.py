@@ -21,7 +21,7 @@ rooms = defaultdict(list)
 # Database connection function
 def get_db_connection():
     base_dir = os.path.abspath(os.path.dirname(__file__))
-    db_path = os.path.join(base_dir, '../db/db.sqlite3')
+    db_path = os.path.join(base_dir, "C:\\Users\\blake\\Documents\\github\\aol\\db\\db.sqlite3")
     conn = sqlite3.connect(db_path, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     return conn
@@ -48,22 +48,35 @@ def signup():
     password = ph.hash(data['password']) 
 
     def db_task():
-        conn = get_db_connection()
+        conn = get_db_connection()  # Ensure absolute path
         cursor = conn.cursor()
         try:
+            # Check if username or email already exists
+            logging.debug(f"Checking if user {username} or email {email} exists.")
             cursor.execute('SELECT * FROM users WHERE username = ? OR email = ?', (username, email))
             if cursor.fetchone():
+                logging.warning(f"User {username} or email {email} already exists.")
                 return {'success': False, 'message': 'Username or email already exists.'}
 
+            # Insert new user into database
+            logging.debug(f"Inserting user {username} into the database.")
             cursor.execute(
                 'INSERT INTO users (email, username, password) VALUES (?, ?, ?)',
                 (email, username, password)
             )
-            conn.commit()
+            conn.commit()  # Commit the transaction
+            logging.info(f"User {username} successfully created.")
             return {'success': True, 'message': 'Account created successfully.'}
+
+        except sqlite3.Error as e:  # Catch database-related errors
+            logging.error(f"SQLite error: {e}")
+            conn.rollback()  # Rollback on failure
+            return {'success': False, 'message': f"Database error: {e}"}
+
         except Exception as e:
-            logging.error(f"Database error: {e}")
-            return {'success': False, 'message': str(e)}
+            logging.error(f"Unexpected error: {e}")
+            return {'success': False, 'message': f"Unexpected error: {e}"}
+
         finally:
             cursor.close()
             conn.close()
@@ -71,9 +84,10 @@ def signup():
     result = eventlet.spawn(db_task).wait()
 
     if result['success']:
-        return jsonify(result), 201
+        return jsonify(result), 201  # HTTP 201 created
     else:
-        return jsonify(result), 400
+        return jsonify(result), 400  # HTTP 400 bad request
+
 
 
 # Login page
@@ -147,6 +161,35 @@ def handle_status_change(data):
 def get_users_with_status():
     return [{'username': user, 'status': user_status[user]} for user in connected_users]
 
+"""@app.route('/add_contact', methods=['POST'])
+def add_contact():
+    data = request.get_json()
+    user_id = data['user_id']  # Your logged-in user ID
+    contact_username = data['contact_username']
+    
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Find the contact's user ID by username
+        cursor.execute('SELECT id FROM users WHERE username = ?', (contact_username,))
+        contact = cursor.fetchone()
+
+        if not contact:
+            return jsonify({'success': False, 'message': 'Contact not found.'}), 404
+
+        contact_id = contact['id']
+
+        # Insert into contacts table
+        cursor.execute('INSERT OR IGNORE INTO contacts (user_id, contact_id) VALUES (?, ?)', (user_id, contact_id))
+        conn.commit()
+
+        return jsonify({'success': True, 'message': 'Contact added successfully.'})
+    except Exception as e:
+        logging.error(f"Error adding contact: {e}")
+        return jsonify({'success': False, 'message': 'Error adding contact.'}), 500
+    finally:
+        conn.close()"""
 
 # Start a one-on-one or group chat
 @socketio.on('start_chat')
