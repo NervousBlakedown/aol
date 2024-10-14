@@ -60,7 +60,6 @@ function login() {
     return;
   }
 
-  // Fetch request to the server for authentication
   fetch('/login', {
     method: 'POST',
     headers: {
@@ -71,19 +70,48 @@ function login() {
       password: password
     })
   })
-  .then(response => response.json())
+  .then(response => {
+    if (response.ok) {
+      return response.json();
+    } else {
+      return response.json().then(data => Promise.reject(data));
+    }
+  })
   .then(data => {
-    if (data.success) {
-      alert('Login successful.');
-      // Establish a Socket.IO connection on successful login
+    alert('Login successful.');
+    // redirect to dashboard page
+    window.location.href = '/dashboard';
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('Login failed: ' + error.message);
+  });
+}
+      
+
+function initializeDashboard() {
+  // Check if the user is logged in by making a request to the server
+  fetch('/get_username', {
+    credentials: 'include'
+  })
+    .then(response => {
+      if (response.ok) {
+        return response.json();
+      } else {
+        // Redirect to login if not authenticated
+        window.location.href = '/login';
+      }
+    })
+    .then(data => {
+      username = data.username;
+      document.getElementById('username-display').textContent = username;
+
+      // Establish Socket.IO connection
       socket = io();
 
       socket.on('connect', function() {
         console.log('Connected to Socket.IO server.');
         socket.emit('login', { username: username });
-        document.getElementById('login').style.display = 'none';
-        document.getElementById('contacts').style.display = 'block';
-        document.getElementById('chat').style.display = 'block';
         playLoginSound();
 
         // Handle incoming messages
@@ -109,6 +137,7 @@ function login() {
         socket.on('chat_started', function (data) {
           currentRoom = data.room;
           console.log(`Joined chat room: ${currentRoom}`);
+          document.getElementById('chat').style.display = 'block';
         });
 
         socket.on('disconnect', function () {
@@ -119,15 +148,45 @@ function login() {
           console.error('Socket.IO connect error:', err);
         });
       });
-    } else {
-      alert('Login failed: ' + data.message);
-    }
-  })
-  .catch(error => {
-    console.error('Error:', error);
-    alert('Error occurred during login.');
-  });
+    });
 }
+
+// Call initializeDashboard when the page loads
+document.addEventListener('DOMContentLoaded', function () {
+  if (window.location.pathname === '/dashboard') {
+    initializeDashboard();
+
+    // Add event listeners for buttons
+    const logoutButton = document.getElementById('logout-button');
+    if (logoutButton) {
+      logoutButton.addEventListener('click', logout);
+    }
+
+    const sendMessageButton = document.getElementById('send-message-button');
+    if (sendMessageButton) {
+      sendMessageButton.addEventListener('click', sendMessage);
+    }
+
+    const startChatButton = document.getElementById('start-chat-button');
+    if (startChatButton) {
+      startChatButton.addEventListener('click', startGroupChat);
+    }
+
+    // Add event listener for 'Enter' key to send message
+    const messageInput = document.getElementById('message');
+    if (messageInput) {
+      messageInput.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') {
+          sendMessage();
+        }
+      });
+
+      // Add event listener for input to send typing notifications
+      messageInput.addEventListener('input', sendTypingNotification);
+    }
+  }
+});
+
 
 // Function to update the list of online users (contacts) with checkboxes for group selection
 function updateContactsList(users) {
@@ -308,3 +367,24 @@ document.addEventListener('DOMContentLoaded', function () {
     messageInput.addEventListener('input', sendTypingNotification);
   }
 });
+
+
+// Logout function
+function logout() {
+  fetch('/logout', {
+    method: 'POST',
+    credentials: 'include'
+  })
+  .then(response => {
+    if (response.ok) {
+      // Disconnect the Socket.IO client
+      if (socket) {
+        socket.disconnect();
+      }
+      // Redirect to login page
+      window.location.href = '/login';
+    } else {
+      alert('Failed to logout.');
+    }
+  });
+}

@@ -1,0 +1,45 @@
+<!-- frontend/dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>BlakeOL Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.socket.io/4.5.1/socket.io.min.js"></script>
+</head>
+<body>
+  <!-- Navigation bar -->
+  <nav>
+    <h2>Welcome, <span id="username-display"></span>!</h2>
+    <button id="logout-button">Logout</button>
+  </nav>
+
+  <!-- 'contacts' div -->
+  <div id="contacts">
+    <h3>Contacts</h3>
+    <!-- Status selector dropdown for changing user status -->
+    <div id="status-selector">
+      <label for="status">Status: </label>
+      <select id="status" onchange="updateStatus(this.value)">
+        <option value="Online">Online</option>
+        <option value="Away">Away</option>
+        <option value="Do Not Disturb">Do Not Disturb</option>
+      </select>
+    </div>
+    <ul id="contacts-list"></ul>
+    <button id="start-chat-button">Start Chat</button>
+  </div>
+
+  <!-- 'chat' div -->
+  <div id="chat" style="display:none;">
+    <div id="messages"></div>
+    <input type="text" id="message" placeholder="Type a message..." oninput="sendTypingNotification()">
+    <button id="send-message-button">Send</button>
+    <div id="typing" style="color: grey; font-size: 0.8em;"></div>
+    <audio id="message_sent_sound" src="./assets/sounds/mail_sent.mp3" preload="auto"></audio>
+    <audio id="message_receive_sound" src="./assets/sounds/aol_message_received_one.mp3" preload="auto"></audio>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

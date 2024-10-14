@@ -3,16 +3,19 @@ import eventlet
 eventlet.monkey_patch() 
 from argon2 import PasswordHasher
 from collections import defaultdict
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, session, redirect
 from flask_socketio import SocketIO, emit, join_room, leave_room
 import logging
 import os
 import sqlite3
+from datetime import timedelta
 logging.basicConfig(level=logging.DEBUG)
 ph = PasswordHasher()
 
 app = Flask(__name__, static_folder='../frontend', static_url_path='')
 socketio = SocketIO(app)
+app.secret_key = 'my_secret_key'  # TODO: Replace with a secure, randomly generated key
+app.permanent_session_lifetime = timedelta(minutes = 30)
 
 connected_users = {}
 user_status = {}  # Store each user's status (Online, Away, Do Not Disturb)
@@ -89,7 +92,6 @@ def signup():
         return jsonify(result), 400  # HTTP 400 bad request
 
 
-
 # Login page
 @app.route('/login', methods=['POST'])
 def login():
@@ -113,21 +115,36 @@ def login():
             cursor.close()
             conn.close()
 
-    # Run the database task using eventlet's thread pool
     result = eventlet.spawn(db_task).wait()
-
-    # Check result before returning it to the client
     if result['success']:
+        session['username'] = username # stores username in session
         return jsonify(result), 200  
     else:
         return jsonify(result), 400
+
+@app.route('/get_username', methods=['GET'])
+def get_username():
+    if 'username' in session:
+        return jsonify({'username': session['username']})
+    else:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+
+# Dashboard page
+@app.route('/dashboard', methods=['GET'])
+def dashboard():
+    if 'username' in session:
+        return send_from_directory(app.static_folder, 'dashboard.html')
+    else:
+        return redirect('/login')
+
 
 # Handle user login via Socket.IO
 @socketio.on('login')
 def handle_login(data):
     username = data['username']
     connected_users[username] = request.sid
-    user_status[username] = 'Online'  # Set status to Online by default
+    user_status[username] = 'Online'  
     emit('user_list', {'users': get_users_with_status()}, broadcast=True)
     logging.debug(f"{username} connected")
 
@@ -161,35 +178,7 @@ def handle_status_change(data):
 def get_users_with_status():
     return [{'username': user, 'status': user_status[user]} for user in connected_users]
 
-"""@app.route('/add_contact', methods=['POST'])
-def add_contact():
-    data = request.get_json()
-    user_id = data['user_id']  # Your logged-in user ID
-    contact_username = data['contact_username']
-    
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
 
-        # Find the contact's user ID by username
-        cursor.execute('SELECT id FROM users WHERE username = ?', (contact_username,))
-        contact = cursor.fetchone()
-
-        if not contact:
-            return jsonify({'success': False, 'message': 'Contact not found.'}), 404
-
-        contact_id = contact['id']
-
-        # Insert into contacts table
-        cursor.execute('INSERT OR IGNORE INTO contacts (user_id, contact_id) VALUES (?, ?)', (user_id, contact_id))
-        conn.commit()
-
-        return jsonify({'success': True, 'message': 'Contact added successfully.'})
-    except Exception as e:
-        logging.error(f"Error adding contact: {e}")
-        return jsonify({'success': False, 'message': 'Error adding contact.'}), 500
-    finally:
-        conn.close()"""
 
 # Start a one-on-one or group chat
 @socketio.on('start_chat')
@@ -230,3 +219,8 @@ def handle_stop_typing(data):
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    session.pop('username', None)
+    return jsonify({'success': True})
