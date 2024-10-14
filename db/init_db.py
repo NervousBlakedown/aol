@@ -76,7 +76,8 @@ def seed_data(cursor):
         ''', messages)
 
 def initialize_db():
-    db_path = "C:\\Users\\blake\\Documents\\github\\aol\\db\\db.sqlite3"  # Relative path to the database
+    base_dir = os.path.abspath(os.path.dirname(__file__))
+    db_path = os.path.join(base_dir, 'db.sqlite3')
     conn = get_db_connection(db_path)
     try:
         cursor = conn.cursor()
