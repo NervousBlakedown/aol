@@ -1,50 +1,84 @@
+/* styles.css */
+
 body {
-  font-family: Arial, sans-serif;
-  background-color: #f4f4f4;
+  font-family: 'Tahoma', 'Verdana', 'Trebuchet MS', sans-serif;
+  background-color: #C0C0C0; /* Silver */
   margin: 0;
   padding: 20px;
 }
 
-#login {
-  width: 300px;
-  padding: 20px;
-  border: 1px solid #000;
+/* Beveled container for all main sections */
+.container {
+  width: 400px;
   margin: 10px auto;
-  background-color: #fff;
+  padding: 20px;
+  background-color: #E0E0E0; /* Light gray */
+  border: 2px solid #fff;
+  border-left-color: #808080;
+  border-top-color: #808080;
 }
 
-#chat {
-  width: 300px;
-  padding: 20px;
-  border: 1px solid #000;
-  margin: 10px auto;
-  background-color: #fff;
+/* Headings with classic fonts */
+h1, h2, h3 {
+  font-family: 'Comic Sans MS', cursive, sans-serif;
+  color: #000080; /* Navy blue */
+  text-align: center;
 }
 
 #messages {
   height: 200px;
   overflow-y: auto;
-  background-color: #f9f9f9;
-  border: 1px solid #ddd;
+  background-color: #fff;
+  border: 2px inset #808080;
   margin-bottom: 10px;
   padding: 10px;
 }
 
-#message {
-  width: calc(100% - 24px);
+/* Input fields with inset borders */
+input[type="text"], input[type="password"], input[type="email"], select {
+  width: calc(100% - 12px);
+  padding: 5px;
   margin-bottom: 10px;
+  border: 2px inset #808080;
+  background-color: #fff;
+  font-family: 'Tahoma', 'Verdana', sans-serif;
 }
 
+/* The message input field */
+#message {
+  width: calc(100% - 12px);
+  padding: 5px;
+  margin-bottom: 10px;
+  border: 2px inset #808080;
+  background-color: #fff;
+}
+
+/* Beveled buttons */
 button {
   padding: 5px 10px;
-  background-color: #0084ff;
-  color: #fff;
-  border: none;
+  background-color: #C0C0C0; /* Light gray */
+  color: #000; /* Black text */
+  border: 2px outset #fff;
+  font-weight: bold;
   cursor: pointer;
 }
 
+button:active {
+  border: 2px inset #fff;
+}
+
 button:hover {
-  background-color: #005bb5;
+  background-color: #B0B0B0;
+}
+
+/* Links */
+a {
+  color: #0000EE; /* Link blue */
+  text-decoration: underline;
+}
+
+a:hover {
+  color: #551A8B; /* Visited link purple */
 }
 
 #typing {
@@ -52,72 +86,66 @@ button:hover {
   font-style: italic;
 }
 
-/* New section for contact list page */
-#contact-list-page {
-  width: 300px;
-  margin: 0 auto;
-  padding: 20px;
-  background-color: #fff;
-  border: 1px solid #000;
-}
-
-#contact-list-page h2 {
-  text-align: center;
-  color: #333;
-}
-
-#contact-list {
+/* Contacts list styling */
+#contacts-list {
   list-style-type: none;
   padding: 0;
 }
 
-#contact-list li {
-  padding: 10px;
-  margin: 5px 0;
-  background-color: #f9f9f9;
-  border-radius: 5px;
-  text-align: center;
+#contacts-list li {
+  padding: 5px;
+  margin-bottom: 5px;
+  background-color: #D0D0D0;
+  border: 1px solid #808080;
 }
 
-#contact-list li.online {
-  color: green;
-  font-weight: bold;
+/* Status selector */
+#status-selector {
+  margin-bottom: 10px;
 }
 
-#contact-list li.offline {
-  color: gray;
-  font-style: italic;
-}
-
-/* New chat window styling */
+/* Chat window styling */
 .chat-window {
   width: 400px;
+  margin: 10px auto;
   padding: 20px;
-  margin: 20px auto;
-  border: 1px solid #000;
-  background-color: #fff;
+  background-color: #E0E0E0;
+  border: 2px solid #fff;
+  border-left-color: #808080;
+  border-top-color: #808080;
 }
 
 .chat-window-header {
   font-weight: bold;
   margin-bottom: 10px;
+  text-align: center;
 }
 
 .chat-window-messages {
   height: 250px;
   overflow-y: auto;
-  background-color: #f1f1f1;
-  border: 1px solid #ddd;
+  background-color: #fff;
+  border: 2px inset #808080;
   margin-bottom: 10px;
   padding: 10px;
 }
 
 .chat-window-input {
-  width: calc(100% - 20px);
+  width: calc(100% - 12px);
+  padding: 5px;
   margin-bottom: 10px;
+  border: 2px inset #808080;
+  background-color: #fff;
 }
 
 .chat-window button {
   width: 100%;
   padding: 8px 10px;
+  background-color: #C0C0C0;
+  color: #000;
+  border: 2px outset #fff;
+}
+
+.chat-window button:active {
+  border: 2px inset #fff;
 }

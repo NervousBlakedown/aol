@@ -1,4 +1,4 @@
-<!-- frontend/dashboard.html -->
+<!-- dashboard.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,13 +9,13 @@
 </head>
 <body>
   <!-- Navigation bar -->
-  <nav>
+  <nav class="container">
     <h2>Welcome, <span id="username-display"></span>!</h2>
     <button id="logout-button">Logout</button>
   </nav>
 
   <!-- 'contacts' div -->
-  <div id="contacts">
+  <div id="contacts" class="container">
     <h3>Contacts</h3>
     <!-- Status selector dropdown for changing user status -->
     <div id="status-selector">
@@ -31,7 +31,7 @@
   </div>
 
   <!-- 'chat' div -->
-  <div id="chat" style="display:none;">
+  <div id="chat" class="chat-window" style="display:none;">
     <div id="messages"></div>
     <input type="text" id="message" placeholder="Type a message..." oninput="sendTypingNotification()">
     <button id="send-message-button">Send</button>
@@ -40,6 +40,22 @@
     <audio id="message_receive_sound" src="./assets/sounds/aol_message_received_one.mp3" preload="auto"></audio>
   </div>
 
+  <!-- Audio element for dashboard startup sound -->
+  <audio id="dashboard_startup_sound" src="./assets/sounds/windows_95_startup.mp3" preload="auto"></audio>
+
   <script src="app.js"></script>
+  <script>
+    // Play dashboard startup sound on first user interaction
+    document.addEventListener('DOMContentLoaded', function () {
+      function playDashboardStartupSound() {
+        const dashboardSound = document.getElementById('dashboard_startup_sound');
+        dashboardSound.play().catch(function(error) {
+          console.log('Autoplay prevented:', error);
+        });
+        document.removeEventListener('click', playDashboardStartupSound);
+      }
+      document.addEventListener('click', playDashboardStartupSound, { once: true });
+    });
+  </script>
 </body>
 </html>

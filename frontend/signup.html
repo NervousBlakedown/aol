@@ -1,3 +1,4 @@
+<!-- signup.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,7 +9,7 @@
   <script src="https://cdn.socket.io/4.5.1/socket.io.min.js"></script>
 </head>
 <body>
-  <div id="signup">
+  <div id="signup" class="container">
     <h2>Create a BlakeOL Account</h2>
     <label for="email">Email Address:</label>
     <input type="email" id="email" placeholder="Enter your email" required>
@@ -18,7 +19,7 @@
     <input type="password" id="password" placeholder="Choose a password" required>
     <button id="create-account-button">Create BlakeOL Account</button>
 
-    <!-- add link to login page if account already created -->
+    <!-- Add link to login page if account already created -->
     <p>Already have an account? <a href="/login">Login</a></p>
   </div>
 
@@ -27,10 +28,16 @@
 
   <script src="app.js"></script>
   <script>
-    // Play sound as soon as the page loads
+    // Play signup sound on first user interaction
     window.onload = function () {
-      const signupSound = document.getElementById('signup_sound');
-      signupSound.play();
+      function playSignupSound() {
+        const signupSound = document.getElementById('signup_sound');
+        signupSound.play().catch(function(error) {
+          console.log('Autoplay prevented:', error);
+        });
+        document.removeEventListener('click', playSignupSound);
+      }
+      document.addEventListener('click', playSignupSound, { once: true });
     };
   </script>
 </body>

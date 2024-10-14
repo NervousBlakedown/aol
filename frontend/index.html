@@ -10,7 +10,8 @@
 </head>
 <body>
   <!-- 'login' div -->
-  <div id="login">
+  <div id="login" class="container">
+    <h2>BlakeOL Login</h2>
     <label for="username">Screen Name:</label>
     <input type="text" id="username" placeholder="Enter Screen Name">
     <label for="password">Password:</label>
@@ -23,7 +24,7 @@
   </div>
 
   <!-- 'contacts' div -->
-  <div id="contacts" style="display:none;">
+  <div id="contacts" class="container" style="display:none;">
     <h3>Contacts</h3>
 
     <!-- Status selector dropdown for changing user status -->
@@ -40,14 +41,8 @@
     <button id="start-chat-button">Start Chat</button>
   </div>
 
-  <!-- <div id="add-contact">
-    <h3>Add Contact</h3>
-    <input type="text" id="contact-username" placeholder="Enter username">
-    <button id="add-contact-button">Add Contact</button>
-  </div> --> 
-
   <!-- 'chat' div -->
-  <div id="chat" style="display:none;">
+  <div id="chat" class="chat-window" style="display:none;">
     <div id="messages"></div>
     <input type="text" id="message" placeholder="Type a message..." oninput="sendTypingNotification()">
     <button id="send-message-button">Send</button>
