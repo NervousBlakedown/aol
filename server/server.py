@@ -52,7 +52,7 @@ def signup():
     password = ph.hash(data['password']) 
 
     def db_task():
-        conn = get_db_connection()  # Ensure absolute path
+        conn = get_db_connection()  
         cursor = conn.cursor()
         try:
             # Check if username or email already exists
@@ -70,7 +70,7 @@ def signup():
             )
             conn.commit()  # Commit the transaction
             logging.info(f"User {username} successfully created.")
-            return {'success': True, 'message': 'Account created successfully.'}
+            # return {'success': True, 'message': 'Account created successfully.'}
 
             # send 'welcome' email after account creation
             logging.debug(f"Sending welcoem email to {email}.")
