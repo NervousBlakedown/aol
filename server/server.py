@@ -9,6 +9,7 @@ import logging
 import os
 import sqlite3
 from datetime import timedelta
+from send_email import send_email
 logging.basicConfig(level=logging.DEBUG)
 ph = PasswordHasher()
 
@@ -71,6 +72,11 @@ def signup():
             logging.info(f"User {username} successfully created.")
             return {'success': True, 'message': 'Account created successfully.'}
 
+            # send 'welcome' email after account creation
+            logging.debug(f"Sending welcoem email to {email}.")
+            send_email(email)
+            return {'success': True, 'message': 'Account created successfully.'}
+
         except sqlite3.Error as e:  # Catch database-related errors
             logging.error(f"SQLite error: {e}")
             conn.rollback()  # Rollback on failure
@@ -87,9 +93,9 @@ def signup():
     result = eventlet.spawn(db_task).wait()
 
     if result['success']:
-        return jsonify(result), 201  # HTTP 201 created
+        return jsonify(result), 201  
     else:
-        return jsonify(result), 400  # HTTP 400 bad request
+        return jsonify(result), 400 
 
 
 # Login page
@@ -217,10 +223,10 @@ def handle_stop_typing(data):
     room = data['room']
     emit('stop_typing', {'username': data['username']}, room=room, include_self=False)
 
-if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=5000, debug=True)
-
 @app.route('/logout', methods=['POST'])
 def logout():
     session.pop('username', None)
     return jsonify({'success': True})
+
+if __name__ == '__main__':
+    socketio.run(app, host='0.0.0.0', port=5000, debug=True)
