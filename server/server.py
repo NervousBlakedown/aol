@@ -9,7 +9,7 @@ import logging
 import os
 import sqlite3
 from datetime import timedelta
-from send_email import send_email
+from server.send_email import send_email
 logging.basicConfig(level=logging.DEBUG)
 ph = PasswordHasher()
 
