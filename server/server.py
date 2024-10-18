@@ -73,7 +73,7 @@ def signup():
             # return {'success': True, 'message': 'Account created successfully.'}
 
             # send 'welcome' email after account creation
-            logging.debug(f"Sending welcoem email to {email}.")
+            logging.debug(f"Sending welcome email to {email}.")
             send_email(email)
             return {'success': True, 'message': 'Account created successfully.'}
 
