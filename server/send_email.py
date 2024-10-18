@@ -1,9 +1,10 @@
 import smtplib
+import os
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import yaml
 
-yaml_file = "C:\\Users\\blake\\Documents\\github\\credentials\\gmail_credentials.yaml"
+yaml_file = os.path.join(os.path.dirname(__file__), '../config/blakeol_gmail_credentials.yaml')
 
 # Function to load credentials from YAML file
 def load_credentials(yaml_file):
