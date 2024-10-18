@@ -144,6 +144,86 @@ def dashboard():
     else:
         return redirect('/login')
 
+# Search Contacts
+@app.route('/search_contacts', methods=['GET'])
+def search_contacts():
+    # Ensure the user is logged in
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    query = request.args.get('query', '')
+
+    if not query:
+        return jsonify([])  # Return empty list if no query is provided
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        # Search for users by username or email, exclude the current user
+        cursor.execute('''
+            SELECT id, username, email 
+            FROM users 
+            WHERE (username LIKE ? OR email LIKE ?) 
+            AND id != ?  -- Exclude the logged-in user from results
+        ''', (f'%{query}%', f'%{query}%', session['user_id']))
+
+        results = cursor.fetchall()
+        contacts = [{'id': row['id'], 'username': row['username'], 'email': row['email']} for row in results]
+
+        return jsonify(contacts)
+
+    except sqlite3.Error as e:
+        logging.error(f"Database error during contact search: {e}")
+        return jsonify({'error': 'Database error during search'}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+# Add contacts
+@app.route('/add_contact', methods=['POST'])
+def add_contact():
+    # Ensure the user is logged in
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
+    data = request.get_json()
+    contact_id = data.get('contact_id')
+
+    if not contact_id:
+        return jsonify({'success': False, 'message': 'Invalid contact ID'})
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        # Check if the contact already exists
+        cursor.execute('''
+            SELECT * FROM contacts 
+            WHERE user_id = ? AND contact_id = ?
+        ''', (session['user_id'], contact_id))
+
+        if cursor.fetchone():
+            return jsonify({'success': False, 'message': 'Contact already added'})
+
+        # Insert the new contact relationship
+        cursor.execute('''
+            INSERT INTO contacts (user_id, contact_id) 
+            VALUES (?, ?)
+        ''', (session['user_id'], contact_id))
+
+        conn.commit()
+        return jsonify({'success': True, 'message': 'Contact added successfully!'})
+
+    except sqlite3.Error as e:
+        logging.error(f"Database error while adding contact: {e}")
+        return jsonify({'success': False, 'message': 'Database error during contact addition'}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
 
 # Handle user login via Socket.IO
 @socketio.on('login')
