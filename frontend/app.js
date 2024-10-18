@@ -172,6 +172,73 @@ document.addEventListener('DOMContentLoaded', function () {
       startChatButton.addEventListener('click', startGroupChat);
     }
 
+    // Add search input functionality for finding contacts
+    document.getElementById('search-input').addEventListener('input', function () {
+      const searchQuery = this.value;
+
+      if (searchQuery.length > 2) { 
+        fetch(`/search_contacts?query=${encodeURIComponent(searchQuery)}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+        .then(response => response.json())
+        .then(data => displaySearchResults(data))
+        .catch(error => {
+          console.error('Error fetching search results:', error);
+        });
+      } else {
+        document.getElementById('search-results').innerHTML = '';
+      }
+    });
+
+    // Function to display search results in the UI
+    function displaySearchResults(results) {
+      const resultsContainer = document.getElementById('search-results');
+      resultsContainer.innerHTML = '';
+
+      if (results.length === 0) {
+        resultsContainer.textContent = 'No results found';
+      } else {
+        results.forEach(contact => {
+          const li = document.createElement('li');
+          li.textContent = `${contact.username} (${contact.email})`;
+
+          const addButton = document.createElement('button');
+          addButton.textContent = 'Add Contact';
+          addButton.addEventListener('click', () => addContact(contact.id));
+
+          li.appendChild(addButton);
+          resultsContainer.appendChild(li);
+        });
+      }
+    }
+
+    // Function to add the contact
+    function addContact(contactId) {
+      fetch(`/add_contact`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ contact_id: contactId }),
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('Contact added successfully!');
+        } else {
+          alert('Error adding contact: ' + data.message);
+        }
+      })
+      .catch(error => {
+        console.error('Error adding contact:', error);
+      });
+    }
+  //}
+//});
+
     // Add event listener for 'Enter' key to send message
     const messageInput = document.getElementById('message');
     if (messageInput) {
