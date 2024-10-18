@@ -56,4 +56,4 @@ def send_email(user_email):
         print(f"Error sending email: {e}")
 
 # Call this function after account creation
-send_email(new_user_email)
+send_email(user_email)
