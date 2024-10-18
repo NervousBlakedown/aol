@@ -26,6 +26,8 @@ rooms = defaultdict(list)
 def get_db_connection():
     base_dir = os.path.abspath(os.path.dirname(__file__))
     db_path = os.path.join(base_dir, '..', 'db', 'db.sqlite3')
+    logging.debug(f"Base directory: {base_dir}")
+    logging.debug(f"Using database path: {db_path}")
     conn = sqlite3.connect(db_path, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     return conn
