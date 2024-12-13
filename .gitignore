@@ -1,4 +1,4 @@
-# Ignore virtual environment folder
+.env
 venv/
 
 # Python cache files
@@ -13,9 +13,6 @@ __pycache__/
 # Logs and databases
 *.log
 *.sqlite3
-
-# Environment variable files
-.env
 
 # YAML
 config/.yaml
