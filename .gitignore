@@ -13,6 +13,7 @@ __pycache__/
 # Logs and databases
 *.log
 *.sqlite3
+db/*.sqlite3
 
 # YAML
 config/.yaml
