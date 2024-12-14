@@ -12,9 +12,9 @@
   <!-- 'login' div -->
   <div id="login" class="container">
     <h2>BlakeOL Login</h2>
-    <label for="username">Screen Name:</label>
+    <label for="username">Screen Name</label>
     <input type="text" id="username" placeholder="Enter Screen Name">
-    <label for="password">Password:</label>
+    <label for="password">Password</label>
     <input type="password" id="password">
     <button id="login-button">Login</button>
     <audio id="startup_sound" src="./assets/sounds/retro_console_startup.mp3" preload="auto"></audio>
@@ -29,12 +29,18 @@
 
     <!-- Status selector dropdown for changing user status -->
     <div id="status-selector">
-      <label for="status">Status: </label>
+      <label for="status">Status </label>
       <select id="status" onchange="updateStatus(this.value)">
         <option value="Online">Online</option>
         <option value="Away">Away</option>
         <option value="Do Not Disturb">Do Not Disturb</option>
       </select>
+    </div>
+
+    <!-- Search bar for finding contacts -->
+    <div id="search-container">
+      <input type="text" id="search-box" placeholder="Search for contacts...">
+      <button id="search-button">Search</button>
     </div>
 
     <ul id="contacts-list"></ul>
