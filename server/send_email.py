@@ -2,24 +2,17 @@ import smtplib
 import os
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import yaml
-
-yaml_file = os.path.join(os.path.dirname(__file__), '../config/blakeol_gmail_credentials.yaml')
-
-# Function to load credentials from YAML file
-def load_credentials(yaml_file):
-    with open(yaml_file, "r") as file:
-        return yaml.safe_load(file)
 
 # Function to send email
 def send_email(user_email):
-    # Load email credentials from the YAML file
-    credentials = load_credentials(yaml_file)
-    sender_email = credentials['address']
-    sender_password = credentials['password']
+    # Load email credentials from .env
+    sender_email = os.getenv("GMAIL_ADDRESS")
+    sender_password = os.getenv("GMAIL_PASSWORD")
+    if not sender_email or not sender_password:
+        raise ValueError("Gmail credentials not set in .env")
     receiver_email = user_email
 
-    # Set up the email content
+    # Set up email content
     message = MIMEMultipart("alternative")
     message["Subject"] = "Welcome to BlakeOL"
     message["From"] = sender_email

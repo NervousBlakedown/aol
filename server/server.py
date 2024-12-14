@@ -116,33 +116,48 @@ def signup():
 # Login page
 @app.route('/login', methods=['POST'])
 def login():
-    logging.debug("Login attempt started.")
-    data = request.get_json()
-    username = data['username']
-    password = data['password']
+    try:
+        data = request.get_json()
+        if not data:
+            raise ValueError("No JSON data received.")
 
-    # This function performs the login-related database query
-    def db_task():
-        with app.app_context():
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            try:
-                cursor.execute('SELECT * FROM users WHERE username = %s', (username,))
-                user = cursor.fetchone()
-                if user and ph.verify(user['password'], password):
-                    return {'success': True, 'message': 'Login successful.'}
-                else:
-                    return {'success': False, 'message': 'Invalid credentials.'}
-            finally:
-                cursor.close()
-                conn.close()
+        username = data.get('username')
+        password = data.get('password')
 
-    result = eventlet.spawn(db_task).wait()
-    if result['success']:
-        session['username'] = username # stores username in session
-        return jsonify(result), 200  
-    else:
-        return jsonify(result), 400
+        if not username or not password:
+            return jsonify({'success': False, 'message': 'Username and password are required.'}), 400
+
+        # Perform database query in a task
+        def db_task():
+            with app.app_context():
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                try:
+                    cursor.execute('SELECT * FROM users WHERE username = %s', (username,))
+                    user = cursor.fetchone()
+                    if user and ph.verify(user['password'], password):
+                        return {'success': True, 'message': 'Login successful.'}
+                    else:
+                        return {'success': False, 'message': 'Invalid credentials.'}
+                finally:
+                    cursor.close()
+                    conn.close()
+
+        result = eventlet.spawn(db_task).wait()
+
+        if result['success']:
+            session['username'] = username
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 401
+
+    except ValueError as e:
+        logging.error(f"ValueError: {e}")
+        return jsonify({'success': False, 'message': 'Invalid input. Expected JSON.'}), 400
+    except Exception as e:
+        logging.error(f"Unexpected error: {e}")
+        return jsonify({'success': False, 'message': 'An error occurred.'}), 500
+
 
 @app.route('/get_username', methods=['GET'])
 def get_username():
