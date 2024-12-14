@@ -1,22 +1,37 @@
-# server.py
+# server/server.py
 import eventlet
 eventlet.monkey_patch() 
-from argon2 import PasswordHasher
-from collections import defaultdict
 from flask import Flask, request, jsonify, send_from_directory, session, redirect
 from flask_socketio import SocketIO, emit, join_room, leave_room
+from flask_sqlalchemy import SQLAlchemy
+from argon2 import PasswordHasher
+from collections import defaultdict
 import logging
 import os
-import sqlite3
+from dotenv import load_dotenv
+import psycopg2
+from psycopg2.extras import RealDictCursor
 from datetime import timedelta
 from server.send_email import send_email
+from supabase import create_client, Client
 logging.basicConfig(level=logging.DEBUG)
 ph = PasswordHasher()
+
+# Load environment variables from .env
+load_dotenv()
+url: str = os.environ.get("SUPABASE_URL")
+key: str = os.environ.get("SUPABASE_KEY")
+supabase: Client = create_client(url, key)
 
 app = Flask(__name__, static_folder='../frontend', static_url_path='')
 socketio = SocketIO(app)
 app.secret_key = 'my_secret_key'  # TODO: Replace with a secure, randomly generated key
 app.permanent_session_lifetime = timedelta(minutes = 30)
+
+gmail_address = os.getenv('GMAIL_ADDRESS')
+gmail_password = os.getenv('GMAIL_PASSWORD')
+if not gmail_address or not gmail_password:
+    raise ValueError("Gmail credentials are not set in the environment variables.")
 
 connected_users = {}
 user_status = {}  # Store each user's status (Online, Away, Do Not Disturb)
@@ -24,13 +39,19 @@ rooms = defaultdict(list)
 
 # Database connection function
 def get_db_connection():
-    base_dir = os.path.abspath(os.path.dirname(__file__))
-    db_path = os.path.join(base_dir, '..', 'db', 'db.sqlite3')
-    logging.debug(f"Base directory: {base_dir}")
-    logging.debug(f"Using database path: {db_path}")
-    conn = sqlite3.connect(db_path, check_same_thread=False)
-    conn.row_factory = sqlite3.Row
-    return conn
+    try:
+        db_url = os.getenv('DATABASE_URL')
+        if not db_url:
+            raise ValueError("DATABASE_URL not set in .env")
+
+        # Connect to Supabase
+        conn = psycopg2.connect(db_url, cursor_factory=RealDictCursor)  # Use RealDictCursor for row-like dicts
+        logging.debug("Database connection successful.")
+        return conn
+
+    except psycopg2.Error as e:
+        logging.error(f"Error connecting to database: {e}")
+        raise e
 
 
 # Serve signup page by default (root route)
@@ -38,12 +59,10 @@ def get_db_connection():
 def default():
     return send_from_directory(app.static_folder, 'signup.html')
 
-
 # Serve login page when user clicks "Already have an account? Log in"
 @app.route('/login', methods=['GET'])
 def login_page():
     return send_from_directory(app.static_folder, 'index.html')  # index.html is login page
-
 
 # Signup page for POST requests (handles account creation)
 @app.route('/signup', methods=['POST'])
@@ -54,12 +73,13 @@ def signup():
     password = ph.hash(data['password']) 
 
     def db_task():
-        conn = get_db_connection()  
-        cursor = conn.cursor()
+        with app.app_context():
+            conn = get_db_connection()  
+            cursor = conn.cursor()
         try:
             # Check if username or email already exists
             logging.debug(f"Checking if user {username} or email {email} exists.")
-            cursor.execute('SELECT * FROM users WHERE username = ? OR email = ?', (username, email))
+            cursor.execute('SELECT * FROM users WHERE username = $1 OR email = $2', (username, email))
             if cursor.fetchone():
                 logging.warning(f"User {username} or email {email} already exists.")
                 return {'success': False, 'message': 'Username or email already exists.'}
@@ -67,7 +87,7 @@ def signup():
             # Insert new user into database
             logging.debug(f"Inserting user {username} into the database.")
             cursor.execute(
-                'INSERT INTO users (email, username, password) VALUES (?, ?, ?)',
+                'INSERT INTO users (email, username, password) VALUES ($1, $2, $3)',
                 (email, username, password)
             )
             conn.commit()  # Commit the transaction
@@ -78,11 +98,6 @@ def signup():
             logging.debug(f"Sending welcome email to {email}.")
             send_email(email)
             return {'success': True, 'message': 'Account created successfully.'}
-
-        except sqlite3.Error as e:  # Catch database-related errors
-            logging.error(f"SQLite error: {e}")
-            conn.rollback()  # Rollback on failure
-            return {'success': False, 'message': f"Database error: {e}"}
 
         except Exception as e:
             logging.error(f"Unexpected error: {e}")
@@ -175,10 +190,6 @@ def search_contacts():
 
         return jsonify(contacts)
 
-    except sqlite3.Error as e:
-        logging.error(f"Database error during contact search: {e}")
-        return jsonify({'error': 'Database error during search'}), 500
-
     finally:
         cursor.close()
         conn.close()
@@ -217,10 +228,6 @@ def add_contact():
 
         conn.commit()
         return jsonify({'success': True, 'message': 'Contact added successfully!'})
-
-    except sqlite3.Error as e:
-        logging.error(f"Database error while adding contact: {e}")
-        return jsonify({'success': False, 'message': 'Database error during contact addition'}), 500
 
     finally:
         cursor.close()
@@ -265,8 +272,6 @@ def handle_status_change(data):
 # Helper function to get users with their statuses
 def get_users_with_status():
     return [{'username': user, 'status': user_status[user]} for user in connected_users]
-
-
 
 # Start a one-on-one or group chat
 @socketio.on('start_chat')
