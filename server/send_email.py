@@ -1,3 +1,5 @@
+# server/send_email.py
+# sends welcome email after signing up
 import smtplib
 import os
 from email.mime.text import MIMEText
