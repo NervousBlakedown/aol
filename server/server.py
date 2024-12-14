@@ -3,7 +3,6 @@ import eventlet
 eventlet.monkey_patch() 
 from flask import Flask, request, jsonify, send_from_directory, session, redirect
 from flask_socketio import SocketIO, emit, join_room, leave_room
-from flask_sqlalchemy import SQLAlchemy
 from argon2 import PasswordHasher
 from collections import defaultdict
 import logging
@@ -25,7 +24,7 @@ supabase: Client = create_client(url, key)
 
 app = Flask(__name__, static_folder='../frontend', static_url_path='')
 socketio = SocketIO(app)
-app.secret_key = 'my_secret_key'  # TODO: Replace with a secure, randomly generated key
+app.secret_key = 'my_secret_key'  # TODO: Replace with secure, randomly generated key
 app.permanent_session_lifetime = timedelta(minutes = 30)
 
 gmail_address = os.getenv('GMAIL_ADDRESS')
@@ -52,7 +51,6 @@ def get_db_connection():
     except psycopg2.Error as e:
         logging.error(f"Error connecting to database: {e}")
         raise e
-
 
 # Serve signup page by default (root route)
 @app.route('/', methods = ['GET'])
@@ -125,18 +123,19 @@ def login():
 
     # This function performs the login-related database query
     def db_task():
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        try:
-            cursor.execute('SELECT * FROM users WHERE username = ?', (username,))
-            user = cursor.fetchone()
-            if user and ph.verify(user['password'], password):
-                return {'success': True, 'message': 'Login successful.'}
-            else:
-                return {'success': False, 'message': 'Invalid credentials.'}
-        finally:
-            cursor.close()
-            conn.close()
+        with app.app_context():
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            try:
+                cursor.execute('SELECT * FROM users WHERE username = $1', (username,))
+                user = cursor.fetchone()
+                if user and ph.verify(user['password'], password):
+                    return {'success': True, 'message': 'Login successful.'}
+                else:
+                    return {'success': False, 'message': 'Invalid credentials.'}
+            finally:
+                cursor.close()
+                conn.close()
 
     result = eventlet.spawn(db_task).wait()
     if result['success']:
@@ -151,7 +150,6 @@ def get_username():
         return jsonify({'username': session['username']})
     else:
         return jsonify({'error': 'Unauthorized'}), 401
-
 
 # Dashboard page
 @app.route('/dashboard', methods=['GET'])
@@ -181,8 +179,8 @@ def search_contacts():
         cursor.execute('''
             SELECT id, username, email 
             FROM users 
-            WHERE (username LIKE ? OR email LIKE ?) 
-            AND id != ?  -- Exclude the logged-in user from results
+            WHERE (username LIKE $1 OR email LIKE $2) 
+            AND id != $3  -- Exclude the logged-in user from results
         ''', (f'%{query}%', f'%{query}%', session['user_id']))
 
         results = cursor.fetchall()
@@ -214,7 +212,7 @@ def add_contact():
         # Check if the contact already exists
         cursor.execute('''
             SELECT * FROM contacts 
-            WHERE user_id = ? AND contact_id = ?
+            WHERE user_id = $1 AND contact_id = $2
         ''', (session['user_id'], contact_id))
 
         if cursor.fetchone():
@@ -223,7 +221,7 @@ def add_contact():
         # Insert the new contact relationship
         cursor.execute('''
             INSERT INTO contacts (user_id, contact_id) 
-            VALUES (?, ?)
+            VALUES ($1, $2)
         ''', (session['user_id'], contact_id))
 
         conn.commit()
