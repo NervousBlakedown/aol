@@ -77,7 +77,7 @@ def signup():
         try:
             # Check if username or email already exists
             logging.debug(f"Checking if user {username} or email {email} exists.")
-            cursor.execute('SELECT * FROM users WHERE username = $1 OR email = $2', (username, email))
+            cursor.execute('SELECT * FROM users WHERE username = %s OR email = %s', (username, email))
             if cursor.fetchone():
                 logging.warning(f"User {username} or email {email} already exists.")
                 return {'success': False, 'message': 'Username or email already exists.'}
@@ -85,7 +85,7 @@ def signup():
             # Insert new user into database
             logging.debug(f"Inserting user {username} into the database.")
             cursor.execute(
-                'INSERT INTO users (email, username, password) VALUES ($1, $2, $3)',
+                'INSERT INTO users (email, username, password) VALUES (%s, %s, %s)',
                 (email, username, password)
             )
             conn.commit()  # Commit the transaction
@@ -127,7 +127,7 @@ def login():
             conn = get_db_connection()
             cursor = conn.cursor()
             try:
-                cursor.execute('SELECT * FROM users WHERE username = $1', (username,))
+                cursor.execute('SELECT * FROM users WHERE username = %s', (username,))
                 user = cursor.fetchone()
                 if user and ph.verify(user['password'], password):
                     return {'success': True, 'message': 'Login successful.'}
@@ -179,8 +179,8 @@ def search_contacts():
         cursor.execute('''
             SELECT id, username, email 
             FROM users 
-            WHERE (username LIKE $1 OR email LIKE $2) 
-            AND id != $3  -- Exclude the logged-in user from results
+            WHERE (username LIKE %s OR email LIKE %s) 
+            AND id != %s  -- Exclude the logged-in user from results
         ''', (f'%{query}%', f'%{query}%', session['user_id']))
 
         results = cursor.fetchall()
@@ -212,7 +212,7 @@ def add_contact():
         # Check if the contact already exists
         cursor.execute('''
             SELECT * FROM contacts 
-            WHERE user_id = $1 AND contact_id = $2
+            WHERE user_id = %s AND contact_id = %s
         ''', (session['user_id'], contact_id))
 
         if cursor.fetchone():
@@ -221,7 +221,7 @@ def add_contact():
         # Insert the new contact relationship
         cursor.execute('''
             INSERT INTO contacts (user_id, contact_id) 
-            VALUES ($1, $2)
+            VALUES (%s, %s)
         ''', (session['user_id'], contact_id))
 
         conn.commit()
