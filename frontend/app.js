@@ -211,3 +211,13 @@ function logout() {
 document.addEventListener('DOMContentLoaded', () => {
   if (window.location.pathname === '/dashboard') initializeDashboard();
 });
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.location.pathname === '/login') {
+    // Add the event listener for the login button
+    document.getElementById('login-button').addEventListener('click', login);
+  } else if (window.location.pathname === '/dashboard') {
+    initializeDashboard();
+  }
+});
+
