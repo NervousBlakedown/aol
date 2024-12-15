@@ -35,5 +35,3 @@ def send_email(user_email):
             print(f"Error sending email: {response.status_code}, {response.text}")
     except Exception as e:
         print(f"Error sending email: {e}")
-
-send_email(user_email)
