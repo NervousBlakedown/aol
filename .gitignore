@@ -1,5 +1,7 @@
+# Main
 .env
 venv/
+.yaml
 
 # Python cache files
 __pycache__/
@@ -14,9 +16,6 @@ __pycache__/
 *.log
 *.sqlite3
 db/*.sqlite3
-
-# YAML
-config/.yaml
 
 # Ignore IDE-specific files
 .vscode/
