@@ -185,7 +185,7 @@ function sendMessage(roomName) {
   if (!message) return;
 
   socket.emit('send_message', { username, message, room: roomName });
-  appendMessageToChat(roomName, username, message);
+  // appendMessageToChat(roomName, username, message);
   input.value = '';
 }
 
