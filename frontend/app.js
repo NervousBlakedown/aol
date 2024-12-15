@@ -160,24 +160,6 @@ function createChatBox(roomName, users) {
   });
 }
 
-  // Add Enter key listener to the input field
-  const messageInput = document.getElementById(`message-${roomName}`);
-  messageInput.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') {
-      sendMessage(roomName);
-    }
-  });
-
-  // Close button logic
-  const closeBtn = chatBox.querySelector('.close-chat');
-  closeBtn.addEventListener('click', () => {
-    // Remove from DOM
-    chatsContainer.removeChild(chatBox);
-
-    // Remove from activeChats
-    delete activeChats[roomName];
-  });
-
 // Update contacts list
 function updateContactsList(users) {
   const contactsList = document.getElementById('contacts-list');
