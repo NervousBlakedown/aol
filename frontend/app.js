@@ -1,9 +1,9 @@
 // app.js
-
 let socket;
 let typingTimeout;
 let currentRoom = null; // Keep track of the active chat room
 let username = null; // Store the logged-in username
+let activeChats = {}; // track active chat boxes and their messages
 
 // Account creation
 function createAccount() {
@@ -90,6 +90,7 @@ function login() {
       
 
 function initializeDashboard() {
+  const chatsContainer = document.getElementById('chats-container'); // Container for all chat boxes
   // Check if the user is logged in by making a request to the server
   fetch('/get_username', {
     credentials: 'include'
@@ -116,8 +117,8 @@ function initializeDashboard() {
 
         // Handle incoming messages
         socket.on('message', function (data) {
-          if (currentRoom === data.room) {
-            displayMessage(data.username, data.msg);
+          if (activeChats[data.room]) {
+            appendMessageToChat(data.room, data.username, data.msg);
           }
         });
         
@@ -138,9 +139,11 @@ function initializeDashboard() {
 
         // Handle chat started event
         socket.on('chat_started', function (data) {
-          currentRoom = data.room;
-          console.log(`Joined chat room: ${currentRoom}`);
-          document.getElementById('chat').style.display = 'block';
+          const roomName = data.room;
+          if (!activeChats[roomName]) {
+            createChatBox(roomName, data.users); // Create a new chat box for this room
+          }
+          console.log(`Joined chat room: ${roomName}`);
         });
 
         socket.on('disconnect', function () {
@@ -153,6 +156,64 @@ function initializeDashboard() {
       });
     });
 }
+
+function createChatBox(roomName, users) {
+  // Check if chat box already exists
+  if (activeChats[roomName]) return;
+
+  // Create the chat box element
+  const chatBox = document.createElement('div');
+  chatBox.className = 'chat-box';
+  chatBox.id = `chat-${roomName}`;
+
+  chatBox.innerHTML = `
+    <div class="chat-header">
+      Chat with: ${users.join(', ')}
+    </div>
+    <div class="chat-messages" id="messages-${roomName}"></div>
+    <div class="chat-input">
+      <input type="text" id="input-${roomName}" placeholder="Type a message..." />
+      <button onclick="sendMessageToRoom('${roomName}')">Send</button>
+    </div>
+  `;
+
+  // Append the chat box to the container
+  chatsContainer.appendChild(chatBox);
+
+  // Track the chat box
+  activeChats[roomName] = chatBox;
+}
+
+function sendMessageToRoom(roomName) {
+  const input = document.getElementById(`input-${roomName}`);
+  const message = input.value.trim();
+
+  if (!message) return;
+
+  // Emit the message to the server
+  socket.emit('send_message', {
+    username: username,
+    message: message,
+    room: roomName,
+  });
+
+  // Append the message locally
+  appendMessageToChat(roomName, username, message);
+
+  // Clear the input field
+  input.value = '';
+}
+
+function appendMessageToChat(roomName, sender, message) {
+  const messagesDiv = document.getElementById(`messages-${roomName}`);
+  const messageElement = document.createElement('div');
+  messageElement.textContent = `${sender}: ${message}`;
+  messagesDiv.appendChild(messageElement);
+
+  // Auto-scroll to the latest message
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
 
 // Call initializeDashboard when the page loads
 document.addEventListener('DOMContentLoaded', function () {

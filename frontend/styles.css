@@ -178,3 +178,76 @@ a:hover {
 #search-container button:hover {
   background: linear-gradient(to bottom, #00acc1, #00796b);
 }
+
+/* multiple chats */
+/* Container for all chat boxes */
+.chats-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 10px;
+  justify-content: center;
+}
+
+/* Individual chat box */
+.chat-box {
+  width: 300px;
+  background: rgba(255, 255, 255, 0.9); /* Slight transparency for modern look */
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #80deea;
+}
+
+/* Chat header */
+.chat-header {
+  background: #00796b;
+  color: white;
+  padding: 10px;
+  border-radius: 10px 10px 0 0;
+  text-align: center;
+  font-weight: bold;
+}
+
+/* Chat messages container */
+.chat-messages {
+  height: 200px;
+  overflow-y: auto;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  border-top: 1px solid #80deea;
+  border-bottom: 1px solid #80deea;
+  flex-grow: 1;
+  font-size: 14px;
+  color: #00796b;
+}
+
+/* Chat input section */
+.chat-input {
+  display: flex;
+  padding: 10px;
+  gap: 5px;
+}
+
+.chat-input input {
+  flex-grow: 1;
+  padding: 8px;
+  border-radius: 5px;
+  border: 1px solid #80deea;
+}
+
+.chat-input button {
+  background: #00796b;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.chat-input button:hover {
+  background: #005b4f;
+}
+

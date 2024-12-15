@@ -293,43 +293,30 @@ def generate_room_name(users):
 # Start a one-on-one or group chat
 @socketio.on('start_chat')
 def start_chat(data):
-    usernames = data['users']  # List of usernames in the chat
-    room_name = "_".join(sorted(usernames))  # Generate a unique room name based on sorted usernames
-    
-    if room_name in rooms:
-        # If the room already exists, notify the users
-        print(f"Room {room_name} already exists. Adding users to the room.")
+    usernames = data['users']
+    room_name = "_".join(sorted(usernames))  # Consistent room naming based on users
+
+    if room_name not in rooms:
+        print(f"Creating new room: {room_name} for users: {', '.join(usernames)}")
         for username in usernames:
             if username in connected_users:
                 join_room(room_name, sid=connected_users[username])
-        emit('chat_started', {'room': room_name, 'users': usernames}, room=room_name)
-        return
+        rooms[room_name] = usernames  # Track participants in the room
 
-    # Create the room and add users
-    print(f"Creating new room: {room_name} for users: {', '.join(usernames)}")
-    for username in usernames:
-        if username in connected_users:
-            join_room(room_name, sid=connected_users[username])
-
-    rooms[room_name] = usernames  # Save the room with its participants
     emit('chat_started', {'room': room_name, 'users': usernames}, room=room_name)
 
 
-
-# Handle sending messages
 @socketio.on('send_message')
 def handle_send_message(data):
-    room = data['room']  # Room name
+    room = data['room']
     message = data['message']
     username = data['username']
 
     if room in rooms:
-        print(f"Message sent from {username} in room {room}")
-        emit('message', {'msg': message, 'username': username}, room=room, include_self=False)
+        print(f"Message sent from {username} in room {room}: {message}")
+        emit('message', {'msg': message, 'username': username, 'room': room}, room=room)
     else:
         print(f"Error: Room {room} does not exist.")
-
-
 
 # Typing notifications
 @socketio.on('typing')
