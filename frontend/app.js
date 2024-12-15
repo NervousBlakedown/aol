@@ -75,6 +75,7 @@ function initializeDashboard() {
       username = data.username;
       document.getElementById('username-display').textContent = username;
       setupSocketIO();
+      document.getElementById('start-chat-button').addEventListener('click', startGroupChat);
     });
 }
 
