@@ -116,8 +116,11 @@ function initializeDashboard() {
 
         // Handle incoming messages
         socket.on('message', function (data) {
-          displayMessage(data.username, data.msg);
+          if (currentRoom === data.room) {
+            displayMessage(data.username, data.msg);
+          }
         });
+        
 
         // Handle typing notifications
         socket.on('typing', function (data) {
@@ -257,46 +260,42 @@ document.addEventListener('DOMContentLoaded', function () {
 
 // Function to update the list of online users (contacts) with checkboxes for group selection
 function updateContactsList(users) {
-  let contactsList = document.getElementById('contacts-list');
-  contactsList.innerHTML = ''; // Clear the existing list
+  const contactsList = document.getElementById('contacts-list');
+  contactsList.innerHTML = ''; // Clear existing contacts
 
-  users.forEach(function (user) {
-    let contactItem = document.createElement('li');
+  users.forEach((user) => {
+    if (user.username === username) return; // Skip the current user
 
-    // Skip the current user
-    if (user.username === username) return;
-
-    // Create a checkbox for each contact
-    let checkbox = document.createElement('input');
+    const contactItem = document.createElement('li');
+    const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
-    checkbox.value = user.username; // Adjusted to match the data structure
-    checkbox.className = 'contact-checkbox'; // Class to make selection easier
+    checkbox.value = user.username; // Store username in the checkbox value
+    checkbox.className = 'contact-checkbox'; // Class for easy selection
 
-    // Add the contact name next to the checkbox
-    let label = document.createElement('label');
-    label.innerText = `${user.username} (${user.status})`; // Display username and status
+    const label = document.createElement('label');
+    label.innerText = `${user.username} (${user.status})`; // Show username and status
 
-    // Append the checkbox and label to the list item
     contactItem.appendChild(checkbox);
     contactItem.appendChild(label);
-
-    // Add the contact item to the list
     contactsList.appendChild(contactItem);
   });
 }
 
+
 // Start a chat
 function startChat(users) {
-  if (!users || users.length == 0) {
+  if (!users || users.length === 0) {
     alert('You must select at least one user to start chatting...obviously.');
     return;
   }
   // add current user to the chat to ensure you're part of the chat
-  users.push(username);
+  if (!users.includes(username)) {
+    users.push(username);
+  }
 
-  currentRoom = users.join('_'); // Use usernames to create a unique room ID
-  socket.emit('start_chat', { users });
-  console.log('Starting chat with: ${users.join(', ')} in room: ${currentRoom}');
+  // currentRoom = users.join('_'); // Use usernames to create a unique room ID
+  socket.emit('start_chat', { users: users });
+  console.log('Requesting to start a chat with: ${users.join(', ')}');
 }
 
 // Function to initiate a group chat
@@ -305,9 +304,10 @@ function startGroupChat() {
 
   // Get all selected checkboxes
   const checkboxes = document.querySelectorAll('.contact-checkbox:checked');
-  checkboxes.forEach(function (checkbox) {
+  checkboxes.forEach((checkbox) => {
     selectedUsers.push(checkbox.value);
   });
+
   // start chat with selected users
   startChat(selectedUsers);
 }
@@ -319,26 +319,27 @@ function sendMessage() {
   const message = messageInput ? messageInput.value.trim() : '';
 
   if (message === '') {
-    return; // Avoid sending empty messages
+    return; // Prevent sending empty messages
   }
 
-  // Display the sent message immediately
+  // Display the sent message locally
   displayMessage(username, message);
 
   // Send the message over the Socket.IO connection
-  console.log('Sending message:', message);
+  console.log(`Sending message: ${message} to room: ${currentRoom}`);
   socket.emit('send_message', {
     username: username,
     message: message,
-    room: currentRoom // Send message to the current chat room
+    room: currentRoom,
   });
 
-  // Play the AOL sound effect
+  // Play the AOL message sent sound
   playAOLSound();
 
   // Clear the input field
   messageInput.value = '';
 }
+
 
 // Display messages in the chat area
 function displayMessage(username, message) {
@@ -358,18 +359,19 @@ function sendTypingNotification() {
   if (socket && socket.connected && currentRoom) {
     socket.emit('typing', {
       username: username,
-      room: currentRoom // Send typing status to the current chat room
+      room: currentRoom,
     });
 
     clearTimeout(typingTimeout);
-    typingTimeout = setTimeout(function () {
+    typingTimeout = setTimeout(() => {
       socket.emit('stop_typing', {
         username: username,
-        room: currentRoom
+        room: currentRoom,
       });
-    }, 3000); // Clears typing status after 3 seconds of inactivity
+    }, 3000); // Clear typing status after 3 seconds of inactivity
   }
 }
+
 
 // Play the login success sound
 function playLoginSound() {

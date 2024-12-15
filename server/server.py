@@ -286,29 +286,49 @@ def handle_status_change(data):
 def get_users_with_status():
     return [{'username': user, 'status': user_status[user]} for user in connected_users]
 
+# Helper to generate a unique room name based on participants
+def generate_room_name(users):
+    return "_".join(sorted(users))  # Use sorted usernames to keep names consistent
+
 # Start a one-on-one or group chat
 @socketio.on('start_chat')
 def start_chat(data):
-    usernames = data['users']
-    room_name = '_'.join(sorted(usernames))  # Create unique room name based on users
-    print(f"Starting chat in room: {room_name} with users: {', '.join(usernames)}")
+    usernames = data['users']  # List of usernames in the chat
+    room_name = "_".join(sorted(usernames))  # Generate a unique room name based on sorted usernames
+    
+    if room_name in rooms:
+        # If the room already exists, notify the users
+        print(f"Room {room_name} already exists. Adding users to the room.")
+        for username in usernames:
+            if username in connected_users:
+                join_room(room_name, sid=connected_users[username])
+        emit('chat_started', {'room': room_name, 'users': usernames}, room=room_name)
+        return
 
+    # Create the room and add users
+    print(f"Creating new room: {room_name} for users: {', '.join(usernames)}")
     for username in usernames:
         if username in connected_users:
             join_room(room_name, sid=connected_users[username])
 
-    rooms[room_name].extend(usernames)
+    rooms[room_name] = usernames  # Save the room with its participants
     emit('chat_started', {'room': room_name, 'users': usernames}, room=room_name)
+
 
 
 # Handle sending messages
 @socketio.on('send_message')
 def handle_send_message(data):
-    room = data['room']
+    room = data['room']  # Room name
     message = data['message']
     username = data['username']
-    print(f"Message sent from {username} in room {room}.")
-    emit('message', {'msg': message, 'username': username}, room=room, include_self = False)
+
+    if room in rooms:
+        print(f"Message sent from {username} in room {room}: {message}")
+        emit('message', {'msg': message, 'username': username}, room=room, include_self=False)
+    else:
+        print(f"Error: Room {room} does not exist.")
+
 
 
 # Typing notifications
