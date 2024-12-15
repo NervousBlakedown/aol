@@ -1,89 +1,90 @@
-/* styles.css */
-
+/* Reset body styling */
 body {
-  font-family: 'Tahoma', 'Verdana', 'Trebuchet MS', sans-serif;
-  background-color: #0db6bb; /* Silver */
+  font-family: 'Segoe UI', 'Tahoma', 'Verdana', sans-serif; /* Modern, clean font */
+  background: linear-gradient(to bottom, #e0f7fa, #80deea); /* Calming blue gradient */
   margin: 0;
-  padding: 20px;
+  padding: 0;
 }
 
-/* Beveled container for all main sections */
+/* Container styling: sleek and slightly transparent */
 .container {
   width: 400px;
-  margin: 10px auto;
+  margin: 20px auto;
   padding: 20px;
-  background-color: #E0E0E0; /* Light gray */
-  border: 2px solid #fff;
-  border-left-color: #808080;
-  border-top-color: #808080;
+  background: rgba(255, 255, 255, 0.9); /* White with slight transparency */
+  border-radius: 15px; /* Rounded corners for a sleek look */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); /* Subtle shadow for depth */
 }
 
-/* Headings with classic fonts */
+/* Headings: Calming blue tones */
 h1, h2, h3 {
-  font-family: 'Comic Sans MS', cursive, sans-serif;
-  color: #000080; /* Navy blue */
+  font-family: 'Segoe UI', 'Verdana', sans-serif;
+  color: #00796b; /* Deep teal for sophistication */
   text-align: center;
 }
 
+/* Chat messages area */
 #messages {
   height: 200px;
   overflow-y: auto;
-  background-color: #fff;
-  border: 2px inset #808080;
+  background: rgba(255, 255, 255, 0.9); /* Slight transparency */
+  border-radius: 10px;
+  border: 1px solid #80deea; /* Matches the blue tones */
   margin-bottom: 10px;
   padding: 10px;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1); /* Inner shadow for depth */
 }
 
-/* Input fields with inset borders */
-input[type="text"], input[type="password"], input[type="email"], select {
-  width: calc(100% - 12px);
-  padding: 5px;
+/* Input fields: clean and modern */
+input[type="text"], input[type="password"], input[type="email"], select, #message {
+  width: calc(100% - 20px);
+  padding: 10px;
   margin-bottom: 10px;
-  border: 2px inset #808080;
-  background-color: #fff;
-  font-family: 'Tahoma', 'Verdana', sans-serif;
+  border: 1px solid #80deea;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+  font-family: 'Segoe UI', sans-serif;
+  color: #00796b; /* Teal text color */
 }
 
-/* The message input field */
-#message {
-  width: calc(100% - 12px);
-  padding: 5px;
-  margin-bottom: 10px;
-  border: 2px inset #808080;
-  background-color: #fff;
-}
-
-/* Beveled buttons */
+/* Buttons: Rounded and hover effects */
 button {
-  padding: 5px 10px;
-  background-color: #C0C0C0; /* Light gray */
-  color: #000; /* Black text */
-  border: 2px outset #fff;
+  padding: 10px 20px;
+  background: linear-gradient(to bottom, #80deea, #00acc1); /* Gradient for depth */
+  color: white;
+  border: none;
+  border-radius: 15px;
   font-weight: bold;
   cursor: pointer;
+  transition: transform 0.2s, background 0.3s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 button:active {
-  border: 2px inset #fff;
+  transform: scale(0.98); /* Slight shrink on click */
 }
 
 button:hover {
-  background-color: #B0B0B0;
+  background: linear-gradient(to bottom, #00acc1, #00796b); /* Slightly darker teal */
 }
 
-/* Links */
+/* Links: Aero blue */
 a {
-  color: #0000EE; /* Link blue */
-  text-decoration: underline;
+  color: #0288d1; /* Vibrant blue */
+  text-decoration: none;
 }
 
 a:hover {
-  color: #551A8B; /* Visited link purple */
+  color: #01579b; /* Darker blue */
+  text-decoration: underline;
 }
 
+/* Typing indicator */
 #typing {
   margin-top: 5px;
   font-style: italic;
+  color: #00796b; /* Teal */
 }
 
 /* Contacts list styling */
@@ -93,10 +94,12 @@ a:hover {
 }
 
 #contacts-list li {
-  padding: 5px;
+  padding: 10px;
   margin-bottom: 5px;
-  background-color: #D0D0D0;
-  border: 1px solid #808080;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 10px;
+  border: 1px solid #80deea;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 /* Status selector */
@@ -107,74 +110,71 @@ a:hover {
 /* Chat window styling */
 .chat-window {
   width: 400px;
-  margin: 10px auto;
+  margin: 20px auto;
   padding: 20px;
-  background-color: #E0E0E0;
-  border: 2px solid #fff;
-  border-left-color: #808080;
-  border-top-color: #808080;
-}
-
-.chat-window-header {
-  font-weight: bold;
-  margin-bottom: 10px;
-  text-align: center;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .chat-window-messages {
   height: 250px;
   overflow-y: auto;
-  background-color: #fff;
-  border: 2px inset #808080;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 10px;
+  border: 1px solid #80deea;
   margin-bottom: 10px;
   padding: 10px;
-}
-
-.chat-window-input {
-  width: calc(100% - 12px);
-  padding: 5px;
-  margin-bottom: 10px;
-  border: 2px inset #808080;
-  background-color: #fff;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .chat-window button {
   width: 100%;
-  padding: 8px 10px;
-  background-color: #C0C0C0;
-  color: #000;
-  border: 2px outset #fff;
+  padding: 12px;
+  border-radius: 15px;
+  background: linear-gradient(to bottom, #80deea, #00acc1);
+  color: white;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.3s;
+}
+
+.chat-window button:hover {
+  background: linear-gradient(to bottom, #00acc1, #00796b);
 }
 
 .chat-window button:active {
-  border: 2px inset #fff;
+  transform: scale(0.98);
 }
 
-* Styling for the search container */
+/* Search container */
 #search-container {
-  display: flex; /* Align items horizontally */
-  align-items: center; /* Vertically align the input and button */
-  margin-bottom: 10px; /* Add spacing below the search bar */
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
 }
 
-/* Styling for the search input */
 #search-container input[type="text"] {
-  flex-grow: 1; /* Allow input to fill available space */
-  margin-right: 5px; /* Add space between input and button */
-  padding: 5px;
-  border: 2px inset #808080; /* Match your existing input styles */
-  background-color: #fff;
+  flex-grow: 1;
+  padding: 10px;
+  border: 1px solid #80deea;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-/* Styling for the search button */
 #search-container button {
-  padding: 5px 10px; /* Match button styles */
-  background-color: #C0C0C0; /* Match button colors */
-  border: 2px outset #fff; /* Match button borders */
+  padding: 10px 20px;
+  background: linear-gradient(to bottom, #80deea, #00acc1);
+  color: white;
+  border: none;
+  border-radius: 15px;
+  margin-left: 5px;
   font-weight: bold;
   cursor: pointer;
 }
 
-#search-container button:active {
-  border: 2px inset #fff; /* Inset effect on click */
+#search-container button:hover {
+  background: linear-gradient(to bottom, #00acc1, #00796b);
 }
