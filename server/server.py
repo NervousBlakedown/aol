@@ -324,7 +324,7 @@ def handle_send_message(data):
     username = data['username']
 
     if room in rooms:
-        print(f"Message sent from {username} in room {room}: {message}")
+        print(f"Message sent from {username} in room {room}")
         emit('message', {'msg': message, 'username': username}, room=room, include_self=False)
     else:
         print(f"Error: Room {room} does not exist.")
