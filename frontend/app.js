@@ -128,7 +128,10 @@ function createChatBox(roomName, users) {
   chatBox.id = `chat-box-${roomName}`;
 
   chatBox.innerHTML = `
-    <h3>${users.join(', ')}</h3>
+    <div class="chat-header">
+      <h3>${users.join(', ')}</h3>
+      <button class="close-chat" data-room="${roomName}">X</button>
+    </div>
     <div class="messages" id="messages-${roomName}"></div>
     <input type="text" id="message-${roomName}" placeholder="Type a message..." oninput="sendTypingNotification('${roomName}')">
     <button onclick="sendMessage('${roomName}')">Send</button>
@@ -145,8 +148,35 @@ function createChatBox(roomName, users) {
       sendMessage(roomName);
     }
   });
+
+  // Close button logic
+  const closeBtn = chatBox.querySelector('.close-chat');
+  closeBtn.addEventListener('click', () => {
+    // Remove from DOM
+    chatsContainer.removeChild(chatBox);
+
+    // Remove from activeChats
+    delete activeChats[roomName];
+  });
 }
 
+  // Add Enter key listener to the input field
+  const messageInput = document.getElementById(`message-${roomName}`);
+  messageInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      sendMessage(roomName);
+    }
+  });
+
+  // Close button logic
+  const closeBtn = chatBox.querySelector('.close-chat');
+  closeBtn.addEventListener('click', () => {
+    // Remove from DOM
+    chatsContainer.removeChild(chatBox);
+
+    // Remove from activeChats
+    delete activeChats[roomName];
+  });
 
 // Update contacts list
 function updateContactsList(users) {
