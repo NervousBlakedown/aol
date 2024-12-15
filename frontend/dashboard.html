@@ -14,11 +14,11 @@
     <button id="logout-button">Logout</button>
   </nav>
 
-  <!-- 'contacts' div -->
+  <!-- Contacts section -->
   <div id="contacts" class="container">
     <h3>Contacts</h3>
 
-    <!-- Status selector dropdown for changing user status -->
+    <!-- Status selector -->
     <div id="status-selector">
       <label for="status">Status: </label>
       <select id="status" onchange="updateStatus(this.value)">
@@ -28,30 +28,30 @@
       </select>
     </div>
 
-    <!-- Add the search field for finding contacts -->
+    <!-- Search for contacts -->
     <div id="search-contacts" class="container">
       <h3>Search for Contacts</h3>
       <input type="text" id="search-input" placeholder="Search by username or email">
       <ul id="search-results"></ul> 
     </div>
 
+    <!-- Contacts list -->
     <ul id="contacts-list"></ul>
     <button id="start-chat-button">Start Chat</button>
   </div>
 
-  <!-- 'chat' div -->
-  <div id="chat" class="chat-window" style="display:none;">
-    <div id="messages"></div>
-    <input type="text" id="message" placeholder="Type a message..." oninput="sendTypingNotification()">
-    <button id="send-message-button">Send</button>
-    <div id="typing" style="color: grey; font-size: 0.8em;"></div>
-    <audio id="message_sent_sound" src="./assets/sounds/mail_sent.mp3" preload="auto"></audio>
-    <audio id="message_receive_sound" src="./assets/sounds/aol_message_received_one.mp3" preload="auto"></audio>
+  <!-- Chats container -->
+  <div id="chats-container" class="container">
+    <h3>Active Chats</h3>
+    <!-- Dynamic chat boxes will be appended here -->
   </div>
 
-  <!-- Audio element for dashboard startup sound -->
+  <!-- Audio notifications -->
   <audio id="dashboard_startup_sound" src="./assets/sounds/windows_95_startup.mp3" preload="auto"></audio>
+  <audio id="message_sent_sound" src="./assets/sounds/mail_sent.mp3" preload="auto"></audio>
+  <audio id="message_receive_sound" src="./assets/sounds/aol_message_received_one.mp3" preload="auto"></audio>
 
+  <!-- Include app.js -->
   <script src="app.js"></script>
   <script>
     // Play dashboard startup sound on first user interaction
