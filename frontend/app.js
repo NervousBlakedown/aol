@@ -119,7 +119,7 @@ function createChatBox(roomName, users) {
   chatBox.id = `chat-box-${roomName}`;
 
   chatBox.innerHTML = `
-    <h3>Chat with: ${users.join(', ')}</h3>
+    <h3>${users.join(', ')}</h3>
     <div class="messages" id="messages-${roomName}"></div>
     <input type="text" id="message-${roomName}" placeholder="Type a message..." oninput="sendTypingNotification('${roomName}')">
     <button onclick="sendMessage('${roomName}')">Send</button>
