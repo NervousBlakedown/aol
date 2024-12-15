@@ -75,7 +75,7 @@ function initializeDashboard() {
       username = data.username;
       document.getElementById('username-display').textContent = username;
       setupSocketIO();
-      document.getElementById('start-chat-button').addEventListener('click', startGroupChat);
+      document.getElementById('start-chat-button').addEventListener('click', startChat);
     });
 }
 
@@ -121,14 +121,23 @@ function createChatBox(roomName, users) {
   chatBox.innerHTML = `
     <h3>Chat with: ${users.join(', ')}</h3>
     <div class="messages" id="messages-${roomName}"></div>
-    <input type="text" id="message-${roomName}" placeholder="Type a message..." oninput="sendTypingNotification('${roomName}')" />
+    <input type="text" id="message-${roomName}" placeholder="Type a message..." oninput="sendTypingNotification('${roomName}')">
     <button onclick="sendMessage('${roomName}')">Send</button>
     <div id="typing-${roomName}" class="typing-indicator"></div>
   `;
 
   chatsContainer.appendChild(chatBox);
   activeChats[roomName] = chatBox;
+
+  // Add Enter key listener to the input field
+  const messageInput = document.getElementById(`message-${roomName}`);
+  messageInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      sendMessage(roomName);
+    }
+  });
 }
+
 
 // Update contacts list
 function updateContactsList(users) {
@@ -153,14 +162,21 @@ function updateContactsList(users) {
 }
 
 // Start a group chat
-function startGroupChat() {
+function startChat() {
   const selectedUsers = Array.from(document.querySelectorAll('.contact-checkbox:checked')).map(cb => cb.value);
+  
   if (selectedUsers.length === 0) {
     alert('Please select at least one contact to start a chat.');
     return;
   }
+  
+  // If there's only one selected user, it's a one-on-one chat.
+  // If more than one, it's a group chat.
+  // The server treats them similarly: it just creates a room with the given participants.
+  
   socket.emit('start_chat', { users: [...selectedUsers, username] });
 }
+
 
 // Send a message
 function sendMessage(roomName) {
