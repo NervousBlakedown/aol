@@ -36,4 +36,4 @@ def send_email(user_email):
     except Exception as e:
         print(f"Error sending email: {e}")
 
-send_email(email)
+send_email(user_email)
