@@ -1,4 +1,3 @@
-<!-- dashboard.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,42 +7,43 @@
   <script src="https://cdn.socket.io/4.5.1/socket.io.min.js"></script>
 </head>
 <body>
-  <!-- Navigation bar -->
-  <nav class="container">
-    <h2>Welcome, <span id="username-display"></span>!</h2>
-    <button id="logout-button">Logout</button>
-  </nav>
+  <div class="layout">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="user-info">
+        <h2>Welcome, <span id="username-display"></span>!</h2>
+        <button id="logout-button">Logout</button>
+      </div>
 
-  <!-- Contacts section -->
-  <div id="contacts" class="container">
-    <h3>Contacts</h3>
+      <div class="status-section">
+        <h3>Status</h3>
+        <select id="status" onchange="updateStatus(this.value)">
+          <option value="Online">Online</option>
+          <option value="Away">Away</option>
+          <option value="Do Not Disturb">Do Not Disturb</option>
+        </select>
+      </div>
 
-    <!-- Status selector -->
-    <div id="status-selector">
-      <label for="status">Status: </label>
-      <select id="status" onchange="updateStatus(this.value)">
-        <option value="Online">Online</option>
-        <option value="Away">Away</option>
-        <option value="Do Not Disturb">Do Not Disturb</option>
-      </select>
+      <div class="search-contacts">
+        <h3>Search for Contacts</h3>
+        <input type="text" id="search-input" placeholder="Search by username or email">
+        <ul id="search-results"></ul> 
+      </div>
+
+      <div class="contacts-list-section">
+        <h3>Contacts</h3>
+        <ul id="contacts-list"></ul>
+        <button id="start-chat-button">Start Chat</button>
+      </div>
     </div>
 
-    <!-- Search for contacts -->
-    <div id="search-contacts" class="container">
-      <h3>Search for Contacts</h3>
-      <input type="text" id="search-input" placeholder="Search by username or email">
-      <ul id="search-results"></ul> 
+    <!-- Main Content Area -->
+    <div class="main-content">
+      <h3>Active Chats</h3>
+      <div id="chats-container" class="chats-container">
+        <!-- Dynamic chat boxes will be appended here -->
+      </div>
     </div>
-
-    <!-- Contacts list -->
-    <ul id="contacts-list"></ul>
-    <button id="start-chat-button">Start Chat</button>
-  </div>
-
-  <!-- Chats container -->
-  <div id="chats-container" class="container">
-    <h3>Active Chats</h3>
-    <!-- Dynamic chat boxes will be appended here -->
   </div>
 
   <!-- Audio notifications -->
