@@ -147,6 +147,18 @@ def login():
 
         if result['success']:
             session['username'] = username
+
+            # Retrieve the user's id and store it in the session
+            with app.app_context():
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                cursor.execute('SELECT id FROM users WHERE username = %s', (username,))
+                user_row = cursor.fetchone()
+                cursor.close()
+                conn.close()
+
+            if user_row:
+                session['user_id'] = user_row['id']
             return jsonify(result), 200
         else:
             return jsonify(result), 401

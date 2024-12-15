@@ -175,7 +175,7 @@ function startChat() {
   const selectedUsers = Array.from(document.querySelectorAll('.contact-checkbox:checked')).map(cb => cb.value);
   
   if (selectedUsers.length === 0) {
-    alert('Please select at least one contact to start a chat.');
+    alert('Please select at least one contact to start a chat...obviously.');
     return;
   }
   
@@ -235,13 +235,9 @@ function logout() {
 
 // Initialize the app on page load
 document.addEventListener('DOMContentLoaded', () => {
-  if (window.location.pathname === '/dashboard') initializeDashboard();
-});
-
-document.addEventListener('DOMContentLoaded', () => {
   if (window.location.pathname === '/login') {
-    // Add the event listener for the login button
-    document.getElementById('login-button').addEventListener('click', login);
+    const loginBtn = document.getElementById('login-button');
+    if (loginBtn) loginBtn.addEventListener('click', login);
   } else if (window.location.pathname === '/dashboard') {
     initializeDashboard();
   }
