@@ -91,7 +91,16 @@ function setupSocketIO() {
 
   socket.on('message', data => {
     if (activeChats[data.room]) appendMessageToChat(data.room, data.username, data.msg);
+  
+    // Play the receive sound only if the message is from someone else
+    if (data.username !== username) {
+      const receiveSound = document.getElementById('message_receive_sound');
+      if (receiveSound) {
+        receiveSound.play().catch(error => console.log('Autoplay prevented:', error));
+      }
+    }
   });
+  
 
   socket.on('user_list', data => updateContactsList(data.users));
 
