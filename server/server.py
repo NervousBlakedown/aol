@@ -156,7 +156,7 @@ def get_username():
 @app.route('/dashboard', methods=['GET'])
 def dashboard():
     if 'username' in session:
-        return send_from_directory('dashboard.html')
+        return render_template('dashboard.html')
     else:
         return redirect('/login')
 
@@ -429,7 +429,7 @@ def logout():
 # Password forget/reset
 @app.route('/forgot_password', methods=['GET'])
 def forgot_password_page():
-    return send_from_directory('forgot_password.html')
+    return render_template('forgot_password.html')
 
 @app.route('/forgot_password', methods=['POST'])
 def forgot_password():
@@ -457,7 +457,7 @@ def forgot_password():
 
 @app.route('/reset_password', methods=['GET'])
 def reset_password_page():
-    return send_from_directory('reset_password.html')
+    return render_template('reset_password.html')
 
 @app.route('/update_password', methods=['POST'])
 def update_password():
