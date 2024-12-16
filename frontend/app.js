@@ -76,6 +76,12 @@ function initializeDashboard() {
       document.getElementById('username-display').textContent = username;
       setupSocketIO();
       document.getElementById('start-chat-button').addEventListener('click', startChat);
+
+      // Logout button
+      const logoutButton = document.getElementById('logout-button');
+      if (logoutButton) {
+        logoutButton.addEventListener('click', logout);
+      }
     });
 }
 
