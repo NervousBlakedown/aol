@@ -4,6 +4,7 @@ let typingTimeout;
 let username = null; // Store the logged-in username
 const activeChats = {}; // Track active chat boxes and their messages
 let myContacts = []; // store users' contacts after fetching them
+let userStatuses = {}; // store {username: status} from user_list event
 
 // Account creation
 function createAccount() {
@@ -117,6 +118,7 @@ function initializeDashboard() {
 }
 
 // Setup Socket.IO
+// CHANGED socket.on('message') to auto-create chat if closed
 function setupSocketIO() {
   socket = io();
 
@@ -127,9 +129,12 @@ function setupSocketIO() {
   });
 
   socket.on('message', data => {
-    if (activeChats[data.room]) appendMessageToChat(data.room, data.username, data.msg);
-  
-    // Play the receive sound only if the message is from someone else
+    // Auto-create chat if it doesn't exist
+    if (!activeChats[data.room]) {
+      createChatBox(data.room, [data.username]);
+    }
+    appendMessageToChat(data.room, data.username, data.msg);
+
     if (data.username !== username) {
       const receiveSound = document.getElementById('message_receive_sound');
       if (receiveSound) {
@@ -137,9 +142,15 @@ function setupSocketIO() {
       }
     }
   });
-  
 
-  socket.on('user_list', data => updateContactsList(data.users));
+  socket.on('user_list', data => {
+    // CHANGED: Store statuses in userStatuses
+    userStatuses = {};
+    data.users.forEach(u => {
+      userStatuses[u.username] = u.status;
+    });
+    updateContactsList([]);
+  });
 
   socket.on('chat_started', data => {
     const roomName = data.room;
@@ -206,7 +217,7 @@ function searchContacts(query) {
       resultsUl.innerHTML = '';
       data.forEach(contact => {
         const li = document.createElement('li');
-        li.textContent = `${contact.username} (${contact.email}) `;
+        li.textContent = `${contact.username} `;
 
         // Add "Add Contact" button
         const addButton = document.createElement('button');
@@ -246,18 +257,13 @@ function addContact(contactId) {
   });
 }
 
-// Update contacts list
+// CHANGED updateContactsList to show status if available
 function updateContactsList(users) {
-  // Originally this showed all online users. Now we want to show only myContacts.
-  // myContacts = [ {id: X, username: Y}, ... ]
-  // If you no longer care about user status, you can ignore the 'users' parameter entirely.
-
   const contactsList = document.getElementById('contacts-list');
   contactsList.innerHTML = '';
 
-  // Just display myContacts
+  // Display myContacts
   myContacts.forEach(contact => {
-    // If you want checkboxes to start chats, keep them; otherwise remove.
     const listItem = document.createElement('li');
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
@@ -265,36 +271,15 @@ function updateContactsList(users) {
     checkbox.className = 'contact-checkbox';
 
     const label = document.createElement('label');
-    // No status needed now, just show username
-    label.textContent = `${contact.username}`;
+    // Show username and status
+    let status = userStatuses[contact.username] || 'Offline'; // If not in userStatuses, user is offline
+    label.textContent = `${contact.username} (${status})`;
 
     listItem.appendChild(checkbox);
     listItem.appendChild(label);
     contactsList.appendChild(listItem);
   });
 }
-
-/* Update contacts list
-function updateContactsList(users) {
-  const contactsList = document.getElementById('contacts-list');
-  contactsList.innerHTML = '';
-  users.forEach(user => {
-    if (user.username === username) return;
-
-    const listItem = document.createElement('li');
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.value = user.username;
-    checkbox.className = 'contact-checkbox';
-
-    const label = document.createElement('label');
-    label.textContent = `${user.username} (${user.status})`;
-
-    listItem.appendChild(checkbox);
-    listItem.appendChild(label);
-    contactsList.appendChild(listItem);
-  });
-} */
 
 // Start a group chat
 function startChat() {
