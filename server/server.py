@@ -1,7 +1,7 @@
 # server/server.py
 import eventlet
 eventlet.monkey_patch() 
-from flask import Flask, request, jsonify, send_from_directory, session, redirect, render_template
+from flask import Flask, request, jsonify, session, redirect, render_template
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from collections import defaultdict
 import logging
@@ -37,6 +37,11 @@ if not fernet_key:
     raise ValueError("FERNET_KEY not set in environment.")
 logging.debug("FERNET_KEY successfully loaded.")
 f = Fernet(fernet_key.encode())
+
+# Test page: delete when ready
+@app.route('/test', methods=['GET'])
+def test():
+    return render_template('index.html')
 
 @app.route('/get_env', methods=['GET'])
 def get_env():
@@ -151,7 +156,7 @@ def get_username():
 @app.route('/dashboard', methods=['GET'])
 def dashboard():
     if 'username' in session:
-        return send_from_directory(app.static_folder, 'dashboard.html')
+        return send_from_directory('dashboard.html')
     else:
         return redirect('/login')
 
@@ -424,7 +429,7 @@ def logout():
 # Password forget/reset
 @app.route('/forgot_password', methods=['GET'])
 def forgot_password_page():
-    return send_from_directory(app.static_folder, 'forgot_password.html')
+    return send_from_directory('forgot_password.html')
 
 @app.route('/forgot_password', methods=['POST'])
 def forgot_password():
@@ -452,7 +457,7 @@ def forgot_password():
 
 @app.route('/reset_password', methods=['GET'])
 def reset_password_page():
-    return send_from_directory(app.static_folder, 'reset_password.html')
+    return send_from_directory('reset_password.html')
 
 @app.route('/update_password', methods=['POST'])
 def update_password():
