@@ -1,18 +1,36 @@
 // app.js
-// Initialize Supabase client
-// Make sure SUPABASE_URL and SUPABASE_KEY are defined before this point.
-// If using a bundler or server template, they should be available.
-const SUPABASE_URL = SUPABASE_URL;
-const SUPABASE_KEY = SUPABASE_KEY;
-const { createClient } = window.supabase;
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
+let SUPABASE_URL, SUPABASE_KEY;
+let supabase;
 let socket;
 let typingTimeout;
 let username = null; // Store the logged-in username
 const activeChats = {}; // Track active chat boxes and their messages
 let myContacts = []; // store users' contacts after fetching them
 let userStatuses = {}; // store {username: status} from user_list event
+
+// Fetch environment variables from the server
+async function fetchEnvVariables() {
+  try {
+    const response = await fetch('/get_env');
+    if (!response.ok) throw new Error('Failed to fetch environment variables');
+
+    const env = await response.json();
+    SUPABASE_URL = env.SUPABASE_URL;
+    SUPABASE_KEY = env.SUPABASE_KEY;
+
+    // Initialize Supabase after fetching environment variables
+    initializeSupabase();
+  } catch (error) {
+    console.error('Error fetching environment variables:', error);
+  }
+}
+
+// Initialize Supabase client
+function initializeSupabase() {
+  const { createClient } = window.supabase;
+  supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+  console.log('Supabase initialized:', supabase);
+}
 
 // Account creation
 function createAccount() {
@@ -76,6 +94,17 @@ function login() {
       alert('Login failed: ' + error.message);
     });
 }
+
+// Event listener for login button
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.location.pathname === '/login') {
+    const loginBtn = document.getElementById('login-button');
+    if (loginBtn) loginBtn.addEventListener('click', login);
+
+    // Fetch environment variables on login page load
+    fetchEnvVariables();
+  }
+});
 
 // Fetch user's contacts
 function fetchMyContacts() {

@@ -19,9 +19,11 @@ ph = PasswordHasher()
 
 # Load .env
 load_dotenv()
-url: str = os.environ.get("SUPABASE_URL")
-key: str = os.environ.get("SUPABASE_KEY")
-supabase: Client = create_client(url, key)
+# url: str = os.environ.get("SUPABASE_URL")
+# key: str = os.environ.get("SUPABASE_KEY")
+SUPABASE_URL = os.getenv('SUPABASE_URL')
+SUPABASE_KEY = os.getenv('SUPABASE_KEY')
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 app = Flask(__name__, static_folder='../frontend', static_url_path='')
 socketio = SocketIO(app)
@@ -38,6 +40,19 @@ if not fernet_key:
     raise ValueError("FERNET_KEY not set in environment.")
 logging.debug("FERNET_KEY successfully loaded.")
 f = Fernet(fernet_key.encode())
+
+@app.route('/get_env', methods=['GET'])
+def get_env():
+    """
+    Endpoint to provide public environment variables to the client.
+    """
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        return jsonify({'error': 'Environment variables not set'}), 500
+
+    return jsonify({
+        'SUPABASE_URL': SUPABASE_URL,
+        'SUPABASE_KEY': SUPABASE_KEY
+    })
 
 # Begin
 connected_users = {}
@@ -135,6 +150,20 @@ def login():
         if not username or not password:
             return jsonify({'success': False, 'message': 'Username and password are required.'}), 400
 
+        # Verify user credentials with Supabase
+        response = supabase.table('users').select('*').eq('username', username).execute()
+        user = response.data[0] if response.data else None
+
+        if user and ph.verify(user['password'], password):
+            session['username'] = username
+            return jsonify({'success': True, 'message': 'Login successful.'}), 200
+        else:
+            return jsonify({'success': False, 'message': 'Invalid credentials.'}), 401
+
+    except Exception as e:
+        logging.error(f"Login error: {e}")
+        return jsonify({'success': False, 'message': 'An error occurred during login.'}), 500
+        
         # Perform database query in a task
         def db_task():
             with app.app_context():
