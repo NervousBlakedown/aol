@@ -36,6 +36,7 @@ if not gmail_address or not gmail_password:
 fernet_key = os.environ.get("FERNET_KEY")
 if not fernet_key:
     raise ValueError("FERNET_KEY not set in environment.")
+logging.debug("FERNET_KEY successfully loaded.")
 f = Fernet(fernet_key.encode())
 
 # Begin
