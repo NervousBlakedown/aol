@@ -463,6 +463,15 @@ def logout():
     session.pop('username', None)
     return jsonify({'success': True})
 
+# Password forget/reset
+@app.route('/forgot_password', methods=['GET'])
+def forgot_password_page():
+    return send_from_directory(app.static_folder, 'forgot_password.html')
+
+@app.route('/reset_password', methods=['GET'])
+def reset_password_page():
+    return send_from_directory(app.static_folder, 'reset_password.html')
+
 # Run
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)

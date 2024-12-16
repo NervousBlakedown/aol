@@ -1,4 +1,11 @@
 // app.js
+// Initialize Supabase client
+// Make sure SUPABASE_URL and SUPABASE_KEY are defined before this point.
+// If using a bundler or server template, they should be available.
+const SUPABASE_URL = SUPABASE_URL_FROM_ENV;
+const SUPABASE_KEY = SUPABASE_KEY_FROM_ENV;
+const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
 let socket;
 let typingTimeout;
 let username = null; // Store the logged-in username
