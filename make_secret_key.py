@@ -1,7 +1,7 @@
 from cryptography.fernet import Fernet
 
 def main():
-    key = Fernet.generate_key().decode()
+    key = Fernet.generate_key().decode().rstrip("=")
     print("Your new Fernet key is:", key)
     print("Copy this key into your .env file as FERNET_KEY=<key_here>")
 
