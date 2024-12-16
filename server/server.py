@@ -121,8 +121,9 @@ def login():
     try:
         # Authenticate with Supabase
         response = supabase.auth.sign_in_with_password({"email": email, "password": password})
+        logging.debug(f"Supabase login response: {response}")
 
-        if 'error' in response:
+        if 'error' in response and response['error']:
             logging.error(f"Login failed for {email}: {response['error']}")
             return jsonify({'success': False, 'message': 'Invalid email or password.'}), 401
 
@@ -136,7 +137,7 @@ def login():
 
     except Exception as e:
         logging.error(f"Login error: {e}")
-        return jsonify({'success': False, 'message': 'An error occurred during login.'}), 500
+        return jsonify({'success': False, 'message': f'An error occurred during login: {str(e)}'}), 500
 
 
 @app.route('/get_username', methods=['GET'])
