@@ -258,6 +258,34 @@ def add_contact():
         cursor.close()
         conn.close()
 
+# Get contacts
+@app.route('/get_my_contacts', methods=['GET'])
+def get_my_contacts():
+    if 'user_id' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        # Get all contact ids for the logged-in user
+        cursor.execute('SELECT contact_id FROM contacts WHERE user_id = %s', (session['user_id'],))
+        results = cursor.fetchall()
+        contact_ids = [row['contact_id'] for row in results]
+
+        if contact_ids:
+            # Fetch usernames for these contacts
+            cursor.execute('SELECT id, username FROM users WHERE id = ANY(%s)', (contact_ids,))
+            user_rows = cursor.fetchall()
+            contacts = [{'id': row['id'], 'username': row['username']} for row in user_rows]
+        else:
+            contacts = []
+
+        return jsonify(contacts), 200
+    finally:
+        cursor.close()
+        conn.close()
+
+
 
 # Handle user login via Socket.IO
 @socketio.on('login')
@@ -347,5 +375,6 @@ def logout():
     session.pop('username', None)
     return jsonify({'success': True})
 
+# Run
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)

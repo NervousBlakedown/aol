@@ -3,6 +3,7 @@ let socket;
 let typingTimeout;
 let username = null; // Store the logged-in username
 const activeChats = {}; // Track active chat boxes and their messages
+let myContacts = []; // store users' contacts after fetching them
 
 // Account creation
 function createAccount() {
@@ -67,22 +68,52 @@ function login() {
     });
 }
 
-// Initialize dashboard
+// Fetch user's contacts
+function fetchMyContacts() {
+  return fetch('/get_my_contacts', { credentials: 'include' })
+    .then(res => res.json())
+    .then(contactData => {
+      myContacts = contactData; // Store in global variable
+    })
+    .catch(err => {
+      console.error('Error fetching contacts:', err);
+    });
+}
+
+// Init dashboard
 function initializeDashboard() {
   fetch('/get_username', { credentials: 'include' })
     .then(response => (response.ok ? response.json() : window.location.href = '/login'))
     .then(data => {
       username = data.username;
       document.getElementById('username-display').textContent = username;
-      setupSocketIO();
-      document.getElementById('start-chat-button').addEventListener('click', startChat);
+      //setupSocketIO();
+      //document.getElementById('start-chat-button').addEventListener('click', startChat);
 
+      // After we get the username, fetch the user's contacts
+      fetchMyContacts().then(() => {
+        setupSocketIO();
+        document.getElementById('start-chat-button').addEventListener('click', startChat);
       // Logout button
       const logoutButton = document.getElementById('logout-button');
       if (logoutButton) {
         logoutButton.addEventListener('click', logout);
       }
+      // set up search input listener
+      const searchInput = document.getElementById('search-input');
+      if (searchInput) {
+        searchInput.addEventListener('input', () => {
+          const query = searchInput.value.trim();
+          if (!query) {
+            document.getElementById('search-results').innerHTML = '';
+          } else {
+            searchContacts(query);
+          }
+        });
+      }
+      // Now that I have contacts and search set up, I can handle updates
     });
+  });
 }
 
 // Setup Socket.IO
@@ -166,7 +197,84 @@ function createChatBox(roomName, users) {
   });
 }
 
+// ADDED: Search contacts function
+function searchContacts(query) {
+  fetch(`/search_contacts?query=${encodeURIComponent(query)}`, { credentials: 'include' })
+    .then(response => response.json())
+    .then(data => {
+      const resultsUl = document.getElementById('search-results');
+      resultsUl.innerHTML = '';
+      data.forEach(contact => {
+        const li = document.createElement('li');
+        li.textContent = `${contact.username} (${contact.email}) `;
+
+        // Add "Add Contact" button
+        const addButton = document.createElement('button');
+        addButton.textContent = 'Add Contact';
+        addButton.addEventListener('click', () => addContact(contact.id));
+        li.appendChild(addButton);
+
+        resultsUl.appendChild(li);
+      });
+    })
+    .catch(error => console.error('Error fetching contacts:', error));
+}
+
+// ADDED: addContact function
+function addContact(contactId) {
+  fetch('/add_contact', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ contact_id: contactId })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert('Contact added successfully!');
+      // After adding a contact, re-fetch user contacts and update the list
+      fetchMyContacts().then(() => {
+        updateContactsList([]); // Pass empty array here, since updateContactsList now only uses myContacts
+      });
+    } else {
+      alert('Failed to add contact: ' + data.message);
+    }
+  })
+  .catch(error => {
+    console.error('Error adding contact:', error);
+    alert('An error occurred while adding the contact.');
+  });
+}
+
 // Update contacts list
+function updateContactsList(users) {
+  // Originally this showed all online users. Now we want to show only myContacts.
+  // myContacts = [ {id: X, username: Y}, ... ]
+  // If you no longer care about user status, you can ignore the 'users' parameter entirely.
+
+  const contactsList = document.getElementById('contacts-list');
+  contactsList.innerHTML = '';
+
+  // Just display myContacts
+  myContacts.forEach(contact => {
+    // If you want checkboxes to start chats, keep them; otherwise remove.
+    const listItem = document.createElement('li');
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.value = contact.username;
+    checkbox.className = 'contact-checkbox';
+
+    const label = document.createElement('label');
+    // No status needed now, just show username
+    label.textContent = `${contact.username}`;
+
+    listItem.appendChild(checkbox);
+    listItem.appendChild(label);
+    contactsList.appendChild(listItem);
+  });
+}
+
+/* Update contacts list
 function updateContactsList(users) {
   const contactsList = document.getElementById('contacts-list');
   contactsList.innerHTML = '';
@@ -186,20 +294,16 @@ function updateContactsList(users) {
     listItem.appendChild(label);
     contactsList.appendChild(listItem);
   });
-}
+} */
 
 // Start a group chat
 function startChat() {
   const selectedUsers = Array.from(document.querySelectorAll('.contact-checkbox:checked')).map(cb => cb.value);
   
   if (selectedUsers.length === 0) {
-    alert('Please select at least one contact to start a chat...obviously.');
+    alert('Select at least one contact to start a chat...obviously.');
     return;
   }
-  
-  // If there's only one selected user, it's a one-on-one chat.
-  // If more than one, it's a group chat.
-  // The server treats them similarly: it just creates a room with the given participants.
   
   socket.emit('start_chat', { users: [...selectedUsers, username] });
 }
