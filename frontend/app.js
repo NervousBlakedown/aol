@@ -257,12 +257,14 @@ function addContact(contactId) {
   });
 }
 
-// CHANGED updateContactsList to show status if available
 function updateContactsList(users) {
   const contactsList = document.getElementById('contacts-list');
   contactsList.innerHTML = '';
 
-  // Display myContacts
+  // Sort contacts alphabetically by username
+  myContacts.sort((a, b) => a.username.localeCompare(b.username));
+
+  // Display contacts
   myContacts.forEach(contact => {
     const listItem = document.createElement('li');
     const checkbox = document.createElement('input');
