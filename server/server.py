@@ -13,10 +13,11 @@ from psycopg2.extras import RealDictCursor
 from datetime import timedelta
 from server.send_email import send_email
 from supabase import create_client, Client
+from cryptography.fernet import Fernet
 logging.basicConfig(level=logging.DEBUG)
 ph = PasswordHasher()
 
-# Load environment variables from .env
+# Load .env
 load_dotenv()
 url: str = os.environ.get("SUPABASE_URL")
 key: str = os.environ.get("SUPABASE_KEY")
@@ -32,6 +33,12 @@ gmail_password = os.getenv('GMAIL_PASSWORD')
 if not gmail_address or not gmail_password:
     raise ValueError("Gmail credentials are not set in the environment variables.")
 
+fernet_key = os.environ.get("FERNET_KEY")
+if not fernet_key:
+    raise ValueError("FERNET_KEY not set in environment.")
+f = Fernet(fernet_key.encode())
+
+# Begin
 connected_users = {}
 user_status = {}  # Store each user's status (Online, Away, Do Not Disturb)
 rooms = defaultdict(list)
@@ -292,9 +299,51 @@ def get_my_contacts():
 def handle_login(data):
     username = data['username']
     connected_users[username] = request.sid
-    user_status[username] = 'Online'  
+    user_status[username] = 'Online'
     emit('user_list', {'users': get_users_with_status()}, broadcast=True)
     logging.debug(f"{username} connected")
+
+    # Fetch undelivered messages for this user
+    if 'user_id' in session:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            # Get all undelivered messages for this user
+            # currently all messages are undelivered because we have no 'delivered' column
+            # Let's assume we never delete them. 
+            # In a real scenario, you might add a 'delivered' boolean column.
+            # For now, just fetch all messages for receiver_id = session['user_id'] and delete after fetching
+            receiver_id = session['user_id']
+            cursor.execute('SELECT id, sender_id, message FROM messages WHERE receiver_id = %s', (receiver_id,))
+            undelivered = cursor.fetchall()
+
+            # Mark them as delivered by deleting
+            message_ids = [row['id'] for row in undelivered]
+            if message_ids:
+                cursor.execute('DELETE FROM messages WHERE id = ANY(%s)', (message_ids, ))
+                conn.commit()
+
+            # Decrypt and emit these messages
+            for m in undelivered:
+                encrypted_msg = m['message']
+                decrypted_msg = f.decrypt(encrypted_msg.encode()).decode()
+
+                # Get sender username
+                cursor.execute('SELECT username FROM users WHERE id = %s', (m['sender_id'],))
+                sender_row = cursor.fetchone()
+                sender_username = sender_row['username'] if sender_row else 'Unknown'
+
+                # Determine room name
+                # If this is a one-on-one chat, room name is sorted usernames
+                # Let's find the current user's username and make room name
+                # since we have sender_username and current username:
+                room_name = "_".join(sorted([username, sender_username]))
+
+                # Emit the message to the client
+                emit('message', {'msg': decrypted_msg, 'username': sender_username, 'room': room_name}, room=request.sid)
+        finally:
+            cursor.close()
+            conn.close()
 
 
 # WebSocket handler for disconnecting users
@@ -353,10 +402,48 @@ def handle_send_message(data):
     username = data['username']
 
     if room in rooms:
-        print(f"Message sent from {username} in room {room}: {message}")
-        emit('message', {'msg': message, 'username': username, 'room': room}, room=room)
+        print(f"Message sent from {username} in room {room}")
+        recipients = [u for u in rooms[room] if u != username]
+
+        # Emit to online recipients
+        online_recipients = [r for r in recipients if r in connected_users]
+        for r in online_recipients:
+            emit('message', {'msg': message, 'username': username, 'room': room}, room=connected_users[r])
+
+        # Store offline recipients' messages encrypted in DB
+        offline_recipients = [r for r in recipients if r not in connected_users]
+        if offline_recipients:
+            # Encrypt message
+            encrypted_message = f.encrypt(message.encode()).decode()
+
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            try:
+                # Need their IDs from usernames
+                # Fetch user ids from usernames
+                user_ids_map = {}
+                # Get sender_id
+                cursor.execute('SELECT id FROM users WHERE username = %s', (username,))
+                sender_row = cursor.fetchone()
+                sender_id = sender_row['id'] if sender_row else None
+
+                # For each offline recipient, store the message
+                for r in offline_recipients:
+                    cursor.execute('SELECT id FROM users WHERE username = %s', (r,))
+                    recipient_row = cursor.fetchone()
+                    if recipient_row and sender_id:
+                        receiver_id = recipient_row['id']
+                        cursor.execute('''
+                            INSERT INTO messages (sender_id, receiver_id, message)
+                            VALUES (%s, %s, %s)
+                        ''', (sender_id, receiver_id, encrypted_message))
+                conn.commit()
+            finally:
+                cursor.close()
+                conn.close()
     else:
         print(f"Error: Room {room} does not exist.")
+
 
 # Typing notifications
 @socketio.on('typing')
