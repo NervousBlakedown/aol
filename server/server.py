@@ -121,12 +121,10 @@ def login():
     try:
         # Login with Supabase Auth
         response = supabase.auth.sign_in_with_password({"email": email, "password": password})
+        
         if 'error' in response:
-            error_message = response['error']['message']
-            if "Email not confirmed" in error_message:
-                return jsonify({'success': False, 'message': 'Please verify your email before logging in.'}), 401
-            return jsonify({'success': False, 'message': 'Invalid email or password.'}), 401
-
+            logging.error(f"Login failed: {response['error']}")
+            return jsonify({'success': False, 'message': response['error']['message']}), 401
 
         # Store user details in session
         session['user'] = {
@@ -139,6 +137,7 @@ def login():
     except Exception as e:
         logging.error(f"Login error: {e}")
         return jsonify({'success': False, 'message': 'An error occurred during login.'}), 500
+
 
 
 @app.route('/get_username', methods=['GET'])
