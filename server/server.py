@@ -95,18 +95,21 @@ def signup():
         return jsonify({'success': False, 'message': 'Email and password are required.'}), 400
 
     try:
-        # Create a new user with Supabase Auth
         response = supabase.auth.sign_up({"email": email, "password": password})
+        
+        # Log the response for debugging
+        logging.debug(f"Supabase signup response: {response}")
+
         if 'error' in response:
             logging.error(f"Signup failed: {response['error']}")
             return jsonify({'success': False, 'message': response['error']['message']}), 400
 
-        # Redirect to verify email page
-        return jsonify({'success': True, 'message': 'Signup successful. Please verify your email.', 'redirect': '/verify_email'}), 201
+        return jsonify({'success': True, 'message': 'Signup successful. Please verify your email.'}), 201
 
     except Exception as e:
         logging.error(f"Signup error: {e}")
         return jsonify({'success': False, 'message': 'An error occurred during signup.'}), 500
+
 
 # Login page
 @app.route('/login', methods=['POST'])
