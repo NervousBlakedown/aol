@@ -437,16 +437,17 @@ def forgot_password():
 
     try:
         # Trigger Supabase forgot password email
-        response = supabase.auth.api.reset_password_for_email(email)
-        if response.get("error"):
+        response = supabase.auth.reset_password_for_email(email)
+        if 'error' in response and response['error']:
             logging.error(f"Password reset error: {response['error']}")
-            return jsonify({"success": False, "message": "Error sending reset email."}), 500
+            return jsonify({"success": False, "message": response['error']['message']}), 500
 
         return jsonify({"success": True, "message": "Password reset email sent."}), 200
 
     except Exception as e:
         logging.error(f"Forgot password error: {e}")
         return jsonify({"success": False, "message": "An error occurred while sending the reset email."}), 500
+
 
 
 
