@@ -71,33 +71,30 @@ function createAccount() {
 
 // Handle login process
 function login() {
-  const screenName = document.getElementById('username').value.trim(); // Fetch screen name
-  const password = document.getElementById('password').value.trim(); // Fetch password
+  const email = document.getElementById('email').value.trim(); // Get email input
+  const password = document.getElementById('password').value.trim(); // Get password input
 
-  if (!screenName || !password) {
-    alert('Please enter your screen name and password.');
+  if (!email || !password) {
+    alert('Please enter both your email and password.');
     return;
   }
 
   fetch('/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username: screenName, password }) // Send screen name instead of email
+    body: JSON.stringify({ email, password }) // Send email and password
   })
     .then(response => (response.ok ? response.json() : response.json().then(data => Promise.reject(data))))
-    .then(data => {
-      if (data.success) {
-        alert(data.message);
-        window.location.href = '/dashboard';
-      } else {
-        alert(data.message); // Show error message from backend
-      }
+    .then(() => {
+      alert('Login successful.');
+      window.location.href = '/dashboard';
     })
     .catch(error => {
-      console.error('Error during login:', error);
-      alert('Login failed: ' + (error.message || 'An error occurred.'));
+      console.error('Error:', error);
+      alert('Login failed: ' + error.message);
     });
 }
+
 
 // Event listener for login button
 document.addEventListener('DOMContentLoaded', () => {

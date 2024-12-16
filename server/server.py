@@ -112,32 +112,19 @@ def signup():
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-    screen_name = data.get('username')  # Fetch the screen name from the request
-    password = data.get('password')
+    email = data.get('email')  # Fetch email
+    password = data.get('password')  # Fetch password
 
-    if not screen_name or not password:
-        return jsonify({'success': False, 'message': 'Screen name and password are required.'}), 400
+    if not email or not password:
+        return jsonify({'success': False, 'message': 'Email and password are required.'}), 400
 
     try:
-        # Retrieve the email associated with the screen name
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('SELECT email FROM users WHERE username = %s', (screen_name,))
-        result = cursor.fetchone()
-
-        if not result:
-            return jsonify({'success': False, 'message': 'Invalid screen name or password.'}), 401
-
-        email = result['email']  # Extract email from the query result
-        cursor.close()
-        conn.close()
-
-        # Authenticate with Supabase using the email
+        # Authenticate with Supabase
         response = supabase.auth.sign_in_with_password({"email": email, "password": password})
 
         if 'error' in response:
-            logging.error(f"Login failed: {response['error']}")
-            return jsonify({'success': False, 'message': response['error']['message']}), 401
+            logging.error(f"Login failed for {email}: {response['error']}")
+            return jsonify({'success': False, 'message': 'Invalid email or password.'}), 401
 
         # Store user details in session
         session['user'] = {
@@ -150,6 +137,7 @@ def login():
     except Exception as e:
         logging.error(f"Login error: {e}")
         return jsonify({'success': False, 'message': 'An error occurred during login.'}), 500
+
 
 @app.route('/get_username', methods=['GET'])
 def get_username():
