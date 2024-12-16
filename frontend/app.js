@@ -221,7 +221,7 @@ function searchContacts(query) {
 
         // Add "Add Contact" button
         const addButton = document.createElement('button');
-        addButton.textContent = 'Add Contact';
+        addButton.textContent = '+';
         addButton.addEventListener('click', () => addContact(contact.id));
         li.appendChild(addButton);
 

@@ -255,3 +255,18 @@ a:hover {
   align-items: flex-start;
   overflow-y: auto; /* CHANGED: Allow scrolling if chats overflow */
 }
+
+.search-contacts button {
+  padding: 5px 8px;
+  border-radius: 50%;
+  line-height: 1;
+  background: linear-gradient(to bottom, #80deea, #00acc1);
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.search-contacts button:hover {
+  background: linear-gradient(to bottom, #00acc1, #00796b);
+}
+
