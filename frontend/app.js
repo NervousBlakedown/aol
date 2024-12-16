@@ -71,27 +71,31 @@ function createAccount() {
 
 // Handle login process
 function login() {
-  username = document.getElementById('username').value.trim();
-  const password = document.getElementById('password').value.trim();
+  const screenName = document.getElementById('username').value.trim(); // Fetch screen name
+  const password = document.getElementById('password').value.trim(); // Fetch password
 
-  if (!username || !password) {
-    alert('Please enter both your screen name and password.');
+  if (!screenName || !password) {
+    alert('Please enter your screen name and password.');
     return;
   }
 
   fetch('/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password })
+    body: JSON.stringify({ username: screenName, password }) // Send screen name instead of email
   })
     .then(response => (response.ok ? response.json() : response.json().then(data => Promise.reject(data))))
-    .then(() => {
-      alert('Login successful.');
-      window.location.href = '/dashboard';
+    .then(data => {
+      if (data.success) {
+        alert(data.message);
+        window.location.href = '/dashboard';
+      } else {
+        alert(data.message); // Show error message from backend
+      }
     })
     .catch(error => {
-      console.error('Error:', error);
-      alert('Login failed: ' + error.message);
+      console.error('Error during login:', error);
+      alert('Login failed: ' + (error.message || 'An error occurred.'));
     });
 }
 
