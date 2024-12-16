@@ -15,13 +15,16 @@ from supabase import create_client, Client
 from cryptography.fernet import Fernet
 logging.basicConfig(level=logging.DEBUG)
 
+# get abs path
+base_dir = os.path.abspath(os.path.dirname(__file__))
+
 # Load .env
 load_dotenv()
 SUPABASE_URL = os.getenv('SUPABASE_URL')
 SUPABASE_KEY = os.getenv('SUPABASE_KEY')
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-app = Flask(__name__, static_folder='frontend/static', template_folder='frontend/templates')
+app = Flask(__name__, static_folder=os.path.join(base_dir, 'frontend', 'static'), template_folder=os.path.join(base_dir, 'frontend', 'templates'))
 socketio = SocketIO(app)
 app.secret_key = 'my_secret_key'  # TODO: Replace with secure, randomly generated key
 app.permanent_session_lifetime = timedelta(minutes = 30)
