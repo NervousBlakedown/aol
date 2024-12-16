@@ -35,6 +35,7 @@ gmail_password = os.getenv('GMAIL_PASSWORD')
 if not gmail_address or not gmail_password:
     raise ValueError("Gmail credentials are not set in the environment variables.")
 
+# Encryption
 fernet_key = os.environ.get("FERNET_KEY")
 if not fernet_key:
     raise ValueError("FERNET_KEY not set in environment.")
@@ -135,14 +136,18 @@ def signup():
     else:
         return jsonify(result), 400 
 
-
 # Login page
 @app.route('/login', methods=['POST'])
 def login():
+    """
+    Handles user login, including verifying argon2-hashed passwords and re-hashing
+    plain-text passwords if necessary (e.g., after a reset).
+    """
     try:
+        # Parse request data
         data = request.get_json()
         if not data:
-            raise ValueError("No JSON data received.")
+            return jsonify({'success': False, 'message': 'No JSON data received.'}), 400
 
         username = data.get('username')
         password = data.get('password')
@@ -150,63 +155,43 @@ def login():
         if not username or not password:
             return jsonify({'success': False, 'message': 'Username and password are required.'}), 400
 
-        # Verify user credentials with Supabase
+        # Fetch user data from Supabase
         response = supabase.table('users').select('*').eq('username', username).execute()
         user = response.data[0] if response.data else None
 
-        if user and ph.verify(user['password'], password):
-            session['username'] = username
-            return jsonify({'success': True, 'message': 'Login successful.'}), 200
-        else:
-            return jsonify({'success': False, 'message': 'Invalid credentials.'}), 401
+        if not user:
+            return jsonify({'success': False, 'message': 'Invalid username or password.'}), 401
+
+        # Extract stored password and determine if it needs re-hashing
+        db_password = user["password"]
+        rehash_needed = False
+
+        try:
+            # Validate password with argon2
+            if not ph.verify(db_password, password):
+                return jsonify({'success': False, 'message': 'Invalid username or password.'}), 401
+        except Exception:
+            # If argon2 verification fails, check if the password is plain text
+            if db_password == password:
+                rehash_needed = True  # Mark for re-hashing
+            else:
+                return jsonify({'success': False, 'message': 'Invalid username or password.'}), 401
+
+        # Store user session
+        session["username"] = username
+        session["user_id"] = user["id"]
+
+        # Re-hash plain text passwords (e.g., after a reset) and update in Supabase
+        if rehash_needed:
+            new_hashed_password = ph.hash(password)
+            supabase.table("users").update({"password": new_hashed_password}).eq("username", username).execute()
+            logging.info(f"Re-hashed password for user {username}.")
+
+        return jsonify({'success': True, 'message': 'Login successful.'}), 200
 
     except Exception as e:
         logging.error(f"Login error: {e}")
         return jsonify({'success': False, 'message': 'An error occurred during login.'}), 500
-        
-        # Perform database query in a task
-        def db_task():
-            with app.app_context():
-                conn = get_db_connection()
-                cursor = conn.cursor()
-                try:
-                    cursor.execute('SELECT * FROM users WHERE username = %s', (username,))
-                    user = cursor.fetchone()
-                    if user and ph.verify(user['password'], password):
-                        return {'success': True, 'message': 'Login successful.'}
-                    else:
-                        return {'success': False, 'message': 'Invalid credentials.'}
-                finally:
-                    cursor.close()
-                    conn.close()
-
-        result = eventlet.spawn(db_task).wait()
-
-        if result['success']:
-            session['username'] = username
-
-            # Retrieve the user's id and store it in the session
-            with app.app_context():
-                conn = get_db_connection()
-                cursor = conn.cursor()
-                cursor.execute('SELECT id FROM users WHERE username = %s', (username,))
-                user_row = cursor.fetchone()
-                cursor.close()
-                conn.close()
-
-            if user_row:
-                session['user_id'] = user_row['id']
-            return jsonify(result), 200
-        else:
-            return jsonify(result), 401
-
-    except ValueError as e:
-        logging.error(f"ValueError: {e}")
-        return jsonify({'success': False, 'message': 'Invalid input. Expected JSON.'}), 400
-    except Exception as e:
-        logging.error(f"Unexpected error: {e}")
-        return jsonify({'success': False, 'message': 'An error occurred.'}), 500
-
 
 @app.route('/get_username', methods=['GET'])
 def get_username():
@@ -321,8 +306,6 @@ def get_my_contacts():
     finally:
         cursor.close()
         conn.close()
-
-
 
 # Handle user login via Socket.IO
 @socketio.on('login')
@@ -449,7 +432,6 @@ def handle_send_message(data):
             conn = get_db_connection()
             cursor = conn.cursor()
             try:
-                # Need their IDs from usernames
                 # Fetch user ids from usernames
                 user_ids_map = {}
                 # Get sender_id
@@ -497,9 +479,62 @@ def logout():
 def forgot_password_page():
     return send_from_directory(app.static_folder, 'forgot_password.html')
 
+@app.route('/forgot_password', methods=['POST'])
+def forgot_password():
+    """
+    Handles password reset by sending Supabase's reset email.
+    """
+    data = request.get_json()
+    email = data.get("email")
+
+    if not email:
+        return jsonify({"success": False, "message": "Email is required."}), 400
+
+    try:
+        # Trigger Supabase forgot password email
+        response = supabase.auth.api.reset_password_for_email(email)
+        if response.get("error"):
+            logging.error(f"Password reset error: {response['error']}")
+            return jsonify({"success": False, "message": "Error sending reset email."}), 500
+
+        return jsonify({"success": True, "message": "Password reset email sent."}), 200
+
+    except Exception as e:
+        logging.error(f"Forgot password error: {e}")
+        return jsonify({"success": False, "message": "An error occurred while sending the reset email."}), 500
+
+
 @app.route('/reset_password', methods=['GET'])
 def reset_password_page():
     return send_from_directory(app.static_folder, 'reset_password.html')
+
+@app.route('/update_password', methods=['POST'])
+def update_password():
+    """
+    Endpoint to update the password after a reset.
+    """
+    data = request.get_json()
+    username = data.get("username")
+    new_password = data.get("new_password")
+
+    if not username or not new_password:
+        return jsonify({"success": False, "message": "Username and new password are required."}), 400
+
+    try:
+        # Hash the new password
+        hashed_password = ph.hash(new_password)
+
+        # Update the password in the database
+        response = supabase.table("users").update({"password": hashed_password}).eq("username", username).execute()
+        if response.get("error"):
+            logging.error(f"Password update error: {response['error']}")
+            return jsonify({"success": False, "message": "Error updating password."}), 500
+
+        return jsonify({"success": True, "message": "Password updated successfully."}), 200
+
+    except Exception as e:
+        logging.error(f"Password update error: {e}")
+        return jsonify({"success": False, "message": "An error occurred while updating the password."}), 500
 
 # Run
 if __name__ == '__main__':
