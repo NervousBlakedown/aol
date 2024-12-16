@@ -1,7 +1,7 @@
 # server/server.py
 import eventlet
 eventlet.monkey_patch() 
-from flask import Flask, request, jsonify, send_from_directory, session, redirect
+from flask import Flask, request, jsonify, send_from_directory, session, redirect, render_template
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from collections import defaultdict
 import logging
@@ -23,7 +23,7 @@ SUPABASE_URL = os.getenv('SUPABASE_URL')
 SUPABASE_KEY = os.getenv('SUPABASE_KEY')
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-app = Flask(__name__, static_folder='../frontend', static_url_path='')
+app = Flask(__name__, static_folder='frontend/static', template_folder='frontend/templates')
 socketio = SocketIO(app)
 app.secret_key = 'my_secret_key'  # TODO: Replace with secure, randomly generated key
 app.permanent_session_lifetime = timedelta(minutes = 30)
@@ -77,14 +77,14 @@ def get_db_connection():
 # Serve signup page by default (root route)
 @app.route('/', methods = ['GET'])
 def default():
-    return send_from_directory(app.static_folder, 'signup.html')
+    return render_template('signup.html')
 
 # Serve login page when user clicks "Already have an account? Log in"
 @app.route('/login', methods=['GET'])
 def login_page():
-    return send_from_directory(app.static_folder, 'index.html')  # index.html is login page
+    return render_template('login.html')
 
-# create account
+# Create account
 @app.route('/signup', methods=['POST'])
 def signup():
     data = request.get_json()
@@ -96,10 +96,8 @@ def signup():
 
     try:
         response = supabase.auth.sign_up({"email": email, "password": password})
-        
         # Log the response for debugging
         logging.debug(f"Supabase signup response: {response}")
-
         if 'error' in response:
             logging.error(f"Signup failed: {response['error']}")
             return jsonify({'success': False, 'message': response['error']['message']}), 400
@@ -123,7 +121,8 @@ def login():
 
     try:
         # Authenticate with Supabase
-        response = supabase.auth.sign_in_with_password({"email": email, "password": password})
+        logging.debug(f"Attempting login for email: {email}")
+        response = supabase.auth.sign_in_with_password(email=email, password=password)
         logging.debug(f"Supabase login response: {response}")
 
         if 'error' in response and response['error']:

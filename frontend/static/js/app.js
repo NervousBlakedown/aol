@@ -29,6 +29,7 @@ async function fetchEnvVariables() {
 function initializeSupabase() {
   const { createClient } = window.supabase;
   supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+  console.log('Supabase URL:', SUPABASE_URL, 'Supabase Key:', SUPABASE_KEY)
   console.log('Supabase initialized:', supabase);
 }
 
@@ -70,40 +71,44 @@ function createAccount() {
 }
 
 // Handle login process
-function login() {
-  const email = document.getElementById('email').value.trim(); // Get email input
-  const password = document.getElementById('password').value.trim(); // Get password input
+async function login() {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value.trim();
 
   if (!email || !password) {
     alert('Please enter both your email and password.');
     return;
   }
 
-  fetch('/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }) // Send email and password
-  })
-    .then(response => (response.ok ? response.json() : response.json().then(data => Promise.reject(data))))
-    .then(() => {
-      alert('Login successful.');
-      window.location.href = '/dashboard';
-    })
-    .catch(error => {
-      console.error('Error:', error);
-      alert('Login failed: ' + error.message);
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: password
     });
+
+    if (error) {
+      throw error;
+    }
+
+    alert('Login successful!');
+    window.location.href = '/dashboard';
+  } catch (error) {
+    console.error('Login error:', error.message);
+    alert(`Login failed: ${error.message}`);
+  }
 }
+
 
 
 // Event listener for login button
 document.addEventListener('DOMContentLoaded', () => {
   if (window.location.pathname === '/login') {
-    const loginBtn = document.getElementById('login-button');
-    if (loginBtn) loginBtn.addEventListener('click', login);
-
-    // Fetch environment variables on login page load
-    fetchEnvVariables();
+      const loginBtn = document.getElementById('login-button');
+      if (loginBtn) loginBtn.addEventListener('click', login);
+      fetchEnvVariables();
+  } else if (window.location.pathname === '/') {
+      const signupBtn = document.getElementById('signup-button');
+      if (signupBtn) signupBtn.addEventListener('click', createAccount);
   }
 });
 
