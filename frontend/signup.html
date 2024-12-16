@@ -41,44 +41,34 @@
     };
 
     // Handle account creation form submission
-    document.getElementById('create-account-button').addEventListener('click', function () {
-      // Get values from input fields
-      const email = document.getElementById('email').value;
-      const username = document.getElementById('username').value;
-      const password = document.getElementById('password').value;
+    document.getElementById('create-account-button').addEventListener('click', async function () {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
 
-      // Ensure all fields are filled
-      if (email && username && password) {
-        // Send the data to the server using fetch API
-        fetch('/signup', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            email: email,
-            username: username,
-            password: password,
-          }),
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            alert('Account created successfully.');
-            // Optionally redirect to login page after successful signup
-            window.location.href = "/login";
-          } else {
-            alert(data.message);
-          }
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          alert('An error occurred during account creation.');
-        });
-      } else {
-        alert('Please fill out all fields.');
+      if (!email || !password) {
+          alert('Please fill out all fields.');
+          return;
       }
-    });
-  </script>
+
+      try {
+          const response = await fetch('/signup', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email, password })
+          });
+
+          const data = await response.json();
+          if (data.success) {
+              window.location.href = data.redirect || '/verify_email';
+        }   else {
+              alert(data.message);
+        }
+    } catch (error) {
+        console.error('Signup error:', error);
+        alert('An error occurred during signup.');
+    }
+});
+
+</script>
 </body>
 </html>

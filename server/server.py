@@ -3,7 +3,6 @@ import eventlet
 eventlet.monkey_patch() 
 from flask import Flask, request, jsonify, send_from_directory, session, redirect
 from flask_socketio import SocketIO, emit, join_room, leave_room
-from argon2 import PasswordHasher
 from collections import defaultdict
 import logging
 import os
@@ -15,7 +14,6 @@ from server.send_email import send_email
 from supabase import create_client, Client
 from cryptography.fernet import Fernet
 logging.basicConfig(level=logging.DEBUG)
-ph = PasswordHasher()
 
 # Load .env
 load_dotenv()
@@ -86,112 +84,62 @@ def default():
 def login_page():
     return send_from_directory(app.static_folder, 'index.html')  # index.html is login page
 
-# Signup page for POST requests (handles account creation)
+# create account
 @app.route('/signup', methods=['POST'])
 def signup():
     data = request.get_json()
-    email = data['email']
-    username = data['username']
-    password = ph.hash(data['password']) 
+    email = data.get('email')
+    password = data.get('password')
 
-    def db_task():
-        with app.app_context():
-            conn = get_db_connection()  
-            cursor = conn.cursor()
-        try:
-            # Check if username or email already exists
-            logging.debug(f"Checking if user {username} or email {email} exists.")
-            cursor.execute('SELECT * FROM users WHERE username = %s OR email = %s', (username, email))
-            if cursor.fetchone():
-                logging.warning(f"User {username} or email {email} already exists.")
-                return {'success': False, 'message': 'Username or email already exists.'}
+    if not email or not password:
+        return jsonify({'success': False, 'message': 'Email and password are required.'}), 400
 
-            # Insert new user into database
-            logging.debug(f"Inserting user {username} into the database.")
-            cursor.execute(
-                'INSERT INTO users (email, username, password) VALUES (%s, %s, %s)',
-                (email, username, password)
-            )
-            conn.commit()  # Commit the transaction
-            logging.info(f"User {username} successfully created.")
-            # return {'success': True, 'message': 'Account created successfully.'}
+    try:
+        # Create a new user with Supabase Auth
+        response = supabase.auth.sign_up({"email": email, "password": password})
+        if 'error' in response:
+            logging.error(f"Signup failed: {response['error']}")
+            return jsonify({'success': False, 'message': response['error']['message']}), 400
 
-            # send 'welcome' email after account creation
-            logging.debug(f"Sending welcome email to {email}.")
-            send_email(email)
-            return {'success': True, 'message': 'Account created successfully.'}
+        # Redirect to verify email page
+        return jsonify({'success': True, 'message': 'Signup successful. Please verify your email.', 'redirect': '/verify_email'}), 201
 
-        except Exception as e:
-            logging.error(f"Unexpected error: {e}")
-            return {'success': False, 'message': f"Unexpected error: {e}"}
-
-        finally:
-            cursor.close()
-            conn.close()
-
-    result = eventlet.spawn(db_task).wait()
-
-    if result['success']:
-        return jsonify(result), 201  
-    else:
-        return jsonify(result), 400 
+    except Exception as e:
+        logging.error(f"Signup error: {e}")
+        return jsonify({'success': False, 'message': 'An error occurred during signup.'}), 500
 
 # Login page
 @app.route('/login', methods=['POST'])
 def login():
-    """
-    Handles user login, including verifying argon2-hashed passwords and re-hashing
-    plain-text passwords if necessary (e.g., after a reset).
-    """
+    data = request.get_json()
+    email = data.get('email')
+    password = data.get('password')
+
+    if not email or not password:
+        return jsonify({'success': False, 'message': 'Email and password are required.'}), 400
+
     try:
-        # Parse request data
-        data = request.get_json()
-        if not data:
-            return jsonify({'success': False, 'message': 'No JSON data received.'}), 400
+        # Login with Supabase Auth
+        response = supabase.auth.sign_in_with_password({"email": email, "password": password})
+        if 'error' in response:
+            error_message = response['error']['message']
+            if "Email not confirmed" in error_message:
+                return jsonify({'success': False, 'message': 'Please verify your email before logging in.'}), 401
+            return jsonify({'success': False, 'message': 'Invalid email or password.'}), 401
 
-        username = data.get('username')
-        password = data.get('password')
 
-        if not username or not password:
-            return jsonify({'success': False, 'message': 'Username and password are required.'}), 400
-
-        # Fetch user data from Supabase
-        response = supabase.table('users').select('*').eq('username', username).execute()
-        user = response.data[0] if response.data else None
-
-        if not user:
-            return jsonify({'success': False, 'message': 'Invalid username or password.'}), 401
-
-        # Extract stored password and determine if it needs re-hashing
-        db_password = user["password"]
-        rehash_needed = False
-
-        try:
-            # Validate password with argon2
-            if not ph.verify(db_password, password):
-                return jsonify({'success': False, 'message': 'Invalid username or password.'}), 401
-        except Exception:
-            # If argon2 verification fails, check if the password is plain text
-            if db_password == password:
-                rehash_needed = True  # Mark for re-hashing
-            else:
-                return jsonify({'success': False, 'message': 'Invalid username or password.'}), 401
-
-        # Store user session
-        session["username"] = username
-        session["user_id"] = user["id"]
-
-        # Re-hash plain text passwords (e.g., after a reset) and update in Supabase
-        if rehash_needed:
-            new_hashed_password = ph.hash(password)
-            supabase.table("users").update({"password": new_hashed_password}).eq("username", username).execute()
-            logging.info(f"Re-hashed password for user {username}.")
+        # Store user details in session
+        session['user'] = {
+            'id': response['user']['id'],
+            'email': response['user']['email']
+        }
 
         return jsonify({'success': True, 'message': 'Login successful.'}), 200
 
     except Exception as e:
         logging.error(f"Login error: {e}")
         return jsonify({'success': False, 'message': 'An error occurred during login.'}), 500
+
 
 @app.route('/get_username', methods=['GET'])
 def get_username():
@@ -471,8 +419,8 @@ def handle_stop_typing(data):
 
 @app.route('/logout', methods=['POST'])
 def logout():
-    session.pop('username', None)
-    return jsonify({'success': True})
+    session.pop('user', None)
+    return jsonify({'success': True, 'message': 'Logged out successfully.'}), 200
 
 # Password forget/reset
 @app.route('/forgot_password', methods=['GET'])
@@ -481,9 +429,6 @@ def forgot_password_page():
 
 @app.route('/forgot_password', methods=['POST'])
 def forgot_password():
-    """
-    Handles password reset by sending Supabase's reset email.
-    """
     data = request.get_json()
     email = data.get("email")
 
@@ -504,6 +449,7 @@ def forgot_password():
         return jsonify({"success": False, "message": "An error occurred while sending the reset email."}), 500
 
 
+
 @app.route('/reset_password', methods=['GET'])
 def reset_password_page():
     return send_from_directory(app.static_folder, 'reset_password.html')
@@ -514,18 +460,18 @@ def update_password():
     Endpoint to update the password after a reset.
     """
     data = request.get_json()
-    username = data.get("username")
+    access_token = data.get("access_token")  # Supabase token after password reset
     new_password = data.get("new_password")
 
-    if not username or not new_password:
-        return jsonify({"success": False, "message": "Username and new password are required."}), 400
+    if not access_token or not new_password:
+        return jsonify({"success": False, "message": "Access token and new password are required."}), 400
 
     try:
-        # Hash the new password
-        hashed_password = ph.hash(new_password)
-
-        # Update the password in the database
-        response = supabase.table("users").update({"password": hashed_password}).eq("username", username).execute()
+        # Update password using Supabase
+        response = supabase.auth.api.update_user(
+            access_token,
+            {"password": new_password}
+        )
         if response.get("error"):
             logging.error(f"Password update error: {response['error']}")
             return jsonify({"success": False, "message": "Error updating password."}), 500
@@ -535,6 +481,7 @@ def update_password():
     except Exception as e:
         logging.error(f"Password update error: {e}")
         return jsonify({"success": False, "message": "An error occurred while updating the password."}), 500
+
 
 # Run
 if __name__ == '__main__':
