@@ -452,7 +452,7 @@ def forgot_password():
     }
     data = {
         "email": email,
-        "redirect_to": "https://your-app.com/reset_password"
+        "redirect_to": "https://blakeol.onrender.com/forgot_password"
     }
     try:
         response = requests.post(f"{SUPABASE_URL}/auth/v1/recover", json=data, headers=headers)
@@ -462,7 +462,7 @@ def forgot_password():
         logging.error(f"Supabase API Error: {e}")
         return jsonify({"success": False, "message": "Failed to send reset email. Please try again later."}), 500
 
-
+# Reset password (after forgotten)
 @app.route('/reset_password', methods=['GET'])
 def reset_password_page():
     return render_template('reset_password.html')
