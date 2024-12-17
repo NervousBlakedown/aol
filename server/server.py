@@ -440,15 +440,27 @@ def forgot_password_page():
 
 @app.route('/forgot_password', methods=['POST'])
 def forgot_password():
-    email = request.form.get("email") if not request.is_json else request.get_json().get("email")
+    email = request.json.get("email") if request.is_json else request.form.get("email")
+
     if not email:
         return jsonify({"success": False, "message": "Email is required."}), 400
 
-    result = send_supabase_reset_email(email)
-    if result['success']:
-        return jsonify({"success": True, "message": result['message']}), 200
-    else:
-        return jsonify({"success": False, "message": result['message']}), 500
+    headers = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": "application/json"
+    }
+    data = {
+        "email": email,
+        "redirect_to": "https://your-app.com/reset_password"
+    }
+    try:
+        response = requests.post(f"{SUPABASE_URL}/auth/v1/recover", json=data, headers=headers)
+        response.raise_for_status()
+        return jsonify({"success": True, "message": "Password reset email sent successfully."}), 200
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Supabase API Error: {e}")
+        return jsonify({"success": False, "message": "Failed to send reset email. Please try again later."}), 500
 
 
 @app.route('/reset_password', methods=['GET'])
