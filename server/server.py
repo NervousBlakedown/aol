@@ -152,7 +152,6 @@ def login():
             'id': response.user.id,
             'email': response.user.email
         }
-
         return jsonify({'success': True, 'message': 'Login successful.'}), 200
     except Exception as e:
         logging.error(f"Login error: {e}")

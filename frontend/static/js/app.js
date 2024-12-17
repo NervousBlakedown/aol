@@ -143,25 +143,6 @@ document.getElementById('create-account-button').addEventListener('click', async
   }
 });
 
-// Event listener for login button
-document.addEventListener('DOMContentLoaded', () => {
-  const currentPath = window.location.pathname;
-
-  if (currentPath === '/login') {
-    const loginBtn = document.getElementById('login-button');
-    if (loginBtn) {
-      fetchEnvVariables();  // Initialize Supabase
-      loginBtn.addEventListener('click', login);  // Attach login event listener
-    }
-  } else if (currentPath === '/') {
-    const signupBtn = document.getElementById('create-account-button');
-    if (signupBtn) {
-      fetchEnvVariables();  // Initialize Supabase
-      signupBtn.addEventListener('click', createAccount);  // Attach signup event listener
-    }
-  }
-});
-
 // Fetch user's contacts
 function fetchMyContacts() {
   return fetch('/get_my_contacts', { credentials: 'include' })
@@ -434,6 +415,25 @@ function playLoginSound() {
   const loginSound = document.getElementById('login_sound');
   if (loginSound) loginSound.play();
 }
+
+// Event listener for login button
+document.addEventListener('DOMContentLoaded', () => {
+  const currentPath = window.location.pathname;
+
+  if (currentPath === '/login') {
+    const loginBtn = document.getElementById('login-button');
+    if (loginBtn) {
+      fetchEnvVariables();  // Initialize Supabase
+      loginBtn.addEventListener('click', login);  // Attach login event listener
+    }
+  } else if (currentPath === '/') {
+    const signupBtn = document.getElementById('create-account-button');
+    if (signupBtn) {
+      fetchEnvVariables();  // Initialize Supabase
+      signupBtn.addEventListener('click', createAccount);  // Attach signup event listener
+    }
+  }
+});
 
 // Logout function
 function logout() {
