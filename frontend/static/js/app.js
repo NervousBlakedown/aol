@@ -22,6 +22,7 @@ async function fetchEnvVariables() {
     initializeSupabase();
   } catch (error) {
     console.error('Error fetching environment variables:', error);
+    throw error;
   }
 }
 
@@ -416,25 +417,6 @@ function playLoginSound() {
   if (loginSound) loginSound.play();
 }
 
-// Event listener for login button
-document.addEventListener('DOMContentLoaded', () => {
-  const currentPath = window.location.pathname;
-
-  if (currentPath === '/login') {
-    const loginBtn = document.getElementById('login-button');
-    if (loginBtn) {
-      fetchEnvVariables();  // Initialize Supabase
-      loginBtn.addEventListener('click', login);  // Attach login event listener
-    }
-  } else if (currentPath === '/') {
-    const signupBtn = document.getElementById('create-account-button');
-    if (signupBtn) {
-      fetchEnvVariables();  // Initialize Supabase
-      signupBtn.addEventListener('click', createAccount);  // Attach signup event listener
-    }
-  }
-});
-
 // Logout function
 function logout() {
   fetch('/logout', { method: 'POST', credentials: 'include' })
@@ -447,3 +429,28 @@ function logout() {
       }
     });
 }
+
+// Event listener for login button
+document.addEventListener('DOMContentLoaded', async () => {
+  const currentPath = window.location.pathname;
+
+  try {
+    // Wait for Supabase to initialize
+    await fetchEnvVariables();
+
+    if (currentPath === '/login') {
+      const loginBtn = document.getElementById('login-button');
+      if (loginBtn) {
+        loginBtn.addEventListener('click', login); // Attach login event listener
+      }
+    } else if (currentPath === '/') {
+      const signupBtn = document.getElementById('create-account-button');
+      if (signupBtn) {
+        signupBtn.addEventListener('click', createAccount); // Attach signup event listener
+      }
+    }
+  } catch (error) {
+    console.error('Error initializing the environment:', error);
+    alert('An error occurred while initializing the application. Please try again.');
+  }
+});
