@@ -205,12 +205,13 @@ def search_contacts():
     try:
         # Use Supabase Admin API to get all users
         response = supabase_admin.auth.admin.list_users()
-        users = response.users  # List of user objects
+        users = response # .users  # List of user objects
 
         # Filter users based on username in raw_user_meta_data
         matching_users = []
         for user in users:
-            user_metadata = user.user_metadata
+            user_metadata = user.get('user_metadata', {})
+            # user_metadata = user.user_metadata
             if user_metadata and 'username' in user_metadata:
                 username = user_metadata['username']
                 if query in username.lower():  # Case-insensitive search
