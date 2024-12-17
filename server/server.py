@@ -16,8 +16,8 @@ from cryptography.fernet import Fernet
 logging.basicConfig(level=logging.DEBUG)
 
 # get paths
-print("Working Directory:", os.getcwd())
-print("Base Directory (__name__):", os.path.abspath(os.path.dirname(__name__)))
+# print("Working Directory:", os.getcwd())
+# print("Base Directory (__name__):", os.path.abspath(os.path.dirname(__name__)))
 base_dir = os.path.abspath(os.path.dirname(__name__))
 static_dir = os.path.join(base_dir, 'frontend', 'static')
 template_dir = os.path.join(base_dir, 'frontend', 'templates')
@@ -440,8 +440,13 @@ def forgot_password_page():
 
 @app.route('/forgot_password', methods=['POST'])
 def forgot_password():
-    data = request.get_json()
-    email = data.get("email")
+    # Check if the request is JSON
+    if request.is_json:
+        data = request.get_json()
+        email = data.get("email")
+    else:
+        # Handle form data from an HTML form
+        email = request.form.get("email")
 
     if not email:
         return jsonify({"success": False, "message": "Email is required."}), 400
@@ -458,8 +463,6 @@ def forgot_password():
     except Exception as e:
         logging.error(f"Forgot password error: {e}")
         return jsonify({"success": False, "message": "An error occurred while sending the reset email."}), 500
-
-
 
 
 @app.route('/reset_password', methods=['GET'])
