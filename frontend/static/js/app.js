@@ -432,31 +432,28 @@ function logout() {
 }
 
 // Event listener for login button
-document.addEventListener('DOMContentLoaded', async () => {
+async function initializeApp() {
   try {
-    // Initialize Supabase first
+    // Step 1: Fetch environment variables and initialize Supabase
     await fetchEnvVariables();
 
-    // Attach event listeners after initialization
-    const currentPath = window.location.pathname;
-
-    if (currentPath === '/login') {
+    // Step 2: Wait for DOMContentLoaded and attach event listeners
+    document.addEventListener('DOMContentLoaded', () => {
       const loginBtn = document.getElementById('login-button');
-      if (loginBtn) {
-        loginBtn.addEventListener('click', login);
-      } else {
-        console.error("Login button not found in the DOM.");
-      }
-    } else if (currentPath === '/') {
       const signupBtn = document.getElementById('create-account-button');
-      if (signupBtn) {
+
+      if (window.location.pathname === '/login' && loginBtn) {
+        loginBtn.addEventListener('click', login);
+        console.log("Login button listener attached.");
+      } else if (window.location.pathname === '/' && signupBtn) {
         signupBtn.addEventListener('click', createAccount);
-      } else {
-        console.error("Signup button not found in the DOM.");
+        console.log("Signup button listener attached.");
       }
-    }
+    });
   } catch (error) {
-    console.error('Error during script initialization:', error);
-    alert('An error occurred while loading the application.');
+    console.error('Initialization error:', error);
+    alert('Application failed to initialize.');
   }
-});
+}
+initializeApp();
+
