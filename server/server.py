@@ -41,9 +41,6 @@ if not gmail_address or not gmail_password:
 
 # Encryption
 fernet_key = os.environ.get("FERNET_KEY")
-if not fernet_key:
-    raise ValueError("FERNET_KEY not set in environment.")
-logging.debug("FERNET_KEY successfully loaded.")
 f = Fernet(fernet_key.encode())
 
 # Test page: delete when ready
@@ -201,6 +198,32 @@ def search_contacts():
     if 'user' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
 
+    query = request.args.get('query', '').strip().lower()
+    if not query:
+        return jsonify([])  # Return empty list if no query provided
+
+    try:
+        # Use Supabase Admin API to get all users
+        response = supabase_admin.auth.admin.list_users()
+        users = response.users  # List of user objects
+
+        # Filter users based on username in raw_user_meta_data
+        matching_users = []
+        for user in users:
+            user_metadata = user.user_metadata
+            if user_metadata and 'username' in user_metadata:
+                username = user_metadata['username']
+                if query in username.lower():  # Case-insensitive search
+                    matching_users.append({'username': username})
+
+        return jsonify(matching_users), 200
+    except Exception as e:
+        logging.error(f"Error searching contacts: {e}")
+        return jsonify({'error': 'Failed to fetch contacts'}), 500
+"""def search_contacts():
+    if 'user' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
     query = request.args.get('query', '')
     if not query:
         return jsonify([])  # Return empty list if no query is provided
@@ -216,7 +239,7 @@ def search_contacts():
         return jsonify(contacts), 200
     except Exception as e:
         logging.error(f"Error searching contacts: {e}")
-        return jsonify({'error': 'Failed to fetch contacts'}), 500
+        return jsonify({'error': 'Failed to fetch contacts'}), 500"""
 
 
 # Add contacts
