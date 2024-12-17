@@ -61,8 +61,6 @@ function createAccount() {
 
 // Handle login process
 function login() {
-  console.log("Login button clicked."); // Confirm button event
-
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value.trim();
 
@@ -74,35 +72,34 @@ function login() {
   supabase.auth.signInWithPassword({ email, password })
     .then(({ error }) => {
       if (error) throw new Error(error.message);
-      console.log("Supabase authentication successful.");
 
-      // Send login info to Flask for session management
       return fetch('/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
-        credentials: 'include' // Ensure cookies are sent
+        credentials: 'include'
       });
     })
-    .then(response => response.json())
-    .then(result => {
-      console.log('Server response:', result);
-
-      if (!result.success) {
-        throw new Error(result.message || "Server failed to establish session.");
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Failed to establish session with server.');
       }
-      
-      console.log('Login successful. Redirecting to dashboard...');
-      // Delay to ensure session cookie is set
-      setTimeout(() => {
-        window.location.href = '/dashboard';
-      }, 500); // 500ms slight delay
+      return response.json();
+    })
+    .then(result => {
+      if (result.success) {
+        console.log('Login successful. Redirecting to dashboard...');
+        window.location.href = '/dashboard'; // Redirect to dashboard
+      } else {
+        throw new Error(result.message || 'Unknown error occurred.');
+      }
     })
     .catch(error => {
       console.error('Login error:', error);
       alert(`Login failed: ${error.message}`);
     });
 }
+
 
 
 // Fetch user's contacts

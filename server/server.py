@@ -186,21 +186,17 @@ def dashboard():
     if 'user' in session:
         try:
             user_id = session['user']['id']
-            response = supabase.table("auth.users").select("raw_user_meta_data").eq("id", user_id).single().execute()
-            
-            if response.data:
-                # Extract username from raw_user_meta_data
-                username = response.data["raw_user_meta_data"].get("username", "User")
-            else:
-                username = "User"  # Default if not found
-            
+
+            # Fetch username from raw_user_meta_data
+            response = supabase.auth.admin.get_user_by_id(user_id)
+            username = response.user.user_metadata.get('username', 'User')
+
             return render_template('dashboard.html', username=username)
         except Exception as e:
             logging.error(f"Error fetching username for dashboard: {e}")
             return redirect('/login')
     else:
         return redirect('/login')
-
 
 # Search Contacts
 @app.route('/search_contacts', methods=['GET'])
@@ -409,8 +405,6 @@ def start_chat(data):
 
     emit('chat_started', {'room': room_name, 'users': usernames}, room=room_name)
 
-
-@socketio.on('send_message')
 @socketio.on('send_message')
 def handle_send_message(data):
     room = data['room']
