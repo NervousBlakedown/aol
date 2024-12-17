@@ -151,20 +151,24 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       console.error('Logout button not found on dashboard.');
     }
+
     // search contacts
     const searchInput = document.getElementById('search-input');
     if (searchInput) {
       searchInput.addEventListener('input', () => {
         const query = searchInput.value.trim();
-        if (query) {
-          searchContacts(query);
-        } else {
-          document.getElementById('search-results').innerHTML = ''; // clear search results
-        }
+        if (query) searchContacts(query);
+        else document.getElementById('search-results').innerHTML = ''; // clear search results
       });
-      console.log('search contacts listener attached');
+    }
+
+    // Start Chat button
+    const startChatButton = document.getElementById('start-chat-button');
+    if (startChatButton) {
+      startChatButton.addEventListener('click', startChat);
+      console.log('Start Chat button listener attached');
     } else {
-      console.error('search input not found on dashboard');
+      console.error('Start Chat button not found on dashboard.');
     }
   }
 });
@@ -348,7 +352,7 @@ function updateContactsList(users) {
   });
 }
 
-// Start a group chat
+// Start chat
 function startChat() {
   const selectedUsers = Array.from(document.querySelectorAll('.contact-checkbox:checked')).map(cb => cb.value);
   
@@ -360,8 +364,7 @@ function startChat() {
   socket.emit('start_chat', { users: [...selectedUsers, username] });
 }
 
-
-// Send a message
+// Send message
 function sendMessage(roomName) {
   const input = document.getElementById(`message-${roomName}`);
   const message = input.value.trim();

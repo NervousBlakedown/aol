@@ -376,7 +376,7 @@ def get_users_with_status():
 def generate_room_name(users):
     return "_".join(sorted(users))  # Use sorted usernames to keep names consistent
 
-# Start a one-on-one or group chat
+# Start chat
 @socketio.on('start_chat')
 def start_chat(data):
     usernames = data['users']
