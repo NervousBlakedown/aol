@@ -117,15 +117,15 @@ def signup():
             }
         })
 
-        # Check for errors returned by Supabase
-        if response.error:
-            logging.error(f"Signup error: {response.error['message']}")
-            return jsonify({'success': False, 'message': response.error['message']}), 400
-
-        return jsonify({'success': True, 'message': 'Signup successful. Please verify your email.'}), 201
+        if response.user:
+            logging.info(f"User created successfully: {response.user.email}")
+            return jsonify({'success': True, 'message': 'Signup successful!'}), 201
+        else:
+            error_message = response.error.message if response.error else "Unknown error"
+            return jsonify({'success': False, 'message': error_message}), 400
     except Exception as e:
-        logging.error(f"Exception during signup: {e}")
-        return jsonify({'success': False, 'message': 'An internal error occurred during signup.'}), 500
+        logging.error(f"Signup error: {e}")
+        return jsonify({'success': False, 'message': 'An error occurred during signup.'}), 500
 
 # Login page
 @app.route('/login', methods=['POST'])
@@ -155,23 +155,27 @@ def login():
         logging.error(f"Login error: {e}")
         return jsonify({'success': False, 'message': f'An error occurred during login: {str(e)}'}), 500
 
+# Get username
 @app.route('/get_username', methods=['GET'])
 def get_username():
     if 'user' in session:
-        return jsonify({'username': session['user']['email']})
+        try:
+            user_id = session['user']['id']
+
+            # Query Supabase to get user's raw_user_meta_data
+            response = supabase.table("auth.users").select("raw_user_meta_data").eq("id", user_id).single().execute()
+            if response.data:
+                username = response.data["raw_user_meta_data"].get("username", "Unknown")
+                return jsonify({'username': username})
+            else:
+                return jsonify({'error': 'User not found'}), 404
+        except Exception as e:
+            logging.error(f"Error fetching username: {e}")
+            return jsonify({'error': 'Failed to fetch username'}), 500
     else:
         return jsonify({'error': 'Unauthorized'}), 401
 
-# Test: test session for login to dashboard after successful login
-@app.route('/check_session', methods=['GET'])
-def check_session():
-    if 'user' in session:
-        return jsonify({'success': True, 'message': 'Session is active!', 'user': session['user']})
-    else:
-        return jsonify({'success': False, 'message': 'Session not active'})
-
-
-# DMain page
+# Main page
 @app.route('/dashboard', methods=['GET'])
 def dashboard():
     if 'user' in session and session['user'].get('email'):

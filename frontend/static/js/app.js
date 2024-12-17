@@ -112,6 +112,36 @@ async function login() {
   }
 }
 
+// Signup success response
+document.getElementById('create-account-button').addEventListener('click', async function () {
+  const email = document.getElementById('email').value.trim();
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value.trim();
+
+  if (!email || !username || !password) {
+    alert('Please fill out all fields.');
+    return;
+  }
+
+  try {
+    const response = await fetch('/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, username, password })
+    });
+
+    const data = await response.json();
+    if (response.ok && data.success) {
+      alert('Signup successful! Please check your email to verify your account.');
+      window.location.href = '/login';
+    } else {
+      alert(data.message || 'Signup failed. Please try again.');
+    }
+  } catch (error) {
+    console.error('Signup error:', error);
+    alert('An error occurred. Please try again.');
+  }
+});
 
 // Event listener for login button
 document.addEventListener('DOMContentLoaded', () => {
@@ -139,7 +169,6 @@ function fetchMyContacts() {
 
 // Init dashboard
 function initializeDashboard() {
-  // Fetch session user details
   fetch('/get_username', { credentials: 'include' })
     .then(response => {
       if (!response.ok) {
@@ -148,16 +177,13 @@ function initializeDashboard() {
       return response.json();
     })
     .then(data => {
-      // Display user's email as the username
-      const userEmail = data.email;
-      document.getElementById('username-display').textContent = userEmail;
-
-      // Initialize dashboard features
-      return fetchMyContacts();
-    })
-    .then(() => {
-      setupSocketIO(); // Initialize Socket.IO
-      attachEventListeners(); // Attach button and input listeners
+      if (data.username) {
+        username = data.username; // Store it globally
+        document.getElementById('username-display').textContent = username;
+      } else {
+        alert('Failed to fetch username.');
+        window.location.href = '/login';
+      }
     })
     .catch(error => {
       console.error("Error initializing dashboard:", error);
