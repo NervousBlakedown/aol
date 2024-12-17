@@ -10,7 +10,7 @@ SUPABASE_KEY = os.getenv('SUPABASE_KEY')
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # Reset password functionality
-def update_user_password(reset_token, new_password):
+def reset_password(reset_token, new_password):
     """
     Update the user's password using the Supabase API.
 

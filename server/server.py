@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from datetime import datetime, timedelta
-from server.auth_utils import update_user_password
+from server.auth_utils import reset_password as reset_user_password
 from supabase import create_client, Client
 from cryptography.fernet import Fernet
 logging.basicConfig(level=logging.DEBUG)
@@ -621,7 +621,10 @@ def reset_password():
     data = request.get_json()
     new_password = data.get('new_password')
 
-    result = update_user_password(reset_token, new_password)
+    if not reset_token or not new_password:
+        return jsonify({"success": False, "message": "Missing reset token or password."}), 400
+
+    result = reset_user_password(reset_token, new_password)
 
     if result["success"]:
         return jsonify(result), 200
