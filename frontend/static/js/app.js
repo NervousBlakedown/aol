@@ -127,14 +127,39 @@ function fetchMyContacts() {
           const contactsList = document.getElementById('contacts-list');
           contactsList.innerHTML = '';
 
+          // Sort contacts alphabetically
+          data.sort((a, b) => a.username.localeCompare(b.username));
+
+          // Render contacts with checkboxes
           data.forEach(contact => {
+            const listItem = document.createElement('li');
+            listItem.className = 'contact-item';
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'contact-checkbox';
+            checkbox.value = contact.username;
+
+            const label = document.createElement('label');
+            label.textContent = contact.username;
+            label.className = 'contact-label';
+
+            listItem.appendChild(checkbox);
+            listItem.appendChild(label);
+            contactsList.appendChild(listItem);
+        });
+    })
+    .catch(err => console.error('Error fetching contacts:', err));
+}
+
+          /* data.forEach(contact => {
               const listItem = document.createElement('li');
               listItem.textContent = contact.username;
               contactsList.appendChild(listItem);
           });
       })
       .catch(err => console.error('Error fetching contacts:', err));
-}
+} */
 
 /* function fetchMyContacts() {
   fetch('/get_my_contacts', { credentials: 'include' })
@@ -144,6 +169,23 @@ function fetchMyContacts() {
     })
     .catch(err => console.error('Error fetching contacts:', err));
 } */
+
+// Chat/checkbox functionality
+function startChat() {
+  // Get all checked checkboxes and extract their values (contact usernames)
+  const selectedContacts = Array.from(document.querySelectorAll('.contact-checkbox:checked'))
+                                .map(checkbox => checkbox.value);
+
+  if (selectedContacts.length === 0) {
+      alert('Please select at least one contact to start a chat.');
+      return;
+  }
+
+  console.log('Starting chat with:', selectedContacts);
+
+  // Emit the chat start event with selected users
+  socket.emit('start_chat', { users: [...selectedContacts, username] });
+}
 
 // Event listener
 document.addEventListener('DOMContentLoaded', () => {
@@ -190,6 +232,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 });
+
+
+
 
 // Logout function
 function logout() {
