@@ -213,7 +213,6 @@ def search_contacts():
             for user in response.data
             if "username" in user["raw_user_meta_data"] and query.lower() in user["raw_user_meta_data"]["username"].lower()
         ]
-
         return jsonify(contacts), 200
     except Exception as e:
         logging.error(f"Error searching contacts: {e}")

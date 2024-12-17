@@ -26,6 +26,11 @@ body, html {
   border-right: 1px solid #80deea;
 }
 
+.contacts-search-section {
+  display: block; /* Ensure it is visible */
+  margin: 10px 0;
+}
+
 /* User info (top of sidebar) */
 .user-info {
   text-align: center;
@@ -59,7 +64,15 @@ body, html {
 }
 
 #search-input {
+  width: 100%;
+  padding: 5px;
   margin-bottom: 10px;
+}
+
+#search-results {
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
 /* Contacts list in sidebar */

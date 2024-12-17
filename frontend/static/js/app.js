@@ -138,9 +138,11 @@ document.addEventListener('DOMContentLoaded', () => {
   if (currentPath === '/login') {
     const loginBtn = document.getElementById('login-button');
     if (loginBtn) loginBtn.addEventListener('click', login);
+
   } else if (currentPath === '/') {
     const signupBtn = document.getElementById('create-account-button');
     if (signupBtn) signupBtn.addEventListener('click', createAccount);
+
   } else if (currentPath === '/dashboard') {
     const logoutButton = document.getElementById('logout-button');
     if (logoutButton) {
@@ -148,6 +150,21 @@ document.addEventListener('DOMContentLoaded', () => {
       console.log('Logout button listener attached');
     } else {
       console.error('Logout button not found on dashboard.');
+    }
+    // search contacts
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+      searchInput.addEventListener('input', () => {
+        const query = searchInput.value.trim();
+        if (query) {
+          searchContacts(query);
+        } else {
+          document.getElementById('search-results').innerHTML = ''; // clear search results
+        }
+      });
+      console.log('search contacts listener attached');
+    } else {
+      console.error('search input not found on dashboard');
     }
   }
 });
