@@ -122,34 +122,29 @@ def signup():
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-    email = data.get('email')  # Fetch email
-    password = data.get('password')  # Fetch password
+    email = data.get('email')
+    password = data.get('password')
 
     if not email or not password:
         return jsonify({'success': False, 'message': 'Email and password are required.'}), 400
 
     try:
         # Authenticate with Supabase
-        logging.debug(f"Attempting login for email: {email}")
-        response = supabase.auth.sign_in_with_password(email=email, password=password)
-        logging.debug(f"Supabase login response: {response}")
-
-        if 'error' in response and response['error']:
-            logging.error(f"Login failed for {email}: {response['error']}")
+        response = supabase.auth.sign_in_with_password({"email": email, "password": password})
+        
+        if response.user is None:
             return jsonify({'success': False, 'message': 'Invalid email or password.'}), 401
 
-        # Store user details in session
+        # Set the session in Flask
         session['user'] = {
-            'id': response['user']['id'],
-            'email': response['user']['email']
+            'id': response.user.id,
+            'email': response.user.email
         }
 
         return jsonify({'success': True, 'message': 'Login successful.'}), 200
-
     except Exception as e:
         logging.error(f"Login error: {e}")
         return jsonify({'success': False, 'message': f'An error occurred during login: {str(e)}'}), 500
-
 
 @app.route('/get_username', methods=['GET'])
 def get_username():
