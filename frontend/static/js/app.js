@@ -169,6 +169,7 @@ function startChat() {
   console.log('Starting chat with:', selectedContacts);
 
   // Emit the chat start event with selected users
+  console.log('Emitting start_chat event:', selectedContacts);
   socket.emit('start_chat', { users: [...selectedContacts, username] });
 
   // Automatically open the chat window
@@ -281,8 +282,11 @@ function setupSocketIO() {
   });
 
   socket.on('chat_started', data => {
+    console.log('Chat started event received:', data);
     const roomName = data.room;
-    if (!activeChats[roomName]) createChatBox(roomName, data.users);
+    if (!activeChats[roomName]) {
+      createChatBox(roomName, data.users);
+    }
   });
 
   socket.on('typing', data => {
@@ -298,7 +302,12 @@ function setupSocketIO() {
 
 // Create a chat box
 function createChatBox(roomName, users) {
+  console.log('Creating chat box for room:', roomName, 'Users:', users);
   const chatsContainer = document.getElementById('chats-container');
+  if (!chatsContainer) {
+    console.error('Chats container not found.');
+    return;
+  }
   const chatBox = document.createElement('div');
   chatBox.className = 'chat-box';
   chatBox.id = `chat-box-${roomName}`;
