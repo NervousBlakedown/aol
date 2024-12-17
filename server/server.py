@@ -100,20 +100,25 @@ def signup():
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
+    username = data.get('username')  # New username input
 
-    if not email or not password:
-        return jsonify({'success': False, 'message': 'Email and password are required.'}), 400
+    if not email or not password or not username:
+        return jsonify({'success': False, 'message': 'Email, password, and username are required.'}), 400
 
     try:
-        response = supabase.auth.sign_up({"email": email, "password": password})
-        # Log the response for debugging
-        logging.debug(f"Supabase signup response: {response}")
-        if 'error' in response:
-            logging.error(f"Signup failed: {response['error']}")
-            return jsonify({'success': False, 'message': response['error']['message']}), 400
+        # Include username in raw_user_meta_data
+        response = supabase.auth.sign_up({
+            "email": email,
+            "password": password,
+            "options": {
+                "data": {"username": username}
+            }
+        })
+
+        if response.error:
+            return jsonify({'success': False, 'message': response.error['message']}), 400
 
         return jsonify({'success': True, 'message': 'Signup successful. Please verify your email.'}), 201
-
     except Exception as e:
         logging.error(f"Signup error: {e}")
         return jsonify({'success': False, 'message': 'An error occurred during signup.'}), 500
@@ -165,40 +170,51 @@ def check_session():
 # DMain page
 @app.route('/dashboard', methods=['GET'])
 def dashboard():
+    if 'user' in session and session['user'].get('email'):
+        user_email = session['user']['email']
+        return render_template('dashboard.html', email=user_email)
+    else:
+        return redirect('/login')
+"""def dashboard():
     if 'user' in session:
         return render_template('dashboard.html', email = session['user'].get('email'))
     else:
-        return redirect('/login')
+        return redirect('/login')"""
 
 # Search Contacts
 @app.route('/search_contacts', methods=['GET'])
 def search_contacts():
-    # Ensure the user is logged in
-    if 'user_id' not in session:
+    if 'user' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
 
     query = request.args.get('query', '')
-
     if not query:
         return jsonify([])  # Return empty list if no query is provided
 
     conn = get_db_connection()
     cursor = conn.cursor()
-
     try:
-        # Search for users by username or email, exclude the current user
+        # Search users by username (stored in raw_user_meta_data)
         cursor.execute('''
-            SELECT id, username, email 
-            FROM users 
-            WHERE (username LIKE %s OR email LIKE %s) 
-            AND id != %s  -- Exclude the logged-in user from results
-        ''', (f'%{query}%', f'%{query}%', session['user_id']))
+            SELECT id, email, raw_user_meta_data 
+            FROM auth.users
+            WHERE raw_user_meta_data->>'username' ILIKE %s AND email != %s
+        ''', (f'%{query}%', session['user']['email']))
 
         results = cursor.fetchall()
-        contacts = [{'id': row['id'], 'username': row['username'], 'email': row['email']} for row in results]
+        contacts = [
+            {
+                'username': row['raw_user_meta_data']['username'],
+                'email': row['email']
+            }
+            for row in results
+        ]
 
         return jsonify(contacts)
 
+    except Exception as e:
+        logging.error(f"Error searching contacts: {e}")
+        return jsonify({'error': 'Failed to fetch contacts'}), 500
     finally:
         cursor.close()
         conn.close()
@@ -206,41 +222,35 @@ def search_contacts():
 # Add contacts
 @app.route('/add_contact', methods=['POST'])
 def add_contact():
-    # Ensure the user is logged in
-    if 'user_id' not in session:
+    if 'user' not in session:
         return jsonify({'success': False, 'message': 'Unauthorized'}), 401
 
+    user_id = session['user']['id']
     data = request.get_json()
-    contact_id = data.get('contact_id')
+    contact_email = data.get('contact_email')  # Get email to add contact
 
-    if not contact_id:
-        return jsonify({'success': False, 'message': 'Invalid contact ID'})
-
-    conn = get_db_connection()
-    cursor = conn.cursor()
+    if not contact_email:
+        return jsonify({'success': False, 'message': 'Contact email is required.'}), 400
 
     try:
-        # Check if the contact already exists
-        cursor.execute('''
-            SELECT * FROM contacts 
-            WHERE user_id = %s AND contact_id = %s
-        ''', (session['user_id'], contact_id))
+        # Query `auth.users` to find the contact's user ID
+        response = supabase.table("auth.users").select("id").eq("email", contact_email).single().execute()
+        contact_user_id = response.data.get('id')
 
-        if cursor.fetchone():
-            return jsonify({'success': False, 'message': 'Contact already added'})
+        if not contact_user_id:
+            return jsonify({'success': False, 'message': 'User not found.'}), 404
 
-        # Insert the new contact relationship
-        cursor.execute('''
-            INSERT INTO contacts (user_id, contact_id) 
-            VALUES (%s, %s)
-        ''', (session['user_id'], contact_id))
+        # Insert into public.contacts
+        supabase.table("contacts").insert({
+            "user_id": user_id,
+            "contact_id": contact_user_id
+        }).execute()
 
-        conn.commit()
-        return jsonify({'success': True, 'message': 'Contact added successfully!'})
+        return jsonify({'success': True, 'message': 'Contact added successfully.'}), 200
+    except Exception as e:
+        logging.error(f"Error adding contact: {e}")
+        return jsonify({'success': False, 'message': 'An error occurred while adding the contact.'}), 500
 
-    finally:
-        cursor.close()
-        conn.close()
 
 # Get contacts
 @app.route('/get_my_contacts', methods=['GET'])
@@ -371,53 +381,70 @@ def start_chat(data):
 
 
 @socketio.on('send_message')
+@socketio.on('send_message')
 def handle_send_message(data):
     room = data['room']
     message = data['message']
-    username = data['username']
+    sender_email = data['username']  # Use sender's email as input
+    print(f"Message received in room {room} from {sender_email}")
 
-    if room in rooms:
-        print(f"Message sent from {username} in room {room}")
-        recipients = [u for u in rooms[room] if u != username]
-
-        # Emit to online recipients
-        online_recipients = [r for r in recipients if r in connected_users]
-        for r in online_recipients:
-            emit('message', {'msg': message, 'username': username, 'room': room}, room=connected_users[r])
-
-        # Store offline recipients' messages encrypted in DB
-        offline_recipients = [r for r in recipients if r not in connected_users]
-        if offline_recipients:
-            # Encrypt message
-            encrypted_message = f.encrypt(message.encode()).decode()
-
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            try:
-                # Fetch user ids from usernames
-                user_ids_map = {}
-                # Get sender_id
-                cursor.execute('SELECT id FROM users WHERE username = %s', (username,))
-                sender_row = cursor.fetchone()
-                sender_id = sender_row['id'] if sender_row else None
-
-                # For each offline recipient, store the message
-                for r in offline_recipients:
-                    cursor.execute('SELECT id FROM users WHERE username = %s', (r,))
-                    recipient_row = cursor.fetchone()
-                    if recipient_row and sender_id:
-                        receiver_id = recipient_row['id']
-                        cursor.execute('''
-                            INSERT INTO messages (sender_id, receiver_id, message)
-                            VALUES (%s, %s, %s)
-                        ''', (sender_id, receiver_id, encrypted_message))
-                conn.commit()
-            finally:
-                cursor.close()
-                conn.close()
-    else:
+    if room not in rooms:
         print(f"Error: Room {room} does not exist.")
+        return
 
+    # Identify recipients (all except the sender)
+    recipients = [u for u in rooms[room] if u != sender_email]
+
+    # Emit to online recipients
+    online_recipients = [r for r in recipients if r in connected_users]
+    for r in online_recipients:
+        emit('message', {'msg': message, 'username': sender_email, 'room': room}, room=connected_users[r])
+
+    # Store encrypted messages for offline recipients
+    offline_recipients = [r for r in recipients if r not in connected_users]
+    if offline_recipients:
+        encrypted_message = f.encrypt(message.encode()).decode()
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        try:
+            # Fetch sender's ID and username from auth.users
+            cursor.execute('''
+                SELECT id, raw_user_meta_data 
+                FROM auth.users 
+                WHERE email = %s
+            ''', (sender_email,))
+            sender_row = cursor.fetchone()
+            if not sender_row:
+                print("Sender not found in auth.users")
+                return
+            
+            sender_id = sender_row['id']
+            sender_username = sender_row['raw_user_meta_data'].get('username', 'Unknown')
+
+            # Store messages for each offline recipient
+            for recipient_email in offline_recipients:
+                cursor.execute('''
+                    SELECT id 
+                    FROM auth.users 
+                    WHERE email = %s
+                ''', (recipient_email,))
+                recipient_row = cursor.fetchone()
+
+                if recipient_row:
+                    receiver_id = recipient_row['id']
+                    cursor.execute('''
+                        INSERT INTO messages (sender_id, receiver_id, message, delivered, timestamp)
+                        VALUES (%s, %s, %s, %s, NOW())
+                    ''', (sender_id, receiver_id, encrypted_message, False))
+
+            conn.commit()
+
+        except Exception as e:
+            logging.error(f"Error storing offline messages: {e}")
+        finally:
+            cursor.close()
+            conn.close()
 
 # Typing notifications
 @socketio.on('typing')

@@ -7,7 +7,7 @@
 <div class="layout">
     <div class="sidebar">
         <div class="user-info">
-            <h2>Welcome, <span id="username-display">{{ email }}</span>!</h2>
+            <h2>Welcome, <span id="username-display">{{ email or 'User' }}</span>!</h2>
             <button id="logout-button">Logout</button>
         </div>
         <div class="status-section">

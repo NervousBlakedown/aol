@@ -286,21 +286,21 @@ function createChatBox(roomName, users) {
   });
 }
 
-// ADDED: Search contacts function
+// Search contacts 
 function searchContacts(query) {
   fetch(`/search_contacts?query=${encodeURIComponent(query)}`, { credentials: 'include' })
     .then(response => response.json())
     .then(data => {
       const resultsUl = document.getElementById('search-results');
       resultsUl.innerHTML = '';
+
       data.forEach(contact => {
         const li = document.createElement('li');
-        li.textContent = `${contact.username} `;
+        li.textContent = `${contact.username} (${contact.email})`;
 
-        // Add "Add Contact" button
         const addButton = document.createElement('button');
-        addButton.textContent = '+';
-        addButton.addEventListener('click', () => addContact(contact.id));
+        addButton.textContent = 'Add';
+        addButton.addEventListener('click', () => addContact(contact.email));
         li.appendChild(addButton);
 
         resultsUl.appendChild(li);
