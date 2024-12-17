@@ -441,27 +441,23 @@ def forgot_password_page():
 
 @app.route('/forgot_password', methods=['POST'])
 def forgot_password():
+    # Debug to verify email extraction
+    logging.debug("Handling forgot password request...")
     email = request.json.get("email") if request.is_json else request.form.get("email")
+    print(f"Email received: {email}")
 
     if not email:
         return jsonify({"success": False, "message": "Email is required."}), 400
 
-    headers = {
-        "apikey": SUPABASE_KEY,
-        "Authorization": f"Bearer {SUPABASE_KEY}",
-        "Content-Type": "application/json"
-    }
-    data = {
-        "email": email,
-        "redirect_to": "https://blakeol.onrender.com/forgot_password"
-    }
-    try:
-        response = requests.post(f"{SUPABASE_URL}/auth/v1/recover", json=data, headers=headers)
-        response.raise_for_status()
-        return jsonify({"success": True, "message": "Password reset email sent successfully."}), 200
-    except requests.exceptions.RequestException as e:
-        logging.error(f"Supabase API Error: {e}")
-        return jsonify({"success": False, "message": "Failed to send reset email. Please try again later."}), 500
+    # Call the function to send the reset email
+    result = send_supabase_reset_email(email)
+
+    print(f"Result: {result}")  # Debug output
+    if result['success']:
+        return jsonify({"success": True, "message": result['message']}), 200
+    else:
+        return jsonify({"success": False, "message": result['message']}), 500
+
 
 # Reset password (after forgotten)
 @app.route('/reset_password', methods=['GET'])
