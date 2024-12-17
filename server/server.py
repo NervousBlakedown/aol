@@ -25,6 +25,7 @@ template_dir = os.path.join(base_dir, 'frontend', 'templates')
 load_dotenv()
 SUPABASE_URL = os.getenv('SUPABASE_URL')
 SUPABASE_KEY = os.getenv('SUPABASE_KEY')
+SUPABASE_SERVICE_KEY = os.getenv('SUPABASE_SERVICE_KEY')
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 logging.debug(f"Supabase URL: {SUPABASE_URL}, Supabase Key: {SUPABASE_KEY}")
 
@@ -163,7 +164,7 @@ def get_username():
             user_id = session['user']['id']
 
             # Fetch the username from raw_user_meta_data
-            response = supabase.auth.admin.get_user_by_id(user_id)
+            response = supabase_admin.auth.admin.get_user_by_id(user_id)
             if response.user:
                 username = response.user.user_metadata.get('username', 'Unknown')
                 return jsonify({'username': username}), 200
@@ -176,7 +177,6 @@ def get_username():
         return jsonify({'error': 'Unauthorized'}), 401
 
 
-
 # Main page
 @app.route('/dashboard', methods=['GET'])
 def dashboard():
@@ -185,7 +185,7 @@ def dashboard():
             user_id = session['user']['id']
 
             # Fetch username from raw_user_meta_data
-            response = supabase.auth.admin.get_user_by_id(user_id)
+            response = supabase_admin.auth.admin.get_user_by_id(user_id)
             username = response.user.user_metadata.get('username', 'User')
 
             return render_template('dashboard.html', username=username)
