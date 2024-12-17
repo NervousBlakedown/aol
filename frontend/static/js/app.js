@@ -142,7 +142,8 @@ function fetchMyContacts() {
 
             const label = document.createElement('label');
             const status = userStatuses[contact.username] || 'Offline';
-            label.textContent = '${contact.username} (${status})';
+            label.textContent = contact.username + ' (' + (userStatuses[contact.username] || 'Offline') + ')';
+            // label.textContent = contact.username, status;
             // label.textContent = contact.username;
             label.className = 'contact-label';
 
