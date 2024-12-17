@@ -136,6 +136,7 @@ def login():
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
+    response = supabase.auth.sign_in_with_password({"email": email, "password": password})
 
     if not email or not password:
         return jsonify({'success': False, 'message': 'Email and password are required.'}), 400
@@ -164,11 +165,12 @@ def get_username():
         try:
             user_id = session['user']['id']
 
-            # Query Supabase to get user's raw_user_meta_data
-            response = supabase.table("auth.users").select("raw_user_meta_data").eq("id", user_id).single().execute()
-            if response.data:
-                username = response.data["raw_user_meta_data"].get("username", "Unknown")
-                return jsonify({'username': username})
+            # Query Supabase auth to fetch user data
+            response = supabase.auth.admin.get_user_by_id(user_id)
+
+            if response.user:
+                username = response.user.user_metadata.get("username", "Unknown")
+                return jsonify({'username': username}), 200
             else:
                 return jsonify({'error': 'User not found'}), 404
         except Exception as e:
@@ -176,6 +178,7 @@ def get_username():
             return jsonify({'error': 'Failed to fetch username'}), 500
     else:
         return jsonify({'error': 'Unauthorized'}), 401
+
 
 # Main page
 @app.route('/dashboard', methods=['GET'])
@@ -209,33 +212,30 @@ def search_contacts():
     if not query:
         return jsonify([])  # Return empty list if no query is provided
 
-    conn = get_db_connection()
-    cursor = conn.cursor()
     try:
-        # Search users by username (stored in raw_user_meta_data)
-        cursor.execute('''
-            SELECT id, email, raw_user_meta_data 
-            FROM auth.users
-            WHERE raw_user_meta_data->>'username' ILIKE %s AND email != %s
-        ''', (f'%{query}%', session['user']['email']))
+        # Query Supabase to fetch users by username from raw_user_meta_data
+        response = supabase.table("auth.users") \
+            .select("id, email, raw_user_meta_data") \
+            .execute()
 
-        results = cursor.fetchall()
-        contacts = [
+        users = response.data
+
+        # Filter users based on the query and exclude the current user
+        current_email = session['user']['email']
+        filtered_users = [
             {
-                'username': row['raw_user_meta_data']['username'],
-                'email': row['email']
+                'username': user['raw_user_meta_data']['username'],
+                'email': user['email']
             }
-            for row in results
+            for user in users
+            if query.lower() in user['raw_user_meta_data'].get('username', '').lower()
+            and user['email'] != current_email
         ]
 
-        return jsonify(contacts)
-
+        return jsonify(filtered_users), 200
     except Exception as e:
         logging.error(f"Error searching contacts: {e}")
         return jsonify({'error': 'Failed to fetch contacts'}), 500
-    finally:
-        cursor.close()
-        conn.close()
 
 # Add contacts
 @app.route('/add_contact', methods=['POST'])
@@ -273,29 +273,41 @@ def add_contact():
 # Get contacts
 @app.route('/get_my_contacts', methods=['GET'])
 def get_my_contacts():
-    if 'user_id' not in session:
+    if 'user' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
 
-    conn = get_db_connection()
-    cursor = conn.cursor()
     try:
-        # Get all contact ids for the logged-in user
-        cursor.execute('SELECT contact_id FROM contacts WHERE user_id = %s', (session['user_id'],))
-        results = cursor.fetchall()
-        contact_ids = [row['contact_id'] for row in results]
+        user_id = session['user']['id']
 
-        if contact_ids:
-            # Fetch usernames for these contacts
-            cursor.execute('SELECT id, username FROM users WHERE id = ANY(%s)', (contact_ids,))
-            user_rows = cursor.fetchall()
-            contacts = [{'id': row['id'], 'username': row['username']} for row in user_rows]
-        else:
-            contacts = []
+        # Query Supabase contacts table
+        response = supabase.table("contacts") \
+            .select("contact_id") \
+            .eq("user_id", user_id) \
+            .execute()
 
-        return jsonify(contacts), 200
-    finally:
-        cursor.close()
-        conn.close()
+        contacts = response.data
+
+        # Fetch usernames for these contacts
+        contact_ids = [contact['contact_id'] for contact in contacts]
+
+        users_response = supabase.table("auth.users") \
+            .select("id, raw_user_meta_data") \
+            .in_("id", contact_ids) \
+            .execute()
+
+        contacts_list = [
+            {
+                'id': user['id'],
+                'username': user['raw_user_meta_data']['username']
+            }
+            for user in users_response.data
+        ]
+
+        return jsonify(contacts_list), 200
+    except Exception as e:
+        logging.error(f"Error fetching contacts: {e}")
+        return jsonify({'error': 'Failed to fetch contacts'}), 500
+
 
 # Handle user login via Socket.IO
 @socketio.on('login')
