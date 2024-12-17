@@ -16,7 +16,9 @@ from cryptography.fernet import Fernet
 logging.basicConfig(level=logging.DEBUG)
 
 # get paths
-base_dir = os.path.abspath(os.path.dirname(__file__))
+print("Working Directory:", os.getcwd())
+print("Base Directory (__file__):", os.path.abspath(os.path.dirname(__name__)))
+base_dir = os.path.abspath(os.path.dirname(__name__))
 static_dir = os.path.join(base_dir, 'frontend', 'static')
 template_dir = os.path.join(base_dir, 'frontend', 'templates')
 
