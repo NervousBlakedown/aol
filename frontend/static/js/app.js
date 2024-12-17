@@ -126,39 +126,61 @@ function fetchMyContacts() {
 
 // Init dashboard
 function initializeDashboard() {
+  // Fetch session user details
   fetch('/get_username', { credentials: 'include' })
-    .then(response => (response.ok ? response.json() : window.location.href = '/login'))
+    .then(response => {
+      if (!response.ok) {
+        throw new Error("Session invalid, redirecting to login.");
+      }
+      return response.json();
+    })
     .then(data => {
-      username = data.username;
-      document.getElementById('username-display').textContent = username;
-      //setupSocketIO();
-      //document.getElementById('start-chat-button').addEventListener('click', startChat);
+      // Display user's email as the username
+      const userEmail = data.email;
+      document.getElementById('username-display').textContent = userEmail;
 
-      // After we get the username, fetch the user's contacts
-      fetchMyContacts().then(() => {
-        setupSocketIO();
-        document.getElementById('start-chat-button').addEventListener('click', startChat);
-      // Logout button
-      const logoutButton = document.getElementById('logout-button');
-      if (logoutButton) {
-        logoutButton.addEventListener('click', logout);
-      }
-      // set up search input listener
-      const searchInput = document.getElementById('search-input');
-      if (searchInput) {
-        searchInput.addEventListener('input', () => {
-          const query = searchInput.value.trim();
-          if (!query) {
-            document.getElementById('search-results').innerHTML = '';
-          } else {
-            searchContacts(query);
-          }
-        });
-      }
-      // Now that I have contacts and search set up, I can handle updates
+      // Initialize dashboard features
+      return fetchMyContacts();
+    })
+    .then(() => {
+      setupSocketIO(); // Initialize Socket.IO
+      attachEventListeners(); // Attach button and input listeners
+    })
+    .catch(error => {
+      console.error("Error initializing dashboard:", error);
+      window.location.href = '/login';
     });
-  });
 }
+
+// Attach all event listeners
+function attachEventListeners() {
+  // Start chat button
+  const startChatButton = document.getElementById('start-chat-button');
+  if (startChatButton) {
+    startChatButton.addEventListener('click', startChat);
+  }
+
+  // Logout button
+  const logoutButton = document.getElementById('logout-button');
+  if (logoutButton) {
+    logoutButton.addEventListener('click', logout);
+  }
+
+  // Search contacts input
+  const searchInput = document.getElementById('search-input');
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      const query = searchInput.value.trim();
+      const searchResults = document.getElementById('search-results');
+      if (!query) {
+        searchResults.innerHTML = '';
+      } else {
+        searchContacts(query);
+      }
+    });
+  }
+}
+
 
 // Setup Socket.IO
 // CHANGED socket.on('message') to auto-create chat if closed

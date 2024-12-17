@@ -119,7 +119,6 @@ def signup():
         logging.error(f"Signup error: {e}")
         return jsonify({'success': False, 'message': 'An error occurred during signup.'}), 500
 
-
 # Login page
 @app.route('/login', methods=['POST'])
 def login():
@@ -155,16 +154,16 @@ def login():
 
 @app.route('/get_username', methods=['GET'])
 def get_username():
-    if 'username' in session:
-        return jsonify({'username': session['username']})
+    if 'user' in session:
+        return jsonify({'username': session['user']['email']})
     else:
         return jsonify({'error': 'Unauthorized'}), 401
 
-# Dashboard page
+# DMain page
 @app.route('/dashboard', methods=['GET'])
 def dashboard():
-    if 'username' in session:
-        return render_template('dashboard.html')
+    if 'user' in session:
+        return render_template('dashboard.html', email = session['user'].get('email'))
     else:
         return redirect('/login')
 
