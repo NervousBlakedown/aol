@@ -100,28 +100,32 @@ def signup():
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
-    username = data.get('username')  # New username input
+    username = data.get('username')  # Username input from the form
 
     if not email or not password or not username:
         return jsonify({'success': False, 'message': 'Email, password, and username are required.'}), 400
 
     try:
-        # Include username in raw_user_meta_data
+        # Properly include username in raw_user_meta_data
         response = supabase.auth.sign_up({
             "email": email,
             "password": password,
             "options": {
-                "data": {"username": username}
+                "data": {
+                    "username": username  # Metadata field
+                }
             }
         })
 
+        # Check for errors returned by Supabase
         if response.error:
+            logging.error(f"Signup error: {response.error['message']}")
             return jsonify({'success': False, 'message': response.error['message']}), 400
 
         return jsonify({'success': True, 'message': 'Signup successful. Please verify your email.'}), 201
     except Exception as e:
-        logging.error(f"Signup error: {e}")
-        return jsonify({'success': False, 'message': 'An error occurred during signup.'}), 500
+        logging.error(f"Exception during signup: {e}")
+        return jsonify({'success': False, 'message': 'An internal error occurred during signup.'}), 500
 
 # Login page
 @app.route('/login', methods=['POST'])

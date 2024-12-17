@@ -58,14 +58,14 @@ function createAccount() {
     .then(response => response.json())
     .then(data => {
       if (data.success) {
-        alert('Account created successfully.');
+        alert('Account created successfully! Please verify email.');
         window.location.href = '/login';
       } else {
-        alert('Failed to create account: ' + data.message);
+        alert('Sign up failed: ' + data.message);
       }
     })
     .catch(error => {
-      console.error('Error:', error);
+      console.error('Error during signup:', error);
       alert('Error occurred while creating account.');
     });
 }
