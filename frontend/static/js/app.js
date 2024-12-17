@@ -110,7 +110,9 @@ function setupSocketIO() {
     if (!activeChats[roomName]) createChatBox(roomName, data.users);
   });
 
-  socket.on('message', data => appendMessageToChat(data.room, data.username, data.msg));
+  socket.on('message', data => {
+    appendMessageToChat(data.room, data.username, data.msg, data.timestamp);
+  });
 
   socket.on('user_list', data => {
     userStatuses = {};
@@ -128,7 +130,7 @@ function initializeDashboard() {
     .then(data => {
       if (data.username) {
         username = data.username;
-        document.getElementById('username-display').textContent = `Welcome, ${username}!`;
+        document.getElementById('username-display').textContent = username; //`Welcome, ${username}!`;
         socket.emit('login', { username });
       } else {
         alert('Error fetching username.');
@@ -172,18 +174,64 @@ function startChat() {
   ).map(cb => cb.value);
 
   if (selectedContacts.length === 0) {
-    alert('Select at least one contact to start a chat.');
+    alert('You like talking to yourself?');
     return;
   }
-
-  const roomName = selectedContacts.join('_');
-  socket.emit('start_chat', { users: [...selectedContacts, username] });
-
-  if (!activeChats[roomName]) createChatBox(roomName, selectedContacts);
+  // Exclude self from room participants
+  const roomParticipants = [username, ...selectedContacts];
+  const uniqueRoomName = roomParticipants.sort().join('_'); // Sort to maintain consistency
+  //const roomParticipants = selectedContacts.filter(contact => contact !== username);
+  //const roomName = selectedContacts.join('_');
+  socket.emit('start_chat', { users: roomParticipants });
+  // socket.emit('start_chat', { users: [...selectedContacts, username] });
+// Create the chat box if it doesn't exist
+  if (!activeChats[uniqueRoomName]) {
+    createChatBox(uniqueRoomName, roomParticipants.filter(name => name !== username));
+  }
+  //if (!activeChats[roomName]) createChatBox(roomName, selectedContacts);
 }
 
 // Create a chat box
-function createChatBox(roomName, users) {
+function createChatBox(roomName, participants) {
+  const chatsContainer = document.getElementById('chats-container');
+  if (!chatsContainer) {
+    console.error('Chats container not found.');
+    return;
+  }
+
+  if (activeChats[roomName]) return; // Prevent duplicate chat boxes
+
+  const chatBox = document.createElement('div');
+  chatBox.className = 'chat-box';
+  chatBox.id = `chat-box-${roomName}`;
+
+  chatBox.innerHTML = `
+    <div class="chat-header">
+      <h3>Chat with ${participants.join(', ')}</h3>
+      <button class="close-chat" data-room="${roomName}">X</button>
+    </div>
+    <div class="messages" id="messages-${roomName}"></div>
+    <input type="text" id="message-${roomName}" placeholder="Type a message..." />
+    <button onclick="sendMessage('${roomName}')">Send</button>
+  `;
+
+  // Close button functionality
+  chatBox.querySelector('.close-chat').addEventListener('click', () => {
+    chatsContainer.removeChild(chatBox);
+    delete activeChats[roomName];
+  });
+
+  // Enter key functionality for sending messages
+  const messageInput = chatBox.querySelector(`#message-${roomName}`);
+  messageInput.addEventListener('keydown', event => {
+    if (event.key === 'Enter') sendMessage(roomName);
+  });
+
+  chatsContainer.appendChild(chatBox);
+  activeChats[roomName] = chatBox;
+}
+
+/* function createChatBox(roomName, users) {
   const chatsContainer = document.getElementById('chats-container');
   if (!chatsContainer) {
     console.error('Chats container not found.');
@@ -218,15 +266,15 @@ function createChatBox(roomName, users) {
 
   chatsContainer.appendChild(chatBox);
   activeChats[roomName] = chatBox;
-}
+} */
 
 // Append a message
-function appendMessageToChat(roomName, sender, message) {
+function appendMessageToChat(roomName, sender, message, timestamp) {
   const messagesDiv = document.getElementById(`messages-${roomName}`);
   if (!messagesDiv) return;
 
   const messageElement = document.createElement('div');
-  messageElement.textContent = `${sender}: ${message}`;
+  messageElement.textContent = `[${timestamp}] ${sender}: ${message}`;
   messagesDiv.appendChild(messageElement);
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
@@ -237,7 +285,10 @@ function sendMessage(roomName) {
   const message = input.value.trim();
   if (!message) return;
 
-  socket.emit('send_message', { username, message, room: roomName });
+  // timestamp for chat box
+  const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  socket.emit('send_message', { username, message, room: roomName, timestamp });
   appendMessageToChat(roomName, 'You', message);
   input.value = '';
 }

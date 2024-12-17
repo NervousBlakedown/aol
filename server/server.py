@@ -482,6 +482,15 @@ def generate_room_name(users):
 # Start chat
 @socketio.on('start_chat')
 def start_chat(data):
+    usernames = data['users']
+    room_name = "_".join(sorted(usernames))  # Sort to ensure consistent naming
+
+    for user in usernames:
+        if user in connected_users:
+            join_room(room_name, sid=connected_users[user])
+
+    emit('chat_started', {'room': room_name, 'users': usernames}, room=room_name)
+"""def start_chat(data):
     logging.debug(f"start_chat event received: {data}")
     usernames = data['users']
     room_name = generate_room_name(usernames) 
@@ -493,26 +502,15 @@ def start_chat(data):
         else:
             logging.debug(f"{username} offline")
     emit('chat_started', {'room': room_name, 'users': usernames}, room=room_name) #room=request.sid)# room=room_name)
-    logging.debug(f"Chat started: room={room_name}, users={usernames}")
-
-"""def start_chat(data):
-    usernames = data['users']
-    room_name = "_".join(sorted(usernames))  # Consistent room naming based on users
-
-    if room_name not in rooms:
-        print(f"Creating new room: {room_name} for users: {', '.join(usernames)}")
-        for username in usernames:
-            if username in connected_users:
-                join_room(room_name, sid=connected_users[username])
-        rooms[room_name] = usernames  # Track participants in the room
-
-    emit('chat_started', {'room': room_name, 'users': usernames}, room=room_name)"""
+    logging.debug(f"Chat started: room={room_name}, users={usernames}")"""
 
 @socketio.on('send_message')
 def handle_send_message(data):
     room = data['room']
     message = data['message']
-    sender_email = data['username']  # Use sender's email as input
+    sender_email = data['username']  # Use sender's email as input; TODO: not 'sender'?
+    timestamp = datetime.now().strftime('%H:%M')  # Add timestamp
+
     print(f"Message received in room {room} from {sender_email}")
 
     if room not in rooms:

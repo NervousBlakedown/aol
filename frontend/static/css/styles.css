@@ -201,6 +201,7 @@ button#start-chat-button {
   padding: 8px;
   border: 1px solid #80deea;
   border-radius: 5px;
+  box-sizing: border-box; /* Ensure padding is included in width */
 }
 
 .chat-box button {
