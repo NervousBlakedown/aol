@@ -1,0 +1,8 @@
+Collecting pyopenssl
+  Downloading pyOpenSSL-24.3.0-py3-none-any.whl.metadata (15 kB)
+Requirement already satisfied: cryptography<45,>=41.0.5 in c:\users\blake\documents\github\aol\venv\lib\site-packages (from pyopenssl) (44.0.0)
+Requirement already satisfied: cffi>=1.12 in c:\users\blake\documents\github\aol\venv\lib\site-packages (from cryptography<45,>=41.0.5->pyopenssl) (1.17.1)
+Requirement already satisfied: pycparser in c:\users\blake\documents\github\aol\venv\lib\site-packages (from cffi>=1.12->cryptography<45,>=41.0.5->pyopenssl) (2.22)
+Downloading pyOpenSSL-24.3.0-py3-none-any.whl (56 kB)
+Installing collected packages: pyopenssl
+Successfully installed pyopenssl-24.3.0

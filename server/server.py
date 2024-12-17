@@ -1,6 +1,6 @@
 # server/server.py
-import eventlet
-eventlet.monkey_patch() 
+# import eventlet
+# eventlet.monkey_patch() 
 import requests
 from flask import Flask, request, jsonify, session, redirect, render_template
 from flask_socketio import SocketIO, emit, join_room, leave_room
@@ -436,26 +436,29 @@ def logout():
     session.pop('user', None)
     return jsonify({'success': True, 'message': 'Logged out successfully.'}), 200
 
-# Password forget/reset
+# Password forget GET request
 @app.route('/forgot_password', methods=['GET'])
 def forgot_password_page():
     return render_template('forgot_password.html')
 
+# Password forget POST request
 @app.route('/forgot_password', methods=['POST'])
 def forgot_password():
-    logging.debug("Processing forgot password request...")
-    email = request.form.get("email")
-    if not email:
-        return jsonify({"success": False, "message": "Please provide a valid email."}), 400
-
-    result = send_supabase_reset_email(email)
-    if result['success']:
-        logging.debug(f"Reset email sent to {email}")
-        return jsonify({"success": True, "message": "Reset email sent successfully!"}), 200
-    else:
-        logging.error(f"Error sending reset email: {result['message']}")
-        return jsonify({"success": False, "message": "Failed to send reset email. Please try again later."}), 500
-
+    try:
+        email = request.form.get("email")
+        if not email:
+            return jsonify({"success": False, "message": "Please provide a valid email."}), 400
+        
+        result = send_supabase_reset_email(email)
+        if result['success']:
+            return jsonify({"success": True, "message": "Reset email sent!"}), 200
+        else:
+            raise Exception(result['message'])
+    except Exception as e:
+        logging.error(f"Error in forgot_password route: {str(e)}")
+        return jsonify({"success": False, "message": "An internal error occurred."}), 500
+        print("Supabase Response Status Code:", response.status_code)
+        print("Supabase Response Content:", response.content)
 
 
 # Reset password (after forgotten)

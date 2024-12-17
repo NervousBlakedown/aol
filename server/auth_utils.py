@@ -21,7 +21,7 @@ def send_supabase_reset_email(email):
         logging.debug("Sending password reset request to Supabase...")
         print(f"Request to Supabase: {data}")
 
-        response = requests.post(f"{SUPABASE_URL}/auth/v1/recover", json=data, headers=headers)
+        response = requests.post(f"{SUPABASE_URL}/auth/v1/recover", json=data, headers=headers, verify=False)
         logging.debug(f"Supabase Response Status: {response.status_code}")
         logging.debug(f"Supabase Response Body: {response.text}")
         print(f"Response Status: {response.status_code}, Response Body: {response.text}")
