@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from datetime import timedelta
-from auth_utils import send_supabase_reset_email
+from server import send_supabase_reset_email
 from supabase import create_client, Client
 from cryptography.fernet import Fernet
 logging.basicConfig(level=logging.DEBUG)
