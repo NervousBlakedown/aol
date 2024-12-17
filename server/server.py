@@ -33,6 +33,7 @@ socketio = SocketIO(app)
 app.secret_key = 'my_secret_key'  # TODO: Replace with secure, randomly generated key
 app.permanent_session_lifetime = timedelta(minutes = 30)
 # Secure Flask session configuration
+from flask_session import Session
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['SESSION_PERMANENT'] = True
 app.config['SESSION_USE_SIGNER'] = True  # Secure cookie signing
