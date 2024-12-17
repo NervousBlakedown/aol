@@ -262,7 +262,7 @@ def add_contact():
 
         # Step 2: Find the contact user by username
         contact_user = next(
-            (user for user in response.users if user.user_metadata.get('username') == contact_username), None
+            (user for user in response if user.user_metadata.get('username') == contact_username), None
         )
 
         if not contact_user:
