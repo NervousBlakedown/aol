@@ -94,7 +94,11 @@ body, html {
   padding: 0;
   max-height: 150px;
   overflow-y: auto;
-  margin-bottom: 15px; /* adjust maybe */
+  margin-bottom: 20px; /* adjust maybe */
+}
+
+button#start-chat-button {
+  margin-top: 10px; /* Additional spacing for the button */
 }
 
 /* Remove border and padding for list items in the contacts box */
@@ -119,7 +123,9 @@ body, html {
 .contact-item {
   display: flex;
   align-items: center;
-  margin-bottom: 5px;
+  gap: 8px;
+  margin: 5px 0;
+  /* margin-bottom: 5px; */
 }
 
 .contact-checkbox {

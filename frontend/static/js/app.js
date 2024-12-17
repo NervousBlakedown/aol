@@ -141,7 +141,9 @@ function fetchMyContacts() {
             checkbox.value = contact.username;
 
             const label = document.createElement('label');
-            label.textContent = contact.username;
+            const status = userStatuses[contact.username] || 'Offline';
+            label.textContent = '${contact.username} (${status})';
+            // label.textContent = contact.username;
             label.className = 'contact-label';
 
             listItem.appendChild(checkbox);
@@ -152,32 +154,14 @@ function fetchMyContacts() {
     .catch(err => console.error('Error fetching contacts:', err));
 }
 
-          /* data.forEach(contact => {
-              const listItem = document.createElement('li');
-              listItem.textContent = contact.username;
-              contactsList.appendChild(listItem);
-          });
-      })
-      .catch(err => console.error('Error fetching contacts:', err));
-} */
-
-/* function fetchMyContacts() {
-  fetch('/get_my_contacts', { credentials: 'include' })
-    .then(res => res.json())
-    .then(contactData => {
-      myContacts = contactData;
-    })
-    .catch(err => console.error('Error fetching contacts:', err));
-} */
-
 // Chat/checkbox functionality
 function startChat() {
   // Get all checked checkboxes and extract their values (contact usernames)
   const selectedContacts = Array.from(document.querySelectorAll('.contact-checkbox:checked'))
-                                .map(checkbox => checkbox.value);
+                                .map(checkbox => checkbox.value); //cb abbreviation?
 
   if (selectedContacts.length === 0) {
-      alert('Please select at least one contact to start a chat.');
+      alert('Need at least one to chat with, homie.');
       return;
   }
 
@@ -185,6 +169,12 @@ function startChat() {
 
   // Emit the chat start event with selected users
   socket.emit('start_chat', { users: [...selectedContacts, username] });
+
+  // Automatically open the chat window
+  const roomName = selectedContacts.join('_'); // Unique room name
+  if (!activeChats[roomName]) {
+    createChatBox(roomName, selectedContacts);
+  }
 }
 
 // Event listener
@@ -377,22 +367,6 @@ function searchContacts(query) {
     })
     .catch(error => console.error('Error searching contacts:', error));
 } 
-/* function searchContacts(query) {
-  fetch(`/search_contacts?query=${encodeURIComponent(query)}`, { credentials: 'include' })
-    .then(response => response.json())
-    .then(data => {
-      const resultsUl = document.getElementById('search-results');
-      resultsUl.innerHTML = '';
-
-      data.forEach(contact => {
-        const li = document.createElement('li');
-        li.textContent = contact.username;
-        resultsUl.appendChild(li);
-      });
-    })
-    .catch(error => console.error('Error fetching contacts:', error));
-} */
-
 
 // add Contacts
 function addContact(username) {
@@ -413,30 +387,6 @@ function addContact(username) {
     })
     .catch(error => console.error('Error adding contact:', error));
 }
-/*function addContact(contactId) {
-  fetch('/add_contact', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify({ contact_id: contactId })
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.success) {
-      alert('Contact added successfully!');
-      // After adding a contact, re-fetch user contacts and update the list
-      fetchMyContacts().then(() => {
-        updateContactsList([]); // Pass empty array here, since updateContactsList now only uses myContacts
-      });
-    } else {
-      alert('Failed to add contact: ' + data.message);
-    }
-  })
-  .catch(error => {
-    console.error('Error adding contact:', error);
-    alert('An error occurred while adding the contact.');
-  });
-} */
 
 function updateContactsList(users) {
   const contactsList = document.getElementById('contacts-list');

@@ -483,6 +483,13 @@ def generate_room_name(users):
 @socketio.on('start_chat')
 def start_chat(data):
     usernames = data['users']
+    room_name = generate_room_name(usernames)  # Generate a unique room name
+    for username in usernames:
+        if username in connected_users:
+            join_room(room_name, sid=connected_users[username])
+    emit('chat_started', {'room': room_name, 'users': usernames}, room=room_name)
+"""def start_chat(data):
+    usernames = data['users']
     room_name = "_".join(sorted(usernames))  # Consistent room naming based on users
 
     if room_name not in rooms:
@@ -492,7 +499,7 @@ def start_chat(data):
                 join_room(room_name, sid=connected_users[username])
         rooms[room_name] = usernames  # Track participants in the room
 
-    emit('chat_started', {'room': room_name, 'users': usernames}, room=room_name)
+    emit('chat_started', {'room': room_name, 'users': usernames}, room=room_name)"""
 
 @socketio.on('send_message')
 def handle_send_message(data):
