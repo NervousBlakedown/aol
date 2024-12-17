@@ -13,6 +13,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const currentPath = window.location.pathname;
 
+  // LOGIN PAGE
+  if (currentPath === '/login') {
+    const loginBtn = document.getElementById('login-button');
+    if (loginBtn) {
+      loginBtn.addEventListener('click', login);
+    }
+  }
+
+  // DASHBOARD PAGE
   if (currentPath === '/dashboard') {
     setupSocketIO(); // Initialize Socket.IO first
     initializeDashboard();
@@ -21,6 +30,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const startChatButton = document.getElementById('start-chat-button');
     if (startChatButton) {
       startChatButton.addEventListener('click', startChat);
+    }
+
+    const logoutButton = document.getElementById('logout-button');
+    if (logoutButton) {
+      logoutButton.addEventListener('click', logout);
     }
   }
 });
@@ -42,6 +56,44 @@ function initializeSupabase() {
   const { createClient } = window.supabase;
   supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
   console.log('Supabase initialized.');
+}
+
+// LOGIN FUNCTION
+function login() {
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value.trim();
+
+  if (!email || !password) {
+    alert('Please enter both email and password.');
+    return;
+  }
+
+  supabase.auth.signInWithPassword({ email, password })
+    .then(({ error }) => {
+      if (error) throw new Error(error.message);
+
+      return fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+        credentials: 'include'
+      });
+    })
+    .then(response => {
+      if (!response.ok) throw new Error('Failed to establish session.');
+      return response.json();
+    })
+    .then(result => {
+      if (result.success) {
+        window.location.href = '/dashboard';
+      } else {
+        throw new Error(result.message || 'Login failed.');
+      }
+    })
+    .catch(error => {
+      console.error('Login error:', error);
+      alert(`Login failed: ${error.message}`);
+    });
 }
 
 // Set up Socket.IO
@@ -127,7 +179,6 @@ function startChat() {
   const roomName = selectedContacts.join('_');
   socket.emit('start_chat', { users: [...selectedContacts, username] });
 
-  // Immediately open the chat box
   if (!activeChats[roomName]) createChatBox(roomName, selectedContacts);
 }
 
@@ -139,7 +190,7 @@ function createChatBox(roomName, users) {
     return;
   }
 
-  if (activeChats[roomName]) return; // Prevent duplicate chat boxes
+  if (activeChats[roomName]) return;
 
   const chatBox = document.createElement('div');
   chatBox.className = 'chat-box';
@@ -155,13 +206,11 @@ function createChatBox(roomName, users) {
     <button onclick="sendMessage('${roomName}')">Send</button>
   `;
 
-  // Close button functionality
   chatBox.querySelector('.close-chat').addEventListener('click', () => {
     chatsContainer.removeChild(chatBox);
     delete activeChats[roomName];
   });
 
-  // Enter key functionality for sending messages
   const messageInput = chatBox.querySelector(`#message-${roomName}`);
   messageInput.addEventListener('keydown', event => {
     if (event.key === 'Enter') sendMessage(roomName);
@@ -171,7 +220,7 @@ function createChatBox(roomName, users) {
   activeChats[roomName] = chatBox;
 }
 
-// Append a message to the chat
+// Append a message
 function appendMessageToChat(roomName, sender, message) {
   const messagesDiv = document.getElementById(`messages-${roomName}`);
   if (!messagesDiv) return;
@@ -193,7 +242,7 @@ function sendMessage(roomName) {
   input.value = '';
 }
 
-// Logout function
+// Logout
 function logout() {
   fetch('/logout', { method: 'POST', credentials: 'include' })
     .then(response => {
