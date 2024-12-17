@@ -1,4 +1,3 @@
-// app.js
 let SUPABASE_URL, SUPABASE_KEY;
 let supabase;
 let socket;
@@ -8,30 +7,26 @@ const activeChats = {}; // Track active chat boxes and their messages
 let myContacts = []; // store users' contacts after fetching them
 let userStatuses = {}; // store {username: status} from user_list event
 
-// Fetch environment variables from the server
-async function fetchEnvVariables() {
-  try {
-    const response = await fetch('/get_env');
-    if (!response.ok) throw new Error('Failed to fetch environment variables');
-
-    const env = await response.json();
-    SUPABASE_URL = env.SUPABASE_URL;
-    SUPABASE_KEY = env.SUPABASE_KEY;
-
-    // Initialize Supabase after fetching environment variables
-    initializeSupabase();
-  } catch (error) {
-    console.error('Error fetching environment variables:', error);
-    throw error;
-  }
+//Part I: Functionality
+function fetchEnvVariables() {
+  fetch('/get_env')
+    .then(response => response.json())
+    .then(env => {
+      SUPABASE_URL = env.SUPABASE_URL;
+      SUPABASE_KEY = env.SUPABASE_KEY;
+      initializeSupabase();
+    })
+    .catch(error => {
+      console.error('Error fetching environment variables:', error);
+      alert('Application failed to initialize.');
+    });
 }
 
 // Initialize Supabase client
 function initializeSupabase() {
   const { createClient } = window.supabase;
   supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-  console.log('Supabase URL:', SUPABASE_URL, 'Supabase Key:', SUPABASE_KEY)
-  console.log('Supabase initialized:', supabase);
+  console.log('Supabase initialized:', SUPABASE_URL);
 }
 
 // Account creation
@@ -42,12 +37,6 @@ function createAccount() {
 
   if (!email || !usernameInput || !password) {
     alert('All fields are required.');
-    return;
-  }
-
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailPattern.test(email)) {
-    alert('Please enter a valid email address.');
     return;
   }
 
@@ -67,12 +56,11 @@ function createAccount() {
     })
     .catch(error => {
       console.error('Error during signup:', error);
-      alert('Error occurred while creating account.');
     });
 }
 
 // Handle login process
-async function login() {
+function login() {
   const email = document.getElementById('email').value.trim();
   const password = document.getElementById('password').value.trim();
 
@@ -81,132 +69,69 @@ async function login() {
     return;
   }
 
-  try {
-    // Authenticate with Supabase
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email,
-      password: password
+  supabase.auth.signInWithPassword({ email, password })
+    .then(({ error }) => {
+      if (error) throw new Error(error.message);
+
+      return fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+        credentials: 'include'
+      });
+    })
+    .then(response => response.json())
+    .then(result => {
+      if (!result.success) throw new Error(result.message);
+      alert('Login successful!');
+      window.location.href = '/dashboard';
+    })
+    .catch(error => {
+      console.error('Login error:', error);
+      alert(`Login failed: ${error.message}`);
     });
-
-    if (error) {
-      throw new Error(error.message || 'Authentication failed.');
-    }
-
-    // Notify Flask about the successful login to set its session
-    const response = await fetch('/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-      credentials: 'include' // Sends the cookies for Flask session
-    });
-
-    const result = await response.json();
-    if (!result.success) {
-      throw new Error(result.message || 'Failed to establish session.');
-    }
-
-    alert('Login successful!');
-    window.location.href = '/dashboard';
-    // setTimeout(() => window.location.href = '/dashboard', 500); // Slight delay to ensure session is set
-  } catch (error) {
-    console.error('Login error:', error.message);
-    alert(`Login failed: ${error.message}`);
-  }
 }
-
-// Signup success response
-document.getElementById('create-account-button').addEventListener('click', async function () {
-  const email = document.getElementById('email').value.trim();
-  const username = document.getElementById('username').value.trim();
-  const password = document.getElementById('password').value.trim();
-
-  if (!email || !username || !password) {
-    alert('Please fill out all fields.');
-    return;
-  }
-
-  try {
-    const response = await fetch('/signup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, username, password })
-    });
-
-    const data = await response.json();
-    if (response.ok) {
-      alert('Signup successful! Please login to continue.');
-      window.location.href = '/login'; // redirect to login page
-    } else {
-      alert(data.message || 'Signup failed. Please try again.');
-    }
-  } catch (error) {
-    console.error('Signup error:', error);
-    alert('An error occurred. Please try again.');
-  }
-});
 
 // Fetch user's contacts
 function fetchMyContacts() {
-  return fetch('/get_my_contacts', { credentials: 'include' })
+  fetch('/get_my_contacts', { credentials: 'include' })
     .then(res => res.json())
     .then(contactData => {
-      myContacts = contactData; // Store in global variable
+      myContacts = contactData;
     })
-    .catch(err => {
-      console.error('Error fetching contacts:', err);
-    });
+    .catch(err => console.error('Error fetching contacts:', err));
 }
 
-// Init dashboard
-function initializeDashboard() {
-  fetch('/get_username', { credentials: 'include' })
+// Event listener setup
+document.addEventListener('DOMContentLoaded', () => {
+  fetchEnvVariables();
+
+  const currentPath = window.location.pathname;
+
+  if (currentPath === '/login') {
+    const loginBtn = document.getElementById('login-button');
+    if (loginBtn) loginBtn.addEventListener('click', login);
+  } else if (currentPath === '/') {
+    const signupBtn = document.getElementById('create-account-button');
+    if (signupBtn) signupBtn.addEventListener('click', createAccount);
+  }
+});
+
+// Logout function
+function logout() {
+  fetch('/logout', { method: 'POST', credentials: 'include' })
     .then(response => {
-      if (!response.ok) throw new Error("Session invalid, redirecting to login.");
-      return response.json();
-    })
-    .then(data => {
-      if (data.username) {
-        const usernameDisplay = document.getElementById('username-display');
-        usernameDisplay.textContent = data.username;
-      }
-    })
-    .catch(error => {
-      console.error("Error fetching username:", error);
-      window.location.href = '/login';
-    });
-}
-
-// Attach all event listeners
-function attachEventListeners() {
-  // Start chat button
-  const startChatButton = document.getElementById('start-chat-button');
-  if (startChatButton) {
-    startChatButton.addEventListener('click', startChat);
-  }
-
-  // Logout button
-  const logoutButton = document.getElementById('logout-button');
-  if (logoutButton) {
-    logoutButton.addEventListener('click', logout);
-  }
-
-  // Search contacts input
-  const searchInput = document.getElementById('search-input');
-  if (searchInput) {
-    searchInput.addEventListener('input', () => {
-      const query = searchInput.value.trim();
-      const searchResults = document.getElementById('search-results');
-      if (!query) {
-        searchResults.innerHTML = '';
+      if (response.ok) {
+        if (socket) socket.disconnect();
+        window.location.href = '/login';
       } else {
-        searchContacts(query);
+        alert('Failed to logout.');
       }
     });
-  }
 }
 
 
-// Setup Socket.IO
+// Part II: Socket Info
 // CHANGED socket.on('message') to auto-create chat if closed
 function setupSocketIO() {
   socket = io();
@@ -215,6 +140,10 @@ function setupSocketIO() {
     console.log('Connected to Socket.IO server.');
     socket.emit('login', { username });
     playLoginSound();
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Disconnected from server.');
   });
 
   socket.on('message', data => {
@@ -430,30 +359,3 @@ function logout() {
       }
     });
 }
-
-// Event listener for login button
-async function initializeApp() {
-  try {
-    // Step 1: Fetch environment variables and initialize Supabase
-    await fetchEnvVariables();
-
-    // Step 2: Wait for DOMContentLoaded and attach event listeners
-    document.addEventListener('DOMContentLoaded', () => {
-      const loginBtn = document.getElementById('login-button');
-      const signupBtn = document.getElementById('create-account-button');
-
-      if (window.location.pathname === '/login' && loginBtn) {
-        loginBtn.addEventListener('click', login);
-        console.log("Login button listener attached.");
-      } else if (window.location.pathname === '/' && signupBtn) {
-        signupBtn.addEventListener('click', createAccount);
-        console.log("Signup button listener attached.");
-      }
-    });
-  } catch (error) {
-    console.error('Initialization error:', error);
-    alert('Application failed to initialize.');
-  }
-}
-initializeApp();
-
