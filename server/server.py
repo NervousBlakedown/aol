@@ -1,6 +1,7 @@
 # server/server.py
 import eventlet
 eventlet.monkey_patch() 
+import requests
 from flask import Flask, request, jsonify, session, redirect, render_template
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from collections import defaultdict
