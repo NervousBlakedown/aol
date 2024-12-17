@@ -1,6 +1,4 @@
 # server/server.py
-# import eventlet
-# eventlet.monkey_patch() 
 import requests
 from flask import Flask, request, jsonify, session, redirect, render_template
 from flask_socketio import SocketIO, emit, join_room, leave_room
@@ -449,16 +447,16 @@ def forgot_password():
         if not email:
             return jsonify({"success": False, "message": "Please provide a valid email."}), 400
         
+        logging.debug(f"Processing forgot password for email: {email}")
         result = send_supabase_reset_email(email)
+
         if result['success']:
-            return jsonify({"success": True, "message": "Reset email sent!"}), 200
+            return jsonify({"success": True, "message": result['message']}), 200
         else:
-            raise Exception(result['message'])
+            return jsonify({"success": False, "message": result['message']}), 500
     except Exception as e:
-        logging.error(f"Error in forgot_password route: {str(e)}")
+        logging.error(f"Exception in forgot_password route: {str(e)}", exc_info=True)
         return jsonify({"success": False, "message": "An internal error occurred."}), 500
-        print("Supabase Response Status Code:", response.status_code)
-        print("Supabase Response Content:", response.content)
 
 
 # Reset password (after forgotten)
