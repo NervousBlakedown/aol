@@ -97,13 +97,19 @@ body, html {
   margin-bottom: 10px;
 }
 
+/* Remove border and padding for list items in the contacts box */
 #contacts-list li {
-  padding: 10px;
-  margin-bottom: 5px;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 10px;
-  border: 1px solid #80deea;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: none;
+  padding: 5px 0; /* Adjust spacing without box */
+  margin: 0;
+  background: none; /* Remove any background */
+  display: flex; /* Align checkbox and name horizontally */
+  align-items: center;
+  gap: 10px; /* Add spacing between checkbox and name */
+}
+
+#contacts-list input.contact-checkbox {
+  margin-right: 8px; /* Small spacing between checkbox and text */
 }
 
 #contacts-list li label {
