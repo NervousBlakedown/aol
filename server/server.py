@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from datetime import timedelta
-from server.send_email import send_email
+from auth_utils import send_supabase_reset_email
 from supabase import create_client, Client
 from cryptography.fernet import Fernet
 logging.basicConfig(level=logging.DEBUG)
@@ -440,64 +440,52 @@ def forgot_password_page():
 
 @app.route('/forgot_password', methods=['POST'])
 def forgot_password():
-    # Check if the request is JSON
-    if request.is_json:
-        data = request.get_json()
-        email = data.get("email")
-    else:
-        # Handle form data from an HTML form
-        email = request.form.get("email")
-
+    email = request.form.get("email") if not request.is_json else request.get_json().get("email")
     if not email:
         return jsonify({"success": False, "message": "Email is required."}), 400
 
-    try:
-        # Trigger Supabase forgot password email
-        response = supabase.auth.reset_password_for_email(email)
-        if 'error' in response and response['error']:
-            logging.error(f"Password reset error: {response['error']}")
-            return jsonify({"success": False, "message": response['error']['message']}), 500
-
-        return jsonify({"success": True, "message": "Password reset email sent."}), 200
-
-    except Exception as e:
-        logging.error(f"Forgot password error: {e}")
-        return jsonify({"success": False, "message": "An error occurred while sending the reset email."}), 500
+    result = send_supabase_reset_email(email)
+    if result['success']:
+        return jsonify({"success": True, "message": result['message']}), 200
+    else:
+        return jsonify({"success": False, "message": result['message']}), 500
 
 
 @app.route('/reset_password', methods=['GET'])
 def reset_password_page():
     return render_template('reset_password.html')
 
+# Update password after 'forgot password' link
 @app.route('/update_password', methods=['POST'])
 def update_password():
-    """
-    Endpoint to update the password after a reset.
-    """
+    import requests
+
+    # Extract reset token and new password
+    reset_token = request.args.get('token')
     data = request.get_json()
-    access_token = data.get("access_token")  # Supabase token after password reset
     new_password = data.get("new_password")
 
-    if not access_token or not new_password:
-        return jsonify({"success": False, "message": "Access token and new password are required."}), 400
+    if not reset_token or not new_password:
+        return jsonify({"success": False, "message": "Invalid token or password."}), 400
 
     try:
-        # Update password using Supabase
-        response = supabase.auth.api.update_user(
-            access_token,
-            {"password": new_password}
-        )
-        if response.get("error"):
-            logging.error(f"Password update error: {response['error']}")
-            return jsonify({"success": False, "message": "Error updating password."}), 500
+        # Send request to Supabase API to update password
+        headers = {
+            "apikey": SUPABASE_KEY,
+            "Authorization": f"Bearer {reset_token}",
+            "Content-Type": "application/json"
+        }
+        payload = {"password": new_password}
 
-        return jsonify({"success": True, "message": "Password updated successfully."}), 200
+        response = requests.put(f"{SUPABASE_URL}/auth/v1/user", json=payload, headers=headers)
+        response.raise_for_status()
 
-    except Exception as e:
-        logging.error(f"Password update error: {e}")
-        return jsonify({"success": False, "message": "An error occurred while updating the password."}), 500
+        return jsonify({"success": True, "message": "Password reset successfully!"}), 200
+    except requests.exceptions.RequestException as e:
+        logging.error(f"Error resetting password: {e}")
+        return jsonify({"success": False, "message": "Failed to reset password. Please try again."}), 500
 
 
-# Run
+# Run app
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5000, debug=True)
