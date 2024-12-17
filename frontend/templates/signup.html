@@ -47,8 +47,8 @@
 
       const data = await response.json();
       if (response.ok && data.success) {
-        alert('Signup successful! Please verify your email.');
-        window.location.href = data.redirect || '/verify_email';
+        alert(data.message);
+        window.location.href = '/login'; // Redirect to login page
       } else {
         alert(data.message || 'Signup failed. Please try again.');
       }

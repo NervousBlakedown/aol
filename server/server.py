@@ -112,20 +112,23 @@ def signup():
             "password": password,
             "options": {
                 "data": {
-                    "username": username  # Metadata field
-                }
+                    "username": username}
             }
         })
 
-        if response.user:
-            logging.info(f"User created successfully: {response.user.email}")
-            return jsonify({'success': True, 'message': 'Signup successful!'}), 201
-        else:
-            error_message = response.error.message if response.error else "Unknown error"
+        # Check for Supabase API errors
+        if response.error:
+            error_message = response.error.message
+            logging.error(f"Signup error: {error_message}")
             return jsonify({'success': False, 'message': error_message}), 400
+
+        # Success: Respond clearly
+        logging.info(f"User created successfully: {email}")
+        return jsonify({'success': True, 'message': 'Signup successful!'}), 201
+
     except Exception as e:
-        logging.error(f"Signup error: {e}")
-        return jsonify({'success': False, 'message': 'An error occurred during signup.'}), 500
+        logging.error(f"Signup exception: {e}")
+        return jsonify({'success': False, 'message': 'An internal error occurred during signup.'}), 500
 
 # Login page
 @app.route('/login', methods=['POST'])
@@ -178,16 +181,24 @@ def get_username():
 # Main page
 @app.route('/dashboard', methods=['GET'])
 def dashboard():
-    if 'user' in session and session['user'].get('email'):
-        user_email = session['user']['email']
-        return render_template('dashboard.html', email=user_email)
+    if 'user' in session:
+        try:
+            user_id = session['user']['id']
+            response = supabase.table("auth.users").select("raw_user_meta_data").eq("id", user_id).single().execute()
+            
+            if response.data:
+                # Extract username from raw_user_meta_data
+                username = response.data["raw_user_meta_data"].get("username", "User")
+            else:
+                username = "User"  # Default if not found
+            
+            return render_template('dashboard.html', username=username)
+        except Exception as e:
+            logging.error(f"Error fetching username for dashboard: {e}")
+            return redirect('/login')
     else:
         return redirect('/login')
-"""def dashboard():
-    if 'user' in session:
-        return render_template('dashboard.html', email = session['user'].get('email'))
-    else:
-        return redirect('/login')"""
+
 
 # Search Contacts
 @app.route('/search_contacts', methods=['GET'])

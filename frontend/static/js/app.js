@@ -145,15 +145,19 @@ document.getElementById('create-account-button').addEventListener('click', async
 
 // Event listener for login button
 document.addEventListener('DOMContentLoaded', () => {
-  if (window.location.pathname === '/login') {
-      const loginBtn = document.getElementById('login-button');
-      if (loginBtn) loginBtn.addEventListener('click', login);
-      fetchEnvVariables();
-  } else if (window.location.pathname === '/') {
-      const signupBtn = document.getElementById('signup-button');
-      if (signupBtn) signupBtn.addEventListener('click', createAccount);
+  // Get references to the elements that should have event listeners
+  const loginBtn = document.getElementById('login-button');
+  const signupBtn = document.getElementById('create-account-button');
+  
+  // Check the current path to decide which button to add an event listener to
+  if (window.location.pathname === '/login' && loginBtn) {
+    loginBtn.addEventListener('click', login);  // Add listener for login
+    fetchEnvVariables();  // Ensure Supabase environment variables are fetched
+  } else if (window.location.pathname === '/' && signupBtn) {
+    signupBtn.addEventListener('click', createAccount);  // Add listener for signup
   }
 });
+
 
 // Fetch user's contacts
 function fetchMyContacts() {
@@ -171,22 +175,17 @@ function fetchMyContacts() {
 function initializeDashboard() {
   fetch('/get_username', { credentials: 'include' })
     .then(response => {
-      if (!response.ok) {
-        throw new Error("Session invalid, redirecting to login.");
-      }
+      if (!response.ok) throw new Error("Session invalid, redirecting to login.");
       return response.json();
     })
     .then(data => {
       if (data.username) {
-        username = data.username; // Store it globally
-        document.getElementById('username-display').textContent = username;
-      } else {
-        alert('Failed to fetch username.');
-        window.location.href = '/login';
+        const usernameDisplay = document.getElementById('username-display');
+        usernameDisplay.textContent = data.username;
       }
     })
     .catch(error => {
-      console.error("Error initializing dashboard:", error);
+      console.error("Error fetching username:", error);
       window.location.href = '/login';
     });
 }
@@ -445,14 +444,3 @@ function logout() {
       }
     });
 }
-
-// Initialize the app on page load
-document.addEventListener('DOMContentLoaded', () => {
-  if (window.location.pathname === '/login') {
-    const loginBtn = document.getElementById('login-button');
-    if (loginBtn) loginBtn.addEventListener('click', login);
-  } else if (window.location.pathname === '/dashboard') {
-    initializeDashboard();
-  }
-});
-
