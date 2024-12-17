@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from datetime import datetime, timedelta
-from server import send_supabase_reset_email
+from server.auth_utils import update_user_password
 from supabase import create_client, Client
 from cryptography.fernet import Fernet
 logging.basicConfig(level=logging.DEBUG)
@@ -614,36 +614,19 @@ def forgot_password():
         return jsonify({"success": False, "message": "An internal error occurred."}), 500
 
 
-# Reset password (after forgotten)
+# Reset password link
 @app.route('/reset_password', methods=['GET'])
-def reset_password_page():
-    return render_template('reset_password.html')
-
-# Update password after 'forgot password' link
-@app.route('/update_password', methods=['POST'])
-def update_password():
-    reset_token = request.args.get('token')  # Token passed in URL
+def reset_password():
+    reset_token = request.args.get('token')
     data = request.get_json()
-    new_password = data.get("new_password")
+    new_password = data.get('new_password')
 
-    if not reset_token or not new_password:
-        return jsonify({"success": False, "message": "Missing token or password."}), 400
+    result = update_user_password(reset_token, new_password)
 
-    headers = {
-        "apikey": SUPABASE_KEY,
-        "Authorization": f"Bearer {reset_token}",
-        "Content-Type": "application/json"
-    }
-    payload = {"password": new_password}
-
-    try:
-        response = requests.put(f"{SUPABASE_URL}/auth/v1/user", json=payload, headers=headers)
-        response.raise_for_status()
-        return jsonify({"success": True, "message": "Password updated successfully."}), 200
-    except requests.RequestException as e:
-        logging.error(f"Error updating password: {e}")
-        return jsonify({"success": False, "message": "Password reset failed. Invalid token."}), 500
-
+    if result["success"]:
+        return jsonify(result), 200
+    else:
+        return jsonify(result), 400
 
 # Run app
 if __name__ == '__main__':
