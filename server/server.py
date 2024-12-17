@@ -227,6 +227,39 @@ def add_contact():
 
     user_id = session['user']['id']
     data = request.get_json()
+    contact_username = data.get('username')
+
+    if not contact_username:
+        return jsonify({'success': False, 'message': 'Contact username is required.'}), 400
+
+    try:
+        # Query auth.users to find the user ID for the given username
+        response = supabase.table("auth.users") \
+            .select("id") \
+            .filter("raw_user_meta_data->>username", "eq", contact_username) \
+            .single() \
+            .execute()
+
+        contact_user_id = response.data.get('id')
+        if not contact_user_id:
+            return jsonify({'success': False, 'message': 'User not found.'}), 404
+
+        # Insert into contacts table
+        supabase.table("contacts").insert({
+            "user_id": user_id,
+            "contact_id": contact_user_id
+        }).execute()
+
+        return jsonify({'success': True, 'message': 'Contact added successfully.'}), 200
+    except Exception as e:
+        logging.error(f"Error adding contact: {e}")
+        return jsonify({'success': False, 'message': 'Failed to add contact.'}), 500
+"""def add_contact():
+    if 'user' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
+    user_id = session['user']['id']
+    data = request.get_json()
     contact_email = data.get('contact_email')  # Get email to add contact
 
     if not contact_email:
@@ -249,7 +282,7 @@ def add_contact():
         return jsonify({'success': True, 'message': 'Contact added successfully.'}), 200
     except Exception as e:
         logging.error(f"Error adding contact: {e}")
-        return jsonify({'success': False, 'message': 'An error occurred while adding the contact.'}), 500
+        return jsonify({'success': False, 'message': 'An error occurred while adding the contact.'}), 500"""
 
 
 # Get contacts

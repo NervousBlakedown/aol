@@ -157,8 +157,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (searchInput) {
       searchInput.addEventListener('input', () => {
         const query = searchInput.value.trim();
-        if (query) searchContacts(query);
-        else document.getElementById('search-results').innerHTML = ''; // clear search results
+        searchContacts(query);
+        //if (query) searchContacts(query);
+        //else document.getElementById('search-results').innerHTML = ''; // clear search results
       });
     }
 
@@ -282,8 +283,39 @@ function createChatBox(roomName, users) {
   });
 }
 
-// Search contacts 
+// Search contacts
 function searchContacts(query) {
+  if (!query) {
+    document.getElementById('search-results').innerHTML = ''; // Clear results if query is empty
+    return;
+  }
+
+  fetch(`/search_contacts?query=${encodeURIComponent(query)}`, { credentials: 'include' })
+    .then(response => response.json())
+    .then(users => {
+      const resultsUl = document.getElementById('search-results');
+      resultsUl.innerHTML = ''; // Clear previous results
+
+      // Dynamically create list items for each matching user
+      users.forEach(user => {
+        const li = document.createElement('li');
+        li.textContent = user.username;
+
+        // Add "plus" button to add contact
+        const addButton = document.createElement('button');
+        addButton.textContent = '+';
+        addButton.style.marginLeft = '10px';
+        addButton.style.fontSize = '10px';
+        addButton.style.padding = '2px 5px';
+        addButton.addEventListener('click', () => addContact(user.username));
+
+        li.appendChild(addButton);
+        resultsUl.appendChild(li);
+      });
+    })
+    .catch(error => console.error('Error searching contacts:', error));
+} 
+/* function searchContacts(query) {
   fetch(`/search_contacts?query=${encodeURIComponent(query)}`, { credentials: 'include' })
     .then(response => response.json())
     .then(data => {
@@ -297,11 +329,29 @@ function searchContacts(query) {
       });
     })
     .catch(error => console.error('Error fetching contacts:', error));
-}
+} */
 
 
 // add Contacts
-function addContact(contactId) {
+function addContact(username) {
+  fetch('/add_contact', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ username })
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert(`${username} added to your contacts!`);
+        fetchMyContacts(); // Refresh contacts list
+      } else {
+        alert('Failed to add contact: ' + data.message);
+      }
+    })
+    .catch(error => console.error('Error adding contact:', error));
+}
+/*function addContact(contactId) {
   fetch('/add_contact', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -324,7 +374,7 @@ function addContact(contactId) {
     console.error('Error adding contact:', error);
     alert('An error occurred while adding the contact.');
   });
-}
+} */
 
 function updateContactsList(users) {
   const contactsList = document.getElementById('contacts-list');
