@@ -191,7 +191,7 @@ function startChat() {
   //if (!activeChats[roomName]) createChatBox(roomName, selectedContacts);
 }
 
-// Create a chat box
+// Create chat box
 function createChatBox(roomName, participants) {
   const chatsContainer = document.getElementById('chats-container');
   if (!chatsContainer) {
@@ -207,7 +207,7 @@ function createChatBox(roomName, participants) {
 
   chatBox.innerHTML = `
     <div class="chat-header">
-      <h3>Chat with ${participants.join(', ')}</h3>
+      <h3>${participants.join(', ')}</h3>
       <button class="close-chat" data-room="${roomName}">X</button>
     </div>
     <div class="messages" id="messages-${roomName}"></div>
@@ -230,43 +230,6 @@ function createChatBox(roomName, participants) {
   chatsContainer.appendChild(chatBox);
   activeChats[roomName] = chatBox;
 }
-
-/* function createChatBox(roomName, users) {
-  const chatsContainer = document.getElementById('chats-container');
-  if (!chatsContainer) {
-    console.error('Chats container not found.');
-    return;
-  }
-
-  if (activeChats[roomName]) return;
-
-  const chatBox = document.createElement('div');
-  chatBox.className = 'chat-box';
-  chatBox.id = `chat-box-${roomName}`;
-
-  chatBox.innerHTML = `
-    <div class="chat-header">
-      <h3>Chat with ${users.join(', ')}</h3>
-      <button class="close-chat" data-room="${roomName}">X</button>
-    </div>
-    <div class="messages" id="messages-${roomName}"></div>
-    <input type="text" id="message-${roomName}" placeholder="Type a message..." />
-    <button onclick="sendMessage('${roomName}')">Send</button>
-  `;
-
-  chatBox.querySelector('.close-chat').addEventListener('click', () => {
-    chatsContainer.removeChild(chatBox);
-    delete activeChats[roomName];
-  });
-
-  const messageInput = chatBox.querySelector(`#message-${roomName}`);
-  messageInput.addEventListener('keydown', event => {
-    if (event.key === 'Enter') sendMessage(roomName);
-  });
-
-  chatsContainer.appendChild(chatBox);
-  activeChats[roomName] = chatBox;
-} */
 
 // Append a message
 function appendMessageToChat(roomName, sender, message, timestamp) {

@@ -4,11 +4,11 @@ from flask import Flask, request, jsonify, session, redirect, render_template
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from collections import defaultdict
 import logging
+import json
 import os
 from dotenv import load_dotenv
 import psycopg2
 from psycopg2.extras import RealDictCursor
-# import datetime
 from datetime import datetime, timedelta
 from server import send_supabase_reset_email
 from supabase import create_client, Client
@@ -509,8 +509,8 @@ def start_chat(data):
 def handle_send_message(data):
     room = data['room']
     message = data['message']
-    sender_email = data['username']  # Use sender's email as input; TODO: not 'sender'?
-    timestamp = datetime.now().strftime('%H:%M')  # Add timestamp
+    sender_email = data['username']  # TODO: not 'sender' or 'sender_username' equivalent?
+    timestamp = datetime.now().strftime('%H:%M')  
 
     print(f"Message received in room {room} from {sender_email}")
 
