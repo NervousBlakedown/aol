@@ -117,8 +117,8 @@ def signup():
         })
 
         # Check for Supabase API errors
-        if response.error:
-            error_message = response.error.message
+        if hasattr(response, 'error') and response.error:
+            error_message = response.error.message if response.error else "Unknown error"
             logging.error(f"Signup error: {error_message}")
             return jsonify({'success': False, 'message': error_message}), 400
 

@@ -131,9 +131,9 @@ document.getElementById('create-account-button').addEventListener('click', async
     });
 
     const data = await response.json();
-    if (response.ok && data.success) {
-      alert('Signup successful! Please check your email to verify your account.');
-      window.location.href = '/login';
+    if (response.ok) {
+      alert('Signup successful! Please login to continue.');
+      window.location.href = '/login'; // redirect to login page
     } else {
       alert(data.message || 'Signup failed. Please try again.');
     }
@@ -145,19 +145,22 @@ document.getElementById('create-account-button').addEventListener('click', async
 
 // Event listener for login button
 document.addEventListener('DOMContentLoaded', () => {
-  // Get references to the elements that should have event listeners
-  const loginBtn = document.getElementById('login-button');
-  const signupBtn = document.getElementById('create-account-button');
-  
-  // Check the current path to decide which button to add an event listener to
-  if (window.location.pathname === '/login' && loginBtn) {
-    loginBtn.addEventListener('click', login);  // Add listener for login
-    fetchEnvVariables();  // Ensure Supabase environment variables are fetched
-  } else if (window.location.pathname === '/' && signupBtn) {
-    signupBtn.addEventListener('click', createAccount);  // Add listener for signup
+  const currentPath = window.location.pathname;
+
+  if (currentPath === '/login') {
+    const loginBtn = document.getElementById('login-button');
+    if (loginBtn) {
+      fetchEnvVariables();  // Initialize Supabase
+      loginBtn.addEventListener('click', login);  // Attach login event listener
+    }
+  } else if (currentPath === '/') {
+    const signupBtn = document.getElementById('create-account-button');
+    if (signupBtn) {
+      fetchEnvVariables();  // Initialize Supabase
+      signupBtn.addEventListener('click', createAccount);  // Attach signup event listener
+    }
   }
 });
-
 
 // Fetch user's contacts
 function fetchMyContacts() {
