@@ -32,14 +32,6 @@ app = Flask(__name__, static_folder=static_dir, template_folder=template_dir)
 socketio = SocketIO(app)
 app.secret_key = 'my_secret_key'  # TODO: Replace with secure, randomly generated key
 app.permanent_session_lifetime = timedelta(minutes = 30)
-# Secure Flask session configuration
-# from flask_session import Session
-app.config['SESSION_TYPE'] = 'filesystem'
-app.config['SESSION_PERMANENT'] = True
-app.config['SESSION_USE_SIGNER'] = True  # Secure cookie signing
-app.config['SESSION_COOKIE_SECURE'] = True  # Use secure cookies (HTTPS only)
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Prevent cross-site issues
-session(app)
 
 gmail_address = os.getenv('GMAIL_ADDRESS')
 gmail_password = os.getenv('GMAIL_PASSWORD')
