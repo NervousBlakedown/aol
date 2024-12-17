@@ -434,7 +434,6 @@ function updateContactsList(users) {
 // Start chat
 function startChat() {
   console.log("chat button clicked")
-  console.log('selected users:', selectedContacts);
   const selectedContacts = Array.from(document.querySelectorAll('.contact-checkbox:checked'))
                                 .map(cb => cb.value);
 
@@ -442,7 +441,7 @@ function startChat() {
       alert('Wanna talk to yourself, I see.');
       return;
   }
-
+  console.log('selected users:', selectedContacts);
   console.log('Starting chat with:', selectedContacts);
   socket.emit('start_chat', { users: [...selectedContacts, username] });
   console.log("Chat start event emitted for:", [...selectedContacts, username]);
