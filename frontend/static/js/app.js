@@ -83,13 +83,13 @@ async function login() {
 
   try {
     // Authenticate with Supabase
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email: email,
       password: password
     });
 
     if (error) {
-      throw new Error(error.message);
+      throw new Error(error.message || 'Authentication failed.');
     }
 
     // Notify Flask about the successful login to set its session
@@ -102,11 +102,12 @@ async function login() {
 
     const result = await response.json();
     if (!result.success) {
-      throw new Error(result.message);
+      throw new Error(result.message || 'Failed to establish session.');
     }
 
     alert('Login successful!');
-    setTimeout(() => window.location.href = '/dashboard', 500); // Slight delay to ensure session is set
+    window.location.href = '/dashboard';
+    // setTimeout(() => window.location.href = '/dashboard', 500); // Slight delay to ensure session is set
   } catch (error) {
     console.error('Login error:', error.message);
     alert(`Login failed: ${error.message}`);
@@ -432,25 +433,30 @@ function logout() {
 
 // Event listener for login button
 document.addEventListener('DOMContentLoaded', async () => {
-  const currentPath = window.location.pathname;
-
   try {
-    // Wait for Supabase to initialize
+    // Initialize Supabase first
     await fetchEnvVariables();
+
+    // Attach event listeners after initialization
+    const currentPath = window.location.pathname;
 
     if (currentPath === '/login') {
       const loginBtn = document.getElementById('login-button');
       if (loginBtn) {
-        loginBtn.addEventListener('click', login); // Attach login event listener
+        loginBtn.addEventListener('click', login);
+      } else {
+        console.error("Login button not found in the DOM.");
       }
     } else if (currentPath === '/') {
       const signupBtn = document.getElementById('create-account-button');
       if (signupBtn) {
-        signupBtn.addEventListener('click', createAccount); // Attach signup event listener
+        signupBtn.addEventListener('click', createAccount);
+      } else {
+        console.error("Signup button not found in the DOM.");
       }
     }
   } catch (error) {
-    console.error('Error initializing the environment:', error);
-    alert('An error occurred while initializing the application. Please try again.');
+    console.error('Error during script initialization:', error);
+    alert('An error occurred while loading the application.');
   }
 });
