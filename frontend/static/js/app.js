@@ -129,7 +129,7 @@ function fetchMyContacts() {
     .catch(err => console.error('Error fetching contacts:', err));
 }
 
-// Event listener setup
+// Event listener
 document.addEventListener('DOMContentLoaded', () => {
   fetchEnvVariables();
 
@@ -141,6 +141,14 @@ document.addEventListener('DOMContentLoaded', () => {
   } else if (currentPath === '/') {
     const signupBtn = document.getElementById('create-account-button');
     if (signupBtn) signupBtn.addEventListener('click', createAccount);
+  } else if (currentPath === '/dashboard') {
+    const logoutButton = document.getElementById('logout-button');
+    if (logoutButton) {
+      logoutButton.addEventListener('click', logout);
+      console.log('Logout button listener attached');
+    } else {
+      console.error('Logout button not found on dashboard.');
+    }
   }
 });
 
@@ -369,7 +377,7 @@ function playLoginSound() {
   if (loginSound) loginSound.play();
 }
 
-// Logout function
+// Logout
 function logout() {
   fetch('/logout', { method: 'POST', credentials: 'include' })
     .then(response => {
