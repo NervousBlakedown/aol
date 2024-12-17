@@ -28,6 +28,8 @@ load_dotenv()
 SUPABASE_URL = os.getenv('SUPABASE_URL')
 SUPABASE_KEY = os.getenv('SUPABASE_KEY')
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+logging.debug(f"Supabase URL: {SUPABASE_URL}, Supabase Key: {SUPABASE_KEY}")
+
 
 app = Flask(__name__, static_folder=static_dir, template_folder=template_dir)
 socketio = SocketIO(app)
@@ -441,22 +443,19 @@ def forgot_password_page():
 
 @app.route('/forgot_password', methods=['POST'])
 def forgot_password():
-    # Debug to verify email extraction
-    logging.debug("Handling forgot password request...")
-    email = request.json.get("email") if request.is_json else request.form.get("email")
-    print(f"Email received: {email}")
-
+    logging.debug("Processing forgot password request...")
+    email = request.form.get("email")
     if not email:
-        return jsonify({"success": False, "message": "Email is required."}), 400
+        return jsonify({"success": False, "message": "Please provide a valid email."}), 400
 
-    # Call the function to send the reset email
     result = send_supabase_reset_email(email)
-
-    print(f"Result: {result}")  # Debug output
     if result['success']:
-        return jsonify({"success": True, "message": result['message']}), 200
+        logging.debug(f"Reset email sent to {email}")
+        return jsonify({"success": True, "message": "Reset email sent successfully!"}), 200
     else:
-        return jsonify({"success": False, "message": result['message']}), 500
+        logging.error(f"Error sending reset email: {result['message']}")
+        return jsonify({"success": False, "message": "Failed to send reset email. Please try again later."}), 500
+
 
 
 # Reset password (after forgotten)
@@ -467,32 +466,27 @@ def reset_password_page():
 # Update password after 'forgot password' link
 @app.route('/update_password', methods=['POST'])
 def update_password():
-    import requests
-
-    # Extract reset token and new password
-    reset_token = request.args.get('token')
+    reset_token = request.args.get('token')  # Token passed in URL
     data = request.get_json()
     new_password = data.get("new_password")
 
     if not reset_token or not new_password:
-        return jsonify({"success": False, "message": "Invalid token or password."}), 400
+        return jsonify({"success": False, "message": "Missing token or password."}), 400
+
+    headers = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {reset_token}",
+        "Content-Type": "application/json"
+    }
+    payload = {"password": new_password}
 
     try:
-        # Send request to Supabase API to update password
-        headers = {
-            "apikey": SUPABASE_KEY,
-            "Authorization": f"Bearer {reset_token}",
-            "Content-Type": "application/json"
-        }
-        payload = {"password": new_password}
-
         response = requests.put(f"{SUPABASE_URL}/auth/v1/user", json=payload, headers=headers)
         response.raise_for_status()
-
-        return jsonify({"success": True, "message": "Password reset successfully!"}), 200
-    except requests.exceptions.RequestException as e:
-        logging.error(f"Error resetting password: {e}")
-        return jsonify({"success": False, "message": "Failed to reset password. Please try again."}), 500
+        return jsonify({"success": True, "message": "Password updated successfully."}), 200
+    except requests.RequestException as e:
+        logging.error(f"Error updating password: {e}")
+        return jsonify({"success": False, "message": "Password reset failed. Invalid token."}), 500
 
 
 # Run app
