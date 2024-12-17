@@ -28,11 +28,17 @@ SUPABASE_KEY = os.getenv('SUPABASE_KEY')
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 logging.debug(f"Supabase URL: {SUPABASE_URL}, Supabase Key: {SUPABASE_KEY}")
 
-
 app = Flask(__name__, static_folder=static_dir, template_folder=template_dir)
 socketio = SocketIO(app)
 app.secret_key = 'my_secret_key'  # TODO: Replace with secure, randomly generated key
 app.permanent_session_lifetime = timedelta(minutes = 30)
+# Secure Flask session configuration
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_PERMANENT'] = True
+app.config['SESSION_USE_SIGNER'] = True  # Secure cookie signing
+app.config['SESSION_COOKIE_SECURE'] = True  # Use secure cookies (HTTPS only)
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Prevent cross-site issues
+Session(app)
 
 gmail_address = os.getenv('GMAIL_ADDRESS')
 gmail_password = os.getenv('GMAIL_PASSWORD')
@@ -158,6 +164,15 @@ def get_username():
         return jsonify({'username': session['user']['email']})
     else:
         return jsonify({'error': 'Unauthorized'}), 401
+
+# Test: test session for login to dashboard after successful login
+@app.route('/check_session', methods=['GET'])
+def check_session():
+    if 'user' in session:
+        return jsonify({'success': True, 'message': 'Session is active!', 'user': session['user']})
+    else:
+        return jsonify({'success': False, 'message': 'Session not active'})
+
 
 # DMain page
 @app.route('/dashboard', methods=['GET'])

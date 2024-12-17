@@ -81,23 +81,36 @@ async function login() {
   }
 
   try {
+    // Authenticate with Supabase
     const { data, error } = await supabase.auth.signInWithPassword({
       email: email,
       password: password
     });
 
     if (error) {
-      throw error;
+      throw new Error(error.message);
+    }
+
+    // Notify Flask about the successful login to set its session
+    const response = await fetch('/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+      credentials: 'include' // Sends the cookies for Flask session
+    });
+
+    const result = await response.json();
+    if (!result.success) {
+      throw new Error(result.message);
     }
 
     alert('Login successful!');
-    window.location.href = '/dashboard';
+    setTimeout(() => window.location.href = '/dashboard', 500); // Slight delay to ensure session is set
   } catch (error) {
     console.error('Login error:', error.message);
     alert(`Login failed: ${error.message}`);
   }
 }
-
 
 
 // Event listener for login button
