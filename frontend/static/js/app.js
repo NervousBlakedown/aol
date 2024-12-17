@@ -286,6 +286,7 @@ function setupSocketIO() {
     const roomName = data.room;
     if (!activeChats[roomName]) {
       createChatBox(roomName, data.users);
+      console.log("chat box created for room:", roomName);
     }
   });
 
@@ -304,10 +305,16 @@ function setupSocketIO() {
 function createChatBox(roomName, users) {
   console.log('Creating chat box for room:', roomName, 'Users:', users);
   const chatsContainer = document.getElementById('chats-container');
+  chatsContainer.appendChild(chatBox); // delete later if needed 4:40 PM 12.17.24
   if (!chatsContainer) {
     console.error('Chats container not found.');
     return;
   }
+  if (!activeChats[roomName]) {
+    createChatBox(roomName, selectedContacts);
+    console.log("createChatBox called for room:", roomName);
+  }
+
   const chatBox = document.createElement('div');
   chatBox.className = 'chat-box';
   chatBox.id = `chat-box-${roomName}`;
@@ -426,6 +433,8 @@ function updateContactsList(users) {
 
 // Start chat
 function startChat() {
+  console.log("chat button clicked")
+  console.log('selected users:', selectedContacts);
   const selectedContacts = Array.from(document.querySelectorAll('.contact-checkbox:checked'))
                                 .map(cb => cb.value);
 
@@ -435,23 +444,16 @@ function startChat() {
   }
 
   console.log('Starting chat with:', selectedContacts);
-  socket.emit('start_chat', { users: selectedContacts });
+  socket.emit('start_chat', { users: [...selectedContacts, username] });
+  console.log("Chat start event emitted for:", [...selectedContacts, username]);
+
+  // socket.emit('start_chat', { users: selectedContacts });
 
   // Automatically create a chat box UI for selected users
   const roomName = selectedContacts.join('_'); // Unique room name based on users
   createChatBox(roomName, selectedContacts);
 }
 
-/*function startChat() {
-  const selectedUsers = Array.from(document.querySelectorAll('.contact-checkbox:checked')).map(cb => cb.value);
-  
-  if (selectedUsers.length === 0) {
-    alert('Select at least one contact to start a chat...obviously.');
-    return;
-  }
-  
-  socket.emit('start_chat', { users: [...selectedUsers, username] });
-} */
 
 // Send message
 function sendMessage(roomName) {
