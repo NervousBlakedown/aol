@@ -100,7 +100,7 @@ def signup():
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
-    username = data.get('username')  # Username input from the form
+    username = data.get('username')
 
     if not email or not password or not username:
         return jsonify({'success': False, 'message': 'Email, password, and username are required.'}), 400
@@ -117,18 +117,13 @@ def signup():
         })
 
         # Check for Supabase API errors
-        if hasattr(response, 'error') and response.error:
-            error_message = response.error.message if response.error else "Unknown error"
-            logging.error(f"Signup error: {error_message}")
-            return jsonify({'success': False, 'message': error_message}), 400
-
-        # Success: Respond clearly
-        logging.info(f"User created successfully: {email}")
-        return jsonify({'success': True, 'message': 'Signup successful!'}), 201
-
+        if response.user:
+            return jsonify({'success': True, 'message': 'Signup successful!'}), 201
+        else:
+            return jsonify({'success': False, 'message': 'Signup failed. Try again.'}), 400
     except Exception as e:
-        logging.error(f"Signup exception: {e}")
-        return jsonify({'success': False, 'message': 'An internal error occurred during signup.'}), 500
+        logging.error(f"Signup error: {e}")
+        return jsonify({'success': False, 'message': 'Error during signup.'}), 500
 
 # Login page
 @app.route('/login', methods=['POST'])
@@ -136,27 +131,29 @@ def login():
     data = request.get_json()
     email = data.get('email')
     password = data.get('password')
-    response = supabase.auth.sign_in_with_password({"email": email, "password": password})
 
     if not email or not password:
-        return jsonify({'success': False, 'message': 'Email and password are required.'}), 400
+        return jsonify({'success': False, 'message': 'Email and password required.'}), 400
 
     try:
-        # Authenticate with Supabase
-        response = supabase.auth.sign_in_with_password({"email": email, "password": password})
-        
-        if response.user is None:
-            return jsonify({'success': False, 'message': 'Invalid email or password.'}), 401
+        # Authenticate user with Supabase
+        response = supabase.auth.sign_in_with_password({
+            "email": email,
+            "password": password
+        })
 
-        # Set the session in Flask
-        session['user'] = {
-            'id': response.user.id,
-            'email': response.user.email
-        }
-        return jsonify({'success': True, 'message': 'Login successful.'}), 200
+        if response.user:
+            session['user'] = {
+                'id': response.user.id,  # Save user ID for future queries
+                'email': response.user.email
+            }
+            return jsonify({'success': True, 'message': 'Login successful.'}), 200
+        else:
+            return jsonify({'success': False, 'message': 'Invalid email or password.'}), 401
     except Exception as e:
         logging.error(f"Login error: {e}")
-        return jsonify({'success': False, 'message': f'An error occurred during login: {str(e)}'}), 500
+        return jsonify({'success': False, 'message': 'Error during login.'}), 500
+
 
 # Get username
 @app.route('/get_username', methods=['GET'])
@@ -165,19 +162,19 @@ def get_username():
         try:
             user_id = session['user']['id']
 
-            # Query Supabase auth to fetch user data
+            # Fetch the username from raw_user_meta_data
             response = supabase.auth.admin.get_user_by_id(user_id)
-
             if response.user:
-                username = response.user.user_metadata.get("username", "Unknown")
+                username = response.user.user_metadata.get('username', 'Unknown')
                 return jsonify({'username': username}), 200
             else:
                 return jsonify({'error': 'User not found'}), 404
         except Exception as e:
             logging.error(f"Error fetching username: {e}")
-            return jsonify({'error': 'Failed to fetch username'}), 500
+            return jsonify({'error': 'Error retrieving username.'}), 500
     else:
         return jsonify({'error': 'Unauthorized'}), 401
+
 
 
 # Main page
@@ -209,29 +206,19 @@ def search_contacts():
         return jsonify([])  # Return empty list if no query is provided
 
     try:
-        # Query Supabase to fetch users by username from raw_user_meta_data
-        response = supabase.table("auth.users") \
-            .select("id, email, raw_user_meta_data") \
-            .execute()
-
-        users = response.data
-
-        # Filter users based on the query and exclude the current user
-        current_email = session['user']['email']
-        filtered_users = [
-            {
-                'username': user['raw_user_meta_data']['username'],
-                'email': user['email']
-            }
-            for user in users
-            if query.lower() in user['raw_user_meta_data'].get('username', '').lower()
-            and user['email'] != current_email
+        # Query for matching usernames in raw_user_meta_data
+        response = supabase.table("auth.users").select("raw_user_meta_data").execute()
+        contacts = [
+            {"username": user["raw_user_meta_data"]["username"]}
+            for user in response.data
+            if "username" in user["raw_user_meta_data"] and query.lower() in user["raw_user_meta_data"]["username"].lower()
         ]
 
-        return jsonify(filtered_users), 200
+        return jsonify(contacts), 200
     except Exception as e:
         logging.error(f"Error searching contacts: {e}")
         return jsonify({'error': 'Failed to fetch contacts'}), 500
+
 
 # Add contacts
 @app.route('/add_contact', methods=['POST'])

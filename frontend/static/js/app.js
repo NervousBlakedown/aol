@@ -100,6 +100,23 @@ function login() {
     });
 }
 
+// Go to dashboard after successful login
+function initializeDashboard() {
+  fetch('/get_username', { credentials: 'include' })
+    .then(response => response.json())
+    .then(data => {
+      if (data.username) {
+        document.getElementById('username-display').textContent = `Welcome, ${data.username}!`;
+      } else {
+        alert('Error fetching username.');
+        window.location.href = '/login';
+      }
+    })
+    .catch(error => {
+      console.error("Error fetching username:", error);
+      window.location.href = '/login';
+    });
+}
 
 
 // Fetch user's contacts
@@ -246,20 +263,15 @@ function searchContacts(query) {
 
       data.forEach(contact => {
         const li = document.createElement('li');
-        li.textContent = `${contact.username} (${contact.email})`;
-
-        const addButton = document.createElement('button');
-        addButton.textContent = 'Add';
-        addButton.addEventListener('click', () => addContact(contact.email));
-        li.appendChild(addButton);
-
+        li.textContent = contact.username;
         resultsUl.appendChild(li);
       });
     })
     .catch(error => console.error('Error fetching contacts:', error));
 }
 
-// ADDED: addContact function
+
+// add Contacts
 function addContact(contactId) {
   fetch('/add_contact', {
     method: 'POST',
