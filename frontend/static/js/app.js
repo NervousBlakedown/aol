@@ -228,7 +228,7 @@ document.addEventListener('DOMContentLoaded', () => {
       startChatButton.addEventListener('click', startChat);
       console.log('Start Chat button listener attached');
     } else {
-      console.error('Start Chat button not found on dashboard.');
+      console.error('Start Chat button not found.');
     }
   }
 });
@@ -466,6 +466,23 @@ function updateContactsList(users) {
 
 // Start chat
 function startChat() {
+  const selectedContacts = Array.from(document.querySelectorAll('.contact-checkbox:checked'))
+                                .map(cb => cb.value);
+
+  if (selectedContacts.length === 0) {
+      alert('Wanna talk to yourself, I see.');
+      return;
+  }
+
+  console.log('Starting chat with:', selectedContacts);
+  socket.emit('start_chat', { users: selectedContacts });
+
+  // Automatically create a chat box UI for selected users
+  const roomName = selectedContacts.join('_'); // Unique room name based on users
+  createChatBox(roomName, selectedContacts);
+}
+
+/*function startChat() {
   const selectedUsers = Array.from(document.querySelectorAll('.contact-checkbox:checked')).map(cb => cb.value);
   
   if (selectedUsers.length === 0) {
@@ -474,7 +491,7 @@ function startChat() {
   }
   
   socket.emit('start_chat', { users: [...selectedUsers, username] });
-}
+} */
 
 // Send message
 function sendMessage(roomName) {
