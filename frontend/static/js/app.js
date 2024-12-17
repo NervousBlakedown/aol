@@ -122,12 +122,28 @@ function initializeDashboard() {
 // Fetch user's contacts
 function fetchMyContacts() {
   fetch('/get_my_contacts', { credentials: 'include' })
+      .then(response => response.json())
+      .then(data => {
+          const contactsList = document.getElementById('contacts-list');
+          contactsList.innerHTML = '';
+
+          data.forEach(contact => {
+              const listItem = document.createElement('li');
+              listItem.textContent = contact.username;
+              contactsList.appendChild(listItem);
+          });
+      })
+      .catch(err => console.error('Error fetching contacts:', err));
+}
+
+/* function fetchMyContacts() {
+  fetch('/get_my_contacts', { credentials: 'include' })
     .then(res => res.json())
     .then(contactData => {
       myContacts = contactData;
     })
     .catch(err => console.error('Error fetching contacts:', err));
-}
+} */
 
 // Event listener
 document.addEventListener('DOMContentLoaded', () => {
@@ -151,6 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       console.error('Logout button not found on dashboard.');
     }
+    fetchMyContacts(); // delete if bug; 2:59 PM 12.17.24
 
     // search contacts
     const searchInput = document.getElementById('search-input');

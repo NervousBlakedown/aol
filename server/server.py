@@ -259,6 +259,46 @@ def add_contact():
     try:
         # Step 1: Fetch all users via Supabase Admin API
         response = supabase_admin.auth.admin.list_users()
+        contact_user = next(
+            (user for user in response if user.user_metadata.get('username') == contact_username), None
+        )
+
+        if not contact_user:
+            return jsonify({'success': False, 'message': 'User not found.'}), 404
+
+        contact_user_id = contact_user.id
+
+        # Step 2: Check if the contact already exists
+        existing_contact = supabase.table("contacts").select("id").eq("user_id", user_id).eq("contact_id", contact_user_id).execute()
+        if existing_contact.data:
+            return jsonify({'success': False, 'message': 'Contact already exists.'}), 409
+
+        # Step 3: Insert contact into the 'contacts' table
+        supabase.table("contacts").insert({
+            "user_id": user_id,
+            "contact_id": contact_user_id
+        }).execute()
+
+        return jsonify({'success': True, 'message': 'Contact added successfully.'}), 200
+
+    except Exception as e:
+        logging.error(f"Error adding contact: {e}")
+        return jsonify({'success': False, 'message': 'An error occurred while adding the contact.'}), 500
+
+"""def add_contact():
+    if 'user' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
+    user_id = session['user']['id']  # Current user's ID
+    data = request.get_json()
+    contact_username = data.get('username')  # Username of the contact to add
+
+    if not contact_username:
+        return jsonify({'success': False, 'message': 'Contact username is required.'}), 400
+
+    try:
+        # Step 1: Fetch all users via Supabase Admin API
+        response = supabase_admin.auth.admin.list_users()
 
         # Step 2: Find the contact user by username
         contact_user = next(
@@ -280,43 +320,43 @@ def add_contact():
 
     except Exception as e:
         logging.error(f"Error adding contact: {e}")
-        return jsonify({'success': False, 'message': 'An error occurred while adding the contact.'}), 500
-"""def add_contact():
-    if 'user' not in session:
-        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
-
-    user_id = session['user']['id']
-    data = request.get_json()
-    contact_username = data.get('username')
-
-    if not contact_username:
-        return jsonify({'success': False, 'message': 'Contact username is required.'}), 400
-
-    try:
-        # Query auth.users to find the user ID for the given username
-        response = supabase.table("auth.users") \
-            .select("id") \
-            .filter("raw_user_meta_data->>username", "eq", contact_username) \
-            .single() \
-            .execute()
-
-        contact_user_id = response.data.get('id')
-        if not contact_user_id:
-            return jsonify({'success': False, 'message': 'User not found.'}), 404
-
-        # Insert into contacts table
-        supabase.table("contacts").insert({
-            "user_id": user_id,
-            "contact_id": contact_user_id
-        }).execute()
-
-        return jsonify({'success': True, 'message': 'Contact added successfully.'}), 200
-    except Exception as e:
-        logging.error(f"Error adding contact: {e}")
-        return jsonify({'success': False, 'message': 'Failed to add contact.'}), 500"""
+        return jsonify({'success': False, 'message': 'An error occurred while adding the contact.'}), 500"""
 
 # Get contacts
 @app.route('/get_my_contacts', methods=['GET'])
+def get_my_contacts():
+    if 'user' not in session:
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    try:
+        user_id = session['user']['id']
+
+        # Step 1: Fetch contact IDs from the 'contacts' table
+        contacts_response = supabase.table("contacts") \
+            .select("contact_id") \
+            .eq("user_id", user_id) \
+            .execute()
+
+        contact_ids = [contact['contact_id'] for contact in contacts_response.data]
+
+        if not contact_ids:
+            return jsonify([])  # No contacts found
+
+        # Step 2: Fetch usernames of contacts using Supabase Admin API
+        response = supabase_admin.auth.admin.list_users()
+        contact_users = [
+            {"id": user.id, "username": user.user_metadata.get('username', 'Unknown')}
+            for user in response
+            if user.id in contact_ids
+        ]
+
+        return jsonify(contact_users), 200
+
+    except Exception as e:
+        logging.error(f"Error fetching contacts: {e}")
+        return jsonify({'error': 'Failed to fetch contacts'}), 500
+
+"""@app.route('/get_my_contacts', methods=['GET'])
 def get_my_contacts():
     if 'user' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -351,7 +391,7 @@ def get_my_contacts():
         return jsonify(contacts_list), 200
     except Exception as e:
         logging.error(f"Error fetching contacts: {e}")
-        return jsonify({'error': 'Failed to fetch contacts'}), 500
+        return jsonify({'error': 'Failed to fetch contacts'}), 500"""
 
 
 # Handle user login via Socket.IO
