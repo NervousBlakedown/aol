@@ -14,10 +14,6 @@ from server.auth_utils import reset_password as reset_user_password
 from supabase import create_client, Client
 from cryptography.fernet import Fernet
 logging.basicConfig(level=logging.DEBUG)
-
-# get paths
-# print("Working Directory:", os.getcwd())
-# print("Base Directory (__name__):", os.path.abspath(os.path.dirname(__name__)))
 base_dir = os.path.abspath(os.path.dirname(__name__))
 static_dir = os.path.join(base_dir, 'frontend', 'static')
 template_dir = os.path.join(base_dir, 'frontend', 'templates')
