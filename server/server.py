@@ -618,6 +618,9 @@ def forgot_password():
 @app.route('/reset_password', methods=['GET'])
 def reset_password():
     reset_token = request.args.get('token')
+    if not reset_token:
+        return "Missing reset token.", 400
+    return render_template('reset_password.html')
     data = request.get_json()
     new_password = data.get('new_password')
 
