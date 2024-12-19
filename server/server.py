@@ -218,27 +218,6 @@ def search_contacts():
     except Exception as e:
         logging.error(f"Error searching contacts: {e}")
         return jsonify({'error': 'Failed to fetch contacts'}), 500
-"""def search_contacts():
-    if 'user' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-
-    query = request.args.get('query', '')
-    if not query:
-        return jsonify([])  # Return empty list if no query is provided
-
-    try:
-        # Query for matching usernames in raw_user_meta_data
-        response = supabase.table("auth.users").select("raw_user_meta_data").execute()
-        contacts = [
-            {"username": user["raw_user_meta_data"]["username"]}
-            for user in response.data
-            if "username" in user["raw_user_meta_data"] and query.lower() in user["raw_user_meta_data"]["username"].lower()
-        ]
-        return jsonify(contacts), 200
-    except Exception as e:
-        logging.error(f"Error searching contacts: {e}")
-        return jsonify({'error': 'Failed to fetch contacts'}), 500"""
-
 
 # Add contacts
 @app.route('/add_contact', methods=['POST'])
@@ -281,43 +260,6 @@ def add_contact():
     except Exception as e:
         logging.error(f"Error adding contact: {e}")
         return jsonify({'success': False, 'message': 'An error occurred while adding the contact.'}), 500
-
-"""def add_contact():
-    if 'user' not in session:
-        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
-
-    user_id = session['user']['id']  # Current user's ID
-    data = request.get_json()
-    contact_username = data.get('username')  # Username of the contact to add
-
-    if not contact_username:
-        return jsonify({'success': False, 'message': 'Contact username is required.'}), 400
-
-    try:
-        # Step 1: Fetch all users via Supabase Admin API
-        response = supabase_admin.auth.admin.list_users()
-
-        # Step 2: Find the contact user by username
-        contact_user = next(
-            (user for user in response if user.user_metadata.get('username') == contact_username), None
-        )
-
-        if not contact_user:
-            return jsonify({'success': False, 'message': 'User not found.'}), 404
-
-        contact_user_id = contact_user.id
-
-        # Step 3: Insert contact into the 'contacts' table
-        supabase.table("contacts").insert({
-            "user_id": user_id,
-            "contact_id": contact_user_id
-        }).execute()
-
-        return jsonify({'success': True, 'message': 'Contact added successfully.'}), 200
-
-    except Exception as e:
-        logging.error(f"Error adding contact: {e}")
-        return jsonify({'success': False, 'message': 'An error occurred while adding the contact.'}), 500"""
 
 # Get contacts
 @app.route('/get_my_contacts', methods=['GET'])
@@ -449,27 +391,14 @@ def start_chat(data):
             join_room(room_name, sid=connected_users[user])
 
     emit('chat_started', {'room': room_name, 'users': usernames}, room=room_name)
-"""def start_chat(data):
-    logging.debug(f"start_chat event received: {data}")
-    usernames = data['users']
-    room_name = generate_room_name(usernames) 
-
-    for username in usernames:
-        if username in connected_users:
-            join_room(room_name, sid=connected_users[username])
-            logging.debug(f"{username} (online) joined room: {room_name}")
-        else:
-            logging.debug(f"{username} offline")
-    emit('chat_started', {'room': room_name, 'users': usernames}, room=room_name) #room=request.sid)# room=room_name)
-    logging.debug(f"Chat started: room={room_name}, users={usernames}")"""
 
 @socketio.on('send_message')
 def handle_send_message(data):
     room = data['room']
     message = data['message']
     sender_email = data['username']  # TODO: not 'sender' or 'sender_username' equivalent?
-    timestamp = datetime.now().strftime('%H:%M')  
-
+    timestamp = datetime.now().strftime('%I:%M%S %p')
+    # timestamp = datetime.now().strftime('%H:%M')  
     print(f"Message received in room {room} from {sender_email}")
 
     if room not in rooms:
@@ -482,7 +411,7 @@ def handle_send_message(data):
     # Emit to online recipients
     online_recipients = [r for r in recipients if r in connected_users]
     for r in online_recipients:
-        emit('message', {'msg': message, 'username': sender_email, 'room': room}, room=connected_users[r])
+        emit('message', {'msg': message, 'username': sender_email, 'room': room, 'timestamp': timestamp}, room=connected_users[r])
 
     # Store encrypted messages for offline recipients
     offline_recipients = [r for r in recipients if r not in connected_users]

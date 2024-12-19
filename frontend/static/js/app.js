@@ -310,7 +310,7 @@ function sendMessage(roomName) {
   if (!message) return;
 
   // timestamp for chat box
-  const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
   socket.emit('send_message', { username, message, room: roomName, timestamp });
   appendMessageToChat(roomName, 'You', message);
