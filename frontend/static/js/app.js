@@ -266,9 +266,19 @@ function createChatBox(roomName, participants) {
 
   const chatBox = document.createElement('div');
   chatBox.className = 'chat-box';
-  chatBox.id = `chat-box-${roomName}`;
+  chatBox.id = `chat-box-${escapedRoomName}`; // Use escapedRoomName for the ID
+  //chatBox.id = `chat-box-${roomName}`; BUGDELETE
 
   chatBox.innerHTML = `
+        <div class="chat-header">
+            <h3>${participants.join(', ')}</h3>
+            <button class="close-chat" data-room="${roomName}">X</button>
+        </div>
+        <div class="messages" id="messages-${escapedRoomName}"></div> <!-- Use escapedRoomName -->
+        <input type="text" id="message-${escapedRoomName}" placeholder="Type a message..." /> <!-- Use escapedRoomName -->
+        <button onclick="sendMessage('${roomName}')">Send</button>
+    `;
+  /* chatBox.innerHTML = `
     <div class="chat-header">
       <h3>${participants.join(', ')}</h3>
       <button class="close-chat" data-room="${roomName}">X</button>
@@ -276,7 +286,7 @@ function createChatBox(roomName, participants) {
     <div class="messages" id="messages-${roomName}"></div>
     <input type="text" id="message-${roomName}" placeholder="Type a message..." />
     <button onclick="sendMessage('${roomName}')">Send</button>
-  `;
+  `; */
 
   // Close button functionality
   chatBox.querySelector('.close-chat').addEventListener('click', () => {
@@ -285,7 +295,7 @@ function createChatBox(roomName, participants) {
   });
 
   // Enter key functionality for sending messages
-  const messageInput = chatBox.querySelector(`#message-${roomName}`);
+  const messageInput = chatBox.querySelector(`#message-${escapedRoomName}`);
   messageInput.addEventListener('keydown', event => {
     if (event.key === 'Enter') sendMessage(roomName);
   });
@@ -297,7 +307,7 @@ function createChatBox(roomName, participants) {
 // Append a message
 function appendMessageToChat(roomName, sender, message, timestamp) {
   const escapedRoomName = CSS.escape(roomName);
-  const messagesDiv = document.getElementById(`messages-${roomName}`);
+  const messagesDiv = document.getElementById(`messages-${escapedRoomName}`);
   if (!messagesDiv) return;
 
   const messageElement = document.createElement('div');
