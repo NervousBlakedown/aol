@@ -2,10 +2,10 @@ let SUPABASE_URL, SUPABASE_KEY;
 let supabase;
 let socket;
 let typingTimeout;
-let username = null; // Store the logged-in username
-const activeChats = {}; // Track active chat boxes and their messages
-let myContacts = []; // Store users' contacts
-let userStatuses = {}; // Store {username: status} from user_list event
+let username = null; 
+const activeChats = {}; 
+let myContacts = []; 
+let userStatuses = {}; 
 
 // Part I: Initialization
 document.addEventListener('DOMContentLoaded', () => {
@@ -278,24 +278,22 @@ function createChatBox(roomName, participants) {
       <button onclick="sendMessage('${roomName}')">Send</button>
   `;
 
-  console.log(`Generated HTML for room ${roomName}: ${chatBox.innerHTML}`); // Debugging log
-
   const closeButton = chatBox.querySelector('.close-chat');
   if (closeButton) {
       closeButton.addEventListener('click', () => {
           chatsContainer.removeChild(chatBox);
           delete activeChats[roomName];
       });
-  } else {
+  } /* else {
       console.error(`Close button not found for room: ${roomName}`);
-  }
+  } */
 
   chatsContainer.appendChild(chatBox);
 
-  // Ensure the message input exists
+  // Ensure message input exists
   const messageInput = document.querySelector(`#message-${escapedRoomName}`);
   if (messageInput) {
-      console.log(`Message input found for room: ${roomName}`);
+      console.log(`Attaching keydown listener for room: ${roomName}`);
       messageInput.addEventListener('keydown', event => {
           if (event.key === 'Enter') {
               console.log(`Return key pressed in room: ${roomName}`); // Debugging log
@@ -309,58 +307,6 @@ function createChatBox(roomName, participants) {
   activeChats[roomName] = chatBox;
 }
 
-/* function createChatBox(roomName, participants) {
-  const chatsContainer = document.getElementById('chats-container');
-  if (!chatsContainer) {
-      console.error('Chats container not found.');
-      return;
-  }
-
-  if (activeChats[roomName]) return;
-
-  const escapedRoomName = CSS.escape(roomName); 
-  const chatBox = document.createElement('div');
-  chatBox.className = 'chat-box';
-  chatBox.id = `chat-box-${escapedRoomName}`; 
-
-  // Use escapedRoomName consistently in IDs
-  chatBox.innerHTML = `
-      <div class="chat-header">
-          <h3>${participants.join(', ')}</h3>
-          <button class="close-chat" data-room="${roomName}">X</button>
-      </div>
-      <div class="messages" id="messages-${escapedRoomName}"></div> <!-- Use escapedRoomName -->
-      <input type="text" id="message-${escapedRoomName}" placeholder="Type a message..." /> <!-- Use escapedRoomName -->
-      <button onclick="sendMessage('${roomName}')">Send</button>
-  `;
-  console.log(`Generated HTML for room ${roomName}: ${chatBox.innerHTML}`);
-
-  // Close button functionality
-  const closeButton = chatBox.querySelector('.close-chat');
-  if (closeButton) {
-      closeButton.addEventListener('click', () => {
-          chatsContainer.removeChild(chatBox);
-          delete activeChats[roomName];
-      });
-  } else {
-      console.error(`Close button not found for room: ${roomName}`);
-  }
-
-  // Enter key functionality for sending messages
-  const messageInput = chatBox.querySelector(`#message-${escapedRoomName}`);
-  if (messageInput) {
-      console.log(`Message input found for room: ${roomName}`);
-      messageInput.addEventListener('keydown', event => {
-          if (event.key === 'Enter') sendMessage(roomName);
-      });
-  } else {
-      console.error(`Message input not found for room: ${roomName}`);
-      console.error(`DOM after appending:`, chatsContainer.innerHTML); // Debugging log
-  }
-
-  chatsContainer.appendChild(chatBox);
-  activeChats[roomName] = chatBox;
-} */
 
 // Append a message
 function appendMessageToChat(roomName, sender, message, timestamp) {
