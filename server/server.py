@@ -422,7 +422,7 @@ def start_chat(data):
 
     emit('chat_started', {'room': room_name, 'users': users}, room=room_name)
 
-# send message
+"""# send message
 @socketio.on('send_message')
 def handle_send_message(data):
     room = data['room']
@@ -481,9 +481,9 @@ def handle_send_message(data):
         logging.error(f"Error handling send_message: {e}")
     finally:
         cursor.close()
-        conn.close()
+        conn.close()"""
 
-"""@socketio.on('send_message')
+@socketio.on('send_message')
 def handle_send_message(data):
     room = data['room']
     message = data['message']
@@ -527,7 +527,7 @@ def handle_send_message(data):
         logging.error(f"Error handling send_message: {e}")
     finally:
         cursor.close()
-        conn.close()"""
+        conn.close()
 
 # Typing notifications
 @socketio.on('typing')
