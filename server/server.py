@@ -435,7 +435,6 @@ def handle_send_message(data):
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-
         # Fetch sender_id using username
         cursor.execute('''
             SELECT id 
@@ -448,11 +447,9 @@ def handle_send_message(data):
             emit('error', {'msg': f"Sender {sender_username} not found."})
             return
         sender_id = sender_row['id']
-
-        # Encrypt the message
         encrypted_message = f.encrypt(message.encode()).decode()
 
-        # Insert the message into the database
+        # Insert message into DB
         cursor.execute('''
             INSERT INTO public.messages (sender_id, receiver_id, room_name, message, delivered, timestamp)
             VALUES (%s, %s, %s, %s, %s, %s)
@@ -471,7 +468,6 @@ def handle_send_message(data):
 def handle_typing(data):
     room = data['room']
     emit('typing', {'username': data['username']}, room=room, include_self=False)
-
 
 @socketio.on('stop_typing')
 def handle_stop_typing(data):
@@ -527,6 +523,63 @@ def reset_password():
         return jsonify(result), 200
     else:
         return jsonify(result), 400
+
+# Join topic chat logic
+@socketio.on('join_topic')
+def join_topic(data):
+    topic_name = data.get('topic')
+    username = data.get('username')
+
+    if not topic_name or not username:
+        logging.error("Topic name or username not provided")
+        emit('error', {'msg': "Topic name and username are required."})
+        return
+
+    try:
+        # Fetch or create the topic
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Check if the topic exists
+        cursor.execute('SELECT id FROM public.topics WHERE name = %s', (topic_name,))
+        topic_row = cursor.fetchone()
+        if not topic_row:
+            # Create the topic if it doesn't exist
+            cursor.execute('INSERT INTO public.topics (name) VALUES (%s) RETURNING id', (topic_name,))
+            topic_id = cursor.fetchone()['id']
+            conn.commit()
+            logging.info(f"Topic created: {topic_name}")
+        else:
+            topic_id = topic_row['id']
+
+        # Join the Socket.IO room for the topic
+        join_room(topic_name, sid=request.sid)
+        logging.info(f"User {username} joined topic: {topic_name}")
+
+        emit('joined_topic', {'topic': topic_name, 'username': username}, room=topic_name)
+
+    except Exception as e:
+        logging.error(f"Error joining topic {topic_name}: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+
+# Leave topic
+@socketio.on('leave_topic')
+def leave_topic(data):
+    topic_name = data.get('topic')
+    username = data.get('username')
+
+    if not topic_name or not username:
+        logging.error("Topic name or username not provided")
+        emit('error', {'msg': "Topic name and username are required."})
+        return
+
+    leave_room(topic_name, sid=request.sid)
+    logging.info(f"User {username} left topic: {topic_name}")
+    emit('left_topic', {'topic': topic_name, 'username': username}, room=topic_name)
+
+
 
 # Run app
 if __name__ == '__main__':
