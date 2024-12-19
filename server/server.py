@@ -75,6 +75,25 @@ def get_db_connection():
         logging.error(f"Error connecting to database: {e}")
         raise e
 
+# Convert ID back to Username for offline message delivery
+def get_username_by_id(user_id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT raw_user_meta_data ->> 'username' AS username
+            FROM auth.users
+            WHERE id = %s
+        ''', (user_id,))
+        user_row = cursor.fetchone()
+        return user_row['username'] if user_row else None
+    except Exception as e:
+        logging.error(f"Error fetching username by id: {e}")
+        return None
+    finally:
+        cursor.close()
+        conn.close()
+
 # Serve signup page by default (root route)
 @app.route('/', methods = ['GET'])
 def default():
@@ -294,6 +313,66 @@ def get_my_contacts():
 # Handle user login
 @socketio.on('login')
 def handle_login(data):
+    username = data.get('username')  # Fetch username safely
+
+    if not username:
+        logging.error("Username not provided in login data")
+        emit('error', {'msg': "Username is required for login."})
+        return
+
+    connected_users[username] = request.sid
+    user_status[username] = 'Online'
+    logging.info(f"User {username} logged in.")
+
+    # Fetch undelivered messages
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Fetch user ID based on username
+        cursor.execute('''
+            SELECT id 
+            FROM auth.users 
+            WHERE raw_user_meta_data ->> 'username' = %s
+        ''', (username,))
+        user_row = cursor.fetchone()
+        if not user_row:
+            logging.error(f"User not found: {username}")
+            return
+        user_id = user_row['id']
+
+        # Fetch unread messages
+        cursor.execute('''
+            SELECT sender_id, message, room_name, timestamp 
+            FROM public.messages 
+            WHERE receiver_id = %s AND delivered = FALSE
+        ''', (user_id,))
+        messages = cursor.fetchall()
+
+        for msg in messages:
+            decrypted_message = f.decrypt(msg['message'].encode()).decode()
+            sender_id = msg['sender_id']
+            room_name = msg['room_name']
+            timestamp = msg['timestamp']
+
+            # Emit the message to the client
+            emit('message', {
+                'room': room_name,
+                'username': get_username_by_id(sender_id),  # Convert sender_id to username
+                'message': decrypted_message,
+                'timestamp': timestamp
+            }, room=request.sid)
+
+        # Mark messages as delivered
+        cursor.execute('UPDATE public.messages SET delivered = TRUE WHERE receiver_id = %s', (user_id,))
+        conn.commit()
+
+    except Exception as e:
+        logging.error(f"Error fetching offline messages: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+"""def handle_login(data):
     username = data['username']
     connected_users[username] = request.sid
     user_status[username] = 'Online'
@@ -341,7 +420,7 @@ def handle_login(data):
         logging.error(f"Error fetching offline messages: {e}")
     finally:
         cursor.close()
-        conn.close()
+        conn.close()"""
 
 """def handle_login(data):
     username = data['username']
@@ -446,6 +525,50 @@ def start_chat(data):
 def handle_send_message(data):
     room = data['room']
     message = data['message']
+    sender_username = data.get('username')  # Fetch username instead of email
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    if not sender_username:
+        logging.error("Sender username not provided in send_message data")
+        emit('error', {'msg': "Sender username is required."})
+        return
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Fetch sender_id using username
+        cursor.execute('''
+            SELECT id 
+            FROM auth.users 
+            WHERE raw_user_meta_data ->> 'username' = %s
+        ''', (sender_username,))
+        sender_row = cursor.fetchone()
+        if not sender_row:
+            logging.error(f"Sender not found: {sender_username}")
+            emit('error', {'msg': f"Sender {sender_username} not found."})
+            return
+        sender_id = sender_row['id']
+
+        # Encrypt the message
+        encrypted_message = f.encrypt(message.encode()).decode()
+
+        # Insert the message into the database
+        cursor.execute('''
+            INSERT INTO public.messages (sender_id, receiver_id, room_name, message, delivered, timestamp)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        ''', (sender_id, None, room, encrypted_message, False, timestamp))
+        conn.commit()
+        logging.info("Message successfully inserted into the database.")
+
+    except Exception as e:
+        logging.error(f"Error handling send_message: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+"""def handle_send_message(data):
+    room = data['room']
+    message = data['message']
     sender_email = data['username']  # Sender's email address
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
@@ -497,7 +620,7 @@ def handle_send_message(data):
         logging.error(f"Error handling send_message: {e}")
     finally:
         cursor.close()
-        conn.close()
+        conn.close()"""
 """def handle_send_message(data):
     room = data['room']
     message = data['message']
