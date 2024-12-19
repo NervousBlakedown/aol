@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// Add a Pal to your contact list
+// Add Pal to Pals list
 function addPal(username) {
   fetch('/add_contact', {
     method: 'POST',
@@ -83,7 +83,7 @@ function addPal(username) {
     .then(result => {
       if (result.success) {
         alert(`Successfully added ${username} as a Pal!`);
-        fetchMyContacts(); // Refresh the contacts list
+        fetchMyContacts(); // Refresh Pals list
       } else {
         alert(`Failed to add ${username}: ${result.message}`);
       }
@@ -94,7 +94,7 @@ function addPal(username) {
     });
 }
 
-// Fetch environment variables
+// Fetch .env
 function fetchEnvVariables() {
   fetch('/get_env')
     .then(response => response.json())
@@ -106,7 +106,7 @@ function fetchEnvVariables() {
     .catch(error => console.error('Error fetching environment variables:', error));
 }
 
-// Initialize Supabase
+// Init Supabase
 function initializeSupabase() {
   const { createClient } = window.supabase;
   supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -161,6 +161,7 @@ function setupSocketIO() {
   });
 
   socket.on('chat_started', data => {
+    console.log('chat_started event received:', data); // Debugging
     const roomName = data.room;
     if (!activeChats[roomName]) createChatBox(roomName, data.users);
   });
@@ -235,6 +236,8 @@ function startChat() {
   // Exclude self from room participants
   const roomParticipants = [username, ...selectedContacts];
   const uniqueRoomName = roomParticipants.sort().join('_'); // Sort to maintain consistency
+  console.log('Emitting start_chat with participants:', roomParticipants); // Debugging
+
   //const roomParticipants = selectedContacts.filter(contact => contact !== username);
   //const roomName = selectedContacts.join('_');
   socket.emit('start_chat', { users: roomParticipants });
@@ -243,6 +246,9 @@ function startChat() {
   if (!activeChats[uniqueRoomName]) {
     createChatBox(uniqueRoomName, roomParticipants.filter(name => name !== username));
   }
+
+  // Deselect checkboxes after starting chat
+  document.querySelectorAll('.contact-checkbox:checked').forEach(cb => cb.checked = false);
   //if (!activeChats[roomName]) createChatBox(roomName, selectedContacts);
 }
 
