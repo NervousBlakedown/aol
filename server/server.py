@@ -391,47 +391,75 @@ def start_chat(data):
 
     emit('chat_started', {'room': room_name, 'users': users}, room=room_name)
 
-"""@socketio.on('start_chat')
-def start_chat(data):
-    room_name = data['room']  # Expect encoded room name
-    users = data['users']
-
-    # Ensure the room exists on the server
-    if room_name not in rooms:
-        rooms[room_name] = users  # Track participants in the room
-
-    # Notify the clients to join the room
-    for user in users:
-        if user in connected_users:
-            join_room(room_name, sid=connected_users[user])
-
-    emit('chat_started', {'room': room_name, 'users': users}, room=room_name)"""
-
-"""@socketio.on('start_chat')
-def start_chat(data):
-    usernames = data['users']
-    room_name = "_".join(sorted(usernames)) 
-    logging.debug(f"Attempting to start chat for room: {room_name} with users: {usernames}")
-
-    # Ensure the room exists in the server's tracking dictionary (BUGDELETE)
-    if room_name not in rooms:
-        rooms[room_name] = []
-
-    for user in usernames:
-        if user in connected_users:
-            join_room(room_name, sid=connected_users[user])
-
-    emit('chat_started', {'room': room_name, 'users': usernames}, room=room_name)"""
-
-
 # send message
 @socketio.on('send_message')
 def handle_send_message(data):
     room = data['room']
     message = data['message']
+    sender_email = data['username']
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    # Encrypt the message
+    encrypted_message = f.encrypt(message.encode()).decode()
+
+    print(f"Message received in room {room} from {sender_email}")
+
+    try:
+        # Fetch sender's ID and username from auth.users
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT id, raw_user_meta_data 
+            FROM auth.users 
+            WHERE email = %s
+        ''', (sender_email,))
+        sender_row = cursor.fetchone()
+        if not sender_row:
+            logging.error("Sender not found in auth.users")
+            return
+
+        sender_id = sender_row['id']
+        sender_username = sender_row['raw_user_meta_data'].get('username', 'Unknown')
+
+        # Save the message in the database
+        cursor.execute('''
+            INSERT INTO public.messages (sender_id, receiver_id, room_name, message, delivered, timestamp)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        ''', (
+            sender_id,
+            None,  # Set to None for now; adapt for specific receiver_id logic
+            room,
+            encrypted_message,
+            False,  # Assume not delivered yet
+            timestamp
+        ))
+        conn.commit()
+
+        # Notify online recipients
+        if room in rooms:
+            recipients = [user for user in rooms[room] if user != sender_email]
+            for recipient in recipients:
+                if recipient in connected_users:
+                    emit('message', {
+                        'room': room,
+                        'username': sender_username,
+                        'message': message,  # Send plain text to online users
+                        'timestamp': timestamp
+                    }, room=connected_users[recipient])
+
+    except Exception as e:
+        logging.error(f"Error handling send_message: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+
+"""@socketio.on('send_message')
+def handle_send_message(data):
+    room = data['room']
+    message = data['message']
     sender_email = data['username']  # TODO: not 'sender' or 'sender_username' equivalent?
     timestamp = datetime.now().strftime('%I:%M%S %p')
-    print(f"Message received in room {room} from {sender_email}")
+    # print(f"Message received in room {room} from {sender_email}")
 
     if room not in rooms:
         logging.error(f"Error: Room {room} does not exist. Message: {message}")
@@ -491,7 +519,7 @@ def handle_send_message(data):
             logging.error(f"Error storing offline messages: {e}")
         finally:
             cursor.close()
-            conn.close()
+            conn.close()"""
 
 # Typing notifications
 @socketio.on('typing')
