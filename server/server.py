@@ -377,6 +377,22 @@ def generate_room_name(users):
 # start chat
 @socketio.on('start_chat')
 def start_chat(data):
+    room_name = data['room']  # Expect encoded room name
+    users = data['users']
+
+    # Ensure the room exists on the server
+    if room_name not in rooms:
+        rooms[room_name] = users  # Track participants in the room
+
+    # Notify the clients to join the room
+    for user in users:
+        if user in connected_users:
+            join_room(room_name, sid=connected_users[user])
+
+    emit('chat_started', {'room': room_name, 'users': users}, room=room_name)
+
+"""@socketio.on('start_chat')
+def start_chat(data):
     usernames = data['users']
     room_name = "_".join(sorted(usernames)) 
     logging.debug(f"Attempting to start chat for room: {room_name} with users: {usernames}")
@@ -389,7 +405,7 @@ def start_chat(data):
         if user in connected_users:
             join_room(room_name, sid=connected_users[user])
 
-    emit('chat_started', {'room': room_name, 'users': usernames}, room=room_name)
+    emit('chat_started', {'room': room_name, 'users': usernames}, room=room_name)"""
 
 
 # send message
