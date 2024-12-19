@@ -1,10 +1,10 @@
 {% extends 'base.html' %}
 
-{% block title %}Signup - BlakeOL{% endblock %}
+{% block title %}Signup - BlakeIM{% endblock %}
 
 {% block content %}
 <div id="signup" class="container">
-  <h2>Create a BlakeOL Account</h2>
+  <h2>Create a BlakeIM Account</h2>
   <label for="email">Email Address</label>
   <input type="email" id="email" placeholder="Enter email" required>
 
@@ -14,7 +14,7 @@
   <label for="password">Password</label>
   <input type="password" id="password" placeholder="Enter password" required>
 
-  <button id="create-account-button">Create BlakeOL Account</button>
+  <button id="create-account-button">Create BlakeIM Account</button>
 
   <p>Already have an account? <a href="{{ url_for('login_page') }}">Login</a></p>
 </div>
