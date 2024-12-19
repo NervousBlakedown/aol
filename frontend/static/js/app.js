@@ -6,6 +6,7 @@ let username = null;
 const activeChats = {}; 
 let myContacts = []; 
 let userStatuses = {}; 
+const roomInputs = {}; // track input elements by room name
 
 // Part I: Initialization
 document.addEventListener('DOMContentLoaded', () => {
@@ -283,10 +284,62 @@ function createChatBox(roomName, participants) {
       closeButton.addEventListener('click', () => {
           chatsContainer.removeChild(chatBox);
           delete activeChats[roomName];
+          delete roomInputs[roomName]; // Clean up reference
+      });
+  }
+
+  chatsContainer.appendChild(chatBox);
+
+  // Store input reference and attach keydown event directly
+  const messageInput = chatBox.querySelector(`#message-${escapedRoomName}`);
+  if (messageInput) {
+      roomInputs[roomName] = messageInput; // Store reference
+      messageInput.addEventListener('keydown', event => {
+          if (event.key === 'Enter') {
+              sendMessage(roomName);
+          }
+      });
+  } else {
+      console.error(`Message input not found for room: ${roomName}`);
+  }
+
+  activeChats[roomName] = chatBox;
+}
+
+/*function createChatBox(roomName, participants) {
+  const chatsContainer = document.getElementById('chats-container');
+  if (!chatsContainer) {
+      console.error('Chats container not found.');
+      return;
+  }
+
+  if (activeChats[roomName]) return;
+
+  const escapedRoomName = CSS.escape(roomName); // Escape special characters for CSS compatibility
+
+  const chatBox = document.createElement('div');
+  chatBox.className = 'chat-box';
+  chatBox.id = `chat-box-${escapedRoomName}`; // Use escapedRoomName for the ID
+
+  chatBox.innerHTML = `
+      <div class="chat-header">
+          <h3>${participants.join(', ')}</h3>
+          <button class="close-chat" data-room="${roomName}">X</button>
+      </div>
+      <div class="messages" id="messages-${escapedRoomName}"></div> <!-- Use escapedRoomName -->
+      <input type="text" id="message-${escapedRoomName}" placeholder="Type a message..." /> <!-- Use escapedRoomName -->
+      <button onclick="sendMessage('${roomName}')">Send</button>
+  `;
+
+  const closeButton = chatBox.querySelector('.close-chat');
+  if (closeButton) {
+      closeButton.addEventListener('click', () => {
+          chatsContainer.removeChild(chatBox);
+          delete activeChats[roomName];
       });
   } /* else {
       console.error(`Close button not found for room: ${roomName}`);
-  } */
+  } 
 
   chatsContainer.appendChild(chatBox);
 
@@ -305,7 +358,7 @@ function createChatBox(roomName, participants) {
   }
 
   activeChats[roomName] = chatBox;
-}
+} */
 
 
 // Append a message
@@ -322,6 +375,22 @@ function appendMessageToChat(roomName, sender, message, timestamp) {
 
 // Send message
 function sendMessage(roomName) {
+  const input = roomInputs[roomName]; // Get input field directly
+  if (!input) {
+      console.error(`Input field not found for room: ${roomName}`);
+      return;
+  }
+
+  const message = input.value.trim();
+  if (!message) return;
+
+  const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  socket.emit('send_message', { username, message, room: roomName, timestamp });
+  appendMessageToChat(roomName, 'You', message, timestamp);
+  input.value = '';
+}
+
+/* function sendMessage(roomName) {
   const escapedRoomName = CSS.escape(roomName);
   const input = document.getElementById(`message-${escapedRoomName}`);
   const message = input.value.trim();
@@ -332,7 +401,7 @@ function sendMessage(roomName) {
   socket.emit('send_message', { username, message, room: roomName, timestamp });
   appendMessageToChat(roomName, 'You', message);
   input.value = '';
-}
+} */
 
 // Logout
 function logout() {
