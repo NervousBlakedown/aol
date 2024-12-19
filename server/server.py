@@ -366,9 +366,6 @@ def handle_login(data):
         # Mark messages as delivered
         cursor.execute('UPDATE public.messages SET delivered = TRUE WHERE receiver_id = %s', (user_id,))
         conn.commit()
-
-    except Exception as e:
-        logging.error(f"Error fetching offline messages: {e}")
     finally:
         cursor.close()
         conn.close()
