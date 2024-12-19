@@ -256,6 +256,57 @@ function startChat() {
 function createChatBox(roomName, participants) {
   const chatsContainer = document.getElementById('chats-container');
   if (!chatsContainer) {
+      console.error('Chats container not found.');
+      return;
+  }
+
+  if (activeChats[roomName]) return;
+
+  const escapedRoomName = CSS.escape(roomName); // Escape special characters for CSS compatibility
+
+  const chatBox = document.createElement('div');
+  chatBox.className = 'chat-box';
+  chatBox.id = `chat-box-${escapedRoomName}`; // Use escapedRoomName for the ID
+
+  // Use escapedRoomName consistently in IDs
+  chatBox.innerHTML = `
+      <div class="chat-header">
+          <h3>${participants.join(', ')}</h3>
+          <button class="close-chat" data-room="${roomName}">X</button>
+      </div>
+      <div class="messages" id="messages-${escapedRoomName}"></div> <!-- Use escapedRoomName -->
+      <input type="text" id="message-${escapedRoomName}" placeholder="Type a message..." /> <!-- Use escapedRoomName -->
+      <button onclick="sendMessage('${roomName}')">Send</button>
+  `;
+
+  // Close button functionality
+  const closeButton = chatBox.querySelector('.close-chat');
+  if (closeButton) {
+      closeButton.addEventListener('click', () => {
+          chatsContainer.removeChild(chatBox);
+          delete activeChats[roomName];
+      });
+  } else {
+      console.error(`Close button not found for room: ${roomName}`);
+  }
+
+  // Enter key functionality for sending messages
+  const messageInput = chatBox.querySelector(`#message-${escapedRoomName}`);
+  if (messageInput) {
+      messageInput.addEventListener('keydown', event => {
+          if (event.key === 'Enter') sendMessage(roomName);
+      });
+  } else {
+      console.error(`Message input not found for room: ${roomName}`);
+  }
+
+  chatsContainer.appendChild(chatBox);
+  activeChats[roomName] = chatBox;
+}
+
+/* function createChatBox(roomName, participants) {
+  const chatsContainer = document.getElementById('chats-container');
+  if (!chatsContainer) {
     console.error('Chats container not found.');
     return;
   }
@@ -288,7 +339,7 @@ function createChatBox(roomName, participants) {
     <button onclick="sendMessage('${roomName}')">Send</button>
   `; */
 
-  // Close button functionality
+  /*// Close button functionality
   chatBox.querySelector('.close-chat').addEventListener('click', () => {
     chatsContainer.removeChild(chatBox);
     delete activeChats[roomName];
@@ -302,7 +353,8 @@ function createChatBox(roomName, participants) {
 
   chatsContainer.appendChild(chatBox);
   activeChats[roomName] = chatBox;
-}
+} */
+
 
 // Append a message
 function appendMessageToChat(roomName, sender, message, timestamp) {
