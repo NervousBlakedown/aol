@@ -262,11 +262,11 @@ function createChatBox(roomName, participants) {
 
   if (activeChats[roomName]) return;
 
-  const escapedRoomName = CSS.escape(roomName); // Escape special characters for CSS compatibility
+  const escapedRoomName = CSS.escape(roomName); 
 
   const chatBox = document.createElement('div');
   chatBox.className = 'chat-box';
-  chatBox.id = `chat-box-${escapedRoomName}`; // Use escapedRoomName for the ID
+  chatBox.id = `chat-box-${escapedRoomName}`; 
 
   // Use escapedRoomName consistently in IDs
   chatBox.innerHTML = `
@@ -279,6 +279,7 @@ function createChatBox(roomName, participants) {
       <button onclick="sendMessage('${roomName}')">Send</button>
   `;
 
+  console.log(`Generated HTML for room ${roomName}: ${chatBox.innerHTML}`); // Debugging log
   // Close button functionality
   const closeButton = chatBox.querySelector('.close-chat');
   if (closeButton) {
@@ -298,63 +299,12 @@ function createChatBox(roomName, participants) {
       });
   } else {
       console.error(`Message input not found for room: ${roomName}`);
+      console.error(`DOM after appending:`, chatsContainer.innerHTML); // Debugging log
   }
 
   chatsContainer.appendChild(chatBox);
   activeChats[roomName] = chatBox;
 }
-
-/* function createChatBox(roomName, participants) {
-  const chatsContainer = document.getElementById('chats-container');
-  if (!chatsContainer) {
-    console.error('Chats container not found.');
-    return;
-  }
-
-  if (activeChats[roomName]) return;
-  const escapedRoomName = CSS.escape(roomName); // Escape special characters for CSS compatibility
-
-
-  const chatBox = document.createElement('div');
-  chatBox.className = 'chat-box';
-  chatBox.id = `chat-box-${escapedRoomName}`; // Use escapedRoomName for the ID
-  //chatBox.id = `chat-box-${roomName}`; BUGDELETE
-
-  chatBox.innerHTML = `
-        <div class="chat-header">
-            <h3>${participants.join(', ')}</h3>
-            <button class="close-chat" data-room="${roomName}">X</button>
-        </div>
-        <div class="messages" id="messages-${escapedRoomName}"></div> <!-- Use escapedRoomName -->
-        <input type="text" id="message-${escapedRoomName}" placeholder="Type a message..." /> <!-- Use escapedRoomName -->
-        <button onclick="sendMessage('${roomName}')">Send</button>
-    `;
-  /* chatBox.innerHTML = `
-    <div class="chat-header">
-      <h3>${participants.join(', ')}</h3>
-      <button class="close-chat" data-room="${roomName}">X</button>
-    </div>
-    <div class="messages" id="messages-${roomName}"></div>
-    <input type="text" id="message-${roomName}" placeholder="Type a message..." />
-    <button onclick="sendMessage('${roomName}')">Send</button>
-  `; */
-
-  /*// Close button functionality
-  chatBox.querySelector('.close-chat').addEventListener('click', () => {
-    chatsContainer.removeChild(chatBox);
-    delete activeChats[roomName];
-  });
-
-  // Enter key functionality for sending messages
-  const messageInput = chatBox.querySelector(`#message-${escapedRoomName}`);
-  messageInput.addEventListener('keydown', event => {
-    if (event.key === 'Enter') sendMessage(roomName);
-  });
-
-  chatsContainer.appendChild(chatBox);
-  activeChats[roomName] = chatBox;
-} */
-
 
 // Append a message
 function appendMessageToChat(roomName, sender, message, timestamp) {
