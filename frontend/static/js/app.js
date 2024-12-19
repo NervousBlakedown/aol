@@ -36,8 +36,63 @@ document.addEventListener('DOMContentLoaded', () => {
     if (logoutButton) {
       logoutButton.addEventListener('click', logout);
     }
+
+    // Add event listener for "Add Pals"
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.trim();
+            const resultsList = document.getElementById('search-results');
+            resultsList.innerHTML = ''; // Clear previous results
+
+            if (query) {
+                fetch(`/search_contacts?query=${query}`)
+                    .then(response => response.json())
+                    .then(results => {
+                        if (results.length === 0) {
+                            resultsList.innerHTML = '<li>No users found.</li>';
+                            return;
+                        }
+                        results.forEach(user => {
+                            const listItem = document.createElement('li');
+                            listItem.innerHTML = `
+                                ${user.username} <button onclick="addPal('${user.username}')">Add</button>
+                            `;
+                            resultsList.appendChild(listItem);
+                        });
+                    })
+                    .catch(error => {
+                        console.error('Error fetching contacts:', error);
+                        resultsList.innerHTML = '<li>Error fetching users. Try again later.</li>';
+                    });
+            }
+        });
+    }
   }
 });
+
+// Add a Pal to your contact list
+function addPal(username) {
+  fetch('/add_contact', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username }),
+    credentials: 'include'
+  })
+    .then(response => response.json())
+    .then(result => {
+      if (result.success) {
+        alert(`Successfully added ${username} as a Pal!`);
+        fetchMyContacts(); // Refresh the contacts list
+      } else {
+        alert(`Failed to add ${username}: ${result.message}`);
+      }
+    })
+    .catch(error => {
+      console.error('Error adding Pal:', error);
+      alert('An error occurred while adding the Pal. Please try again.');
+    });
+}
 
 // Fetch environment variables
 function fetchEnvVariables() {

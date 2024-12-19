@@ -353,44 +353,6 @@ def get_my_contacts():
         logging.error(f"Error fetching contacts: {e}")
         return jsonify({'error': 'Failed to fetch contacts'}), 500
 
-"""@app.route('/get_my_contacts', methods=['GET'])
-def get_my_contacts():
-    if 'user' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-
-    try:
-        user_id = session['user']['id']
-
-        # Query Supabase contacts table
-        response = supabase.table("contacts") \
-            .select("contact_id") \
-            .eq("user_id", user_id) \
-            .execute()
-
-        contacts = response.data
-
-        # Fetch usernames for these contacts
-        contact_ids = [contact['contact_id'] for contact in contacts]
-
-        users_response = supabase.table("auth.users") \
-            .select("id, raw_user_meta_data") \
-            .in_("id", contact_ids) \
-            .execute()
-
-        contacts_list = [
-            {
-                'id': user['id'],
-                'username': user['raw_user_meta_data']['username']
-            }
-            for user in users_response.data
-        ]
-
-        return jsonify(contacts_list), 200
-    except Exception as e:
-        logging.error(f"Error fetching contacts: {e}")
-        return jsonify({'error': 'Failed to fetch contacts'}), 500"""
-
-
 # Handle user login via Socket.IO
 @socketio.on('login')
 def handle_login(data):
