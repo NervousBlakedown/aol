@@ -422,72 +422,12 @@ def start_chat(data):
 
     emit('chat_started', {'room': room_name, 'users': users}, room=room_name)
 
-"""# send message
+# Send message
 @socketio.on('send_message')
 def handle_send_message(data):
     room = data['room']
     message = data['message']
-    sender_username = data.get('username')  # Sender's username
-    recipients = data.get('recipients', [])  # List of recipient usernames
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-    if not sender_username or not recipients:
-        logging.error("Sender username or recipients not provided in send_message data")
-        emit('error', {'msg': "Sender username and recipients are required."})
-        return
-
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        # Fetch sender_id using sender_username
-        cursor.execute('''
-            SELECT id 
-            FROM auth.users 
-            WHERE raw_user_meta_data ->> 'username' = %s
-        ''', (sender_username,))
-        sender_row = cursor.fetchone()
-        if not sender_row:
-            logging.error(f"Sender not found: {sender_username}")
-            emit('error', {'msg': f"Sender {sender_username} not found."})
-            return
-        sender_id = sender_row['id']
-
-        # Format room_name: Sort recipient usernames and exclude the sender
-        formatted_room_name = ", ".join(sorted([username for username in recipients if username != sender_username]))
-
-        # Encrypt the message
-        encrypted_message = f.encrypt(message.encode()).decode()
-
-        # Insert the message into the database
-        cursor.execute('''
-            INSERT INTO public.messages (sender_id, receiver_id, room_name, message, delivered, timestamp)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        ''', (sender_id, None, formatted_room_name, encrypted_message, False, timestamp))
-        conn.commit()
-        logging.info(f"Message successfully inserted into the database with room_name: {formatted_room_name}")
-
-        # Notify online recipients
-        for recipient in recipients:
-            if recipient in connected_users:
-                emit('message', {
-                    'room': formatted_room_name,
-                    'username': sender_username,
-                    'message': message,
-                    'timestamp': timestamp
-                }, room=connected_users[recipient])
-
-    except Exception as e:
-        logging.error(f"Error handling send_message: {e}")
-    finally:
-        cursor.close()
-        conn.close()"""
-
-@socketio.on('send_message')
-def handle_send_message(data):
-    room = data['room']
-    message = data['message']
-    sender_username = data.get('username')  # Fetch username instead of email
+    sender_username = data.get('username')
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
     if not sender_username:
