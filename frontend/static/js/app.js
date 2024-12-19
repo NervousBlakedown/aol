@@ -245,6 +245,37 @@ function startChat() {
       return;
   }
 
+  const receivers = selectedContacts;
+  let roomName;
+
+  // Handle single vs. group chat room naming
+  if (receivers.length === 1) {
+      roomName = receivers[0]; // Single chat: Use receiver's username
+  } else {
+      const roomParticipants = [username, ...receivers];
+      roomName = encodeRoomName(roomParticipants.sort().join('_')); // Group chat: Encode participants
+  }
+
+  console.log(`Starting chat with: ${receivers} (Room Name: ${roomName})`); // Debugging log
+
+  if (!activeChats[roomName]) {
+      createChatBox(roomName, receivers); // Pass only receivers for the title
+  }
+
+  // Deselect checkboxes after starting chat
+  document.querySelectorAll('.contact-checkbox:checked').forEach(cb => cb.checked = false);
+}
+
+/*function startChat() {
+  const selectedContacts = Array.from(
+      document.querySelectorAll('.contact-checkbox:checked')
+  ).map(cb => cb.value);
+
+  if (selectedContacts.length === 0) {
+      alert('Please select at least one Pal.');
+      return;
+  }
+
   const roomParticipants = [username, ...selectedContacts]; // Include sender and receivers
   const receivers = selectedContacts; // Exclude sender for display purposes
   const roomName = encodeRoomName(roomParticipants.sort().join('_')); // Consistent room naming
@@ -257,7 +288,7 @@ function startChat() {
 
   // Deselect checkboxes after starting chat
   document.querySelectorAll('.contact-checkbox:checked').forEach(cb => cb.checked = false);
-}
+} */
 
 /* function startChat() {
   const selectedContacts = Array.from(
@@ -321,6 +352,60 @@ function createChatBox(roomName, participants) {
 
   if (activeChats[roomName]) return;
 
+  const encodedRoomName = participants.length > 1 ? encodeRoomName(roomName) : roomName; // Use plain name for single chats
+
+  const chatBox = document.createElement('div');
+  chatBox.className = 'chat-box';
+  chatBox.id = `chat-box-${encodedRoomName}`; // Use encodedRoomName for group chats
+
+  // Create a title depending on the number of participants
+  const chatTitle = participants.length > 1
+      ? participants.join(', ') // Group chat: list all participants
+      : participants[0]; // Single chat: display only the receiver
+
+  chatBox.innerHTML = `
+      <div class="chat-header">
+          <h3>${chatTitle}</h3>
+          <button class="close-chat" data-room="${roomName}">X</button>
+      </div>
+      <div class="messages" id="messages-${encodedRoomName}"></div> <!-- Use encodedRoomName -->
+      <input type="text" id="message-${encodedRoomName}" placeholder="Type a message..." /> <!-- Use encodedRoomName -->
+      <button onclick="sendMessage('${roomName}')">Send</button>
+  `;
+
+  const closeButton = chatBox.querySelector('.close-chat');
+  if (closeButton) {
+      closeButton.addEventListener('click', () => {
+          chatsContainer.removeChild(chatBox);
+          delete activeChats[roomName];
+      });
+  }
+
+  chatsContainer.appendChild(chatBox);
+
+  const messageInput = document.querySelector(`#message-${encodedRoomName}`);
+  if (messageInput) {
+      messageInput.addEventListener('keydown', event => {
+          if (event.key === 'Enter') {
+              sendMessage(roomName);
+          }
+      });
+  } else {
+      console.error(`Message input not found for room: ${roomName}`);
+  }
+
+  activeChats[roomName] = chatBox;
+}
+
+/* function createChatBox(roomName, participants) {
+  const chatsContainer = document.getElementById('chats-container');
+  if (!chatsContainer) {
+      console.error('Chats container not found.');
+      return;
+  }
+
+  if (activeChats[roomName]) return;
+
   const encodedRoomName = roomName; // Encoded roomName is already passed
 
   const chatBox = document.createElement('div');
@@ -364,7 +449,7 @@ function createChatBox(roomName, participants) {
   }
 
   activeChats[roomName] = chatBox;
-}
+} */
 
 /* function createChatBox(roomName, participants) {
   const chatsContainer = document.getElementById('chats-container');
