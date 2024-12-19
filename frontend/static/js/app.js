@@ -260,7 +260,9 @@ function createChatBox(roomName, participants) {
     return;
   }
 
-  if (activeChats[roomName]) return; // Prevent duplicate chat boxes
+  if (activeChats[roomName]) return;
+  const escapedRoomName = CSS.escape(roomName); // Escape special characters for CSS compatibility
+
 
   const chatBox = document.createElement('div');
   chatBox.className = 'chat-box';
@@ -294,6 +296,7 @@ function createChatBox(roomName, participants) {
 
 // Append a message
 function appendMessageToChat(roomName, sender, message, timestamp) {
+  const escapedRoomName = CSS.escape(roomName);
   const messagesDiv = document.getElementById(`messages-${roomName}`);
   if (!messagesDiv) return;
 
@@ -305,13 +308,13 @@ function appendMessageToChat(roomName, sender, message, timestamp) {
 
 // Send message
 function sendMessage(roomName) {
-  const input = document.getElementById(`message-${roomName}`);
+  const escapedRoomName = CSS.escape(roomName);
+  const input = document.getElementById(`message-${escapedRoomName}`);
   const message = input.value.trim();
   if (!message) return;
 
   // timestamp for chat box
   const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-
   socket.emit('send_message', { username, message, room: roomName, timestamp });
   appendMessageToChat(roomName, 'You', message);
   input.value = '';

@@ -40,10 +40,6 @@ if not gmail_address or not gmail_password:
 fernet_key = os.environ.get("FERNET_KEY")
 f = Fernet(fernet_key.encode())
 
-# Test page: delete when ready
-@app.route('/test', methods=['GET'])
-def test():
-    return render_template('index.html')
 
 @app.route('/get_env', methods=['GET'])
 def get_env():
@@ -295,12 +291,14 @@ def get_my_contacts():
         logging.error(f"Error fetching contacts: {e}")
         return jsonify({'error': 'Failed to fetch contacts'}), 500
 
-# Handle user login via Socket.IO
+# Handle user login
 @socketio.on('login')
 def handle_login(data):
     username = data['username']
     connected_users[username] = request.sid
     user_status[username] = 'Online'
+    logging.debug(f"User {username} logged in with SID: {request.sid}")
+    logging.debug(f"Connected users: {connected_users}")
     emit('user_list', {'users': get_users_with_status()}, broadcast=True)
     logging.debug(f"{username} connected")
 
@@ -309,11 +307,6 @@ def handle_login(data):
         conn = get_db_connection()
         cursor = conn.cursor()
         try:
-            # Get all undelivered messages for this user
-            # currently all messages are undelivered because we have no 'delivered' column
-            # Let's assume we never delete them. 
-            # In a real scenario, you might add a 'delivered' boolean column.
-            # For now, just fetch all messages for receiver_id = session['user_id'] and delete after fetching
             receiver_id = session['user_id']
             cursor.execute('SELECT id, sender_id, message FROM messages WHERE receiver_id = %s', (receiver_id,))
             undelivered = cursor.fetchall()
@@ -380,11 +373,17 @@ def get_users_with_status():
 def generate_room_name(users):
     return "_".join(sorted(users))  # Use sorted usernames to keep names consistent
 
-# Start chat
+
+# start chat
 @socketio.on('start_chat')
 def start_chat(data):
     usernames = data['users']
-    room_name = "_".join(sorted(usernames))  # Sort to ensure consistent naming
+    room_name = "_".join(sorted(usernames)) 
+    logging.debug(f"Attempting to start chat for room: {room_name} with users: {usernames}")
+
+    # Ensure the room exists in the server's tracking dictionary (BUGDELETE)
+    if room_name not in rooms:
+        rooms[room_name] = []
 
     for user in usernames:
         if user in connected_users:
@@ -392,16 +391,19 @@ def start_chat(data):
 
     emit('chat_started', {'room': room_name, 'users': usernames}, room=room_name)
 
+
+# send message
 @socketio.on('send_message')
 def handle_send_message(data):
     room = data['room']
     message = data['message']
     sender_email = data['username']  # TODO: not 'sender' or 'sender_username' equivalent?
     timestamp = datetime.now().strftime('%I:%M%S %p')
-    # timestamp = datetime.now().strftime('%H:%M')  
     print(f"Message received in room {room} from {sender_email}")
 
     if room not in rooms:
+        logging.error(f"Error: Room {room} does not exist. Message: {message}")
+        emit('error', {'msg': f"Room {room} does not exist. Please try restarting the chat."}, room=connected_users.get(sender_email))
         print(f"Error: Room {room} does not exist.")
         return
 
