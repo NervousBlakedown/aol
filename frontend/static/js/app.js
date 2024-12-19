@@ -309,6 +309,62 @@ function createChatBox(roomName, participants) {
 
   if (activeChats[roomName]) return;
 
+  // Apply encoding once for DOM use
+  const encodedRoomName = encodeRoomName(roomName);
+
+  const chatBox = document.createElement('div');
+  chatBox.className = 'chat-box';
+  chatBox.id = `chat-box-${encodedRoomName}`;
+
+  // Create a title depending on the number of participants
+  const chatTitle = participants.length > 1
+      ? participants.join(', ') // Group chat: List all receivers
+      : participants[0]; // Single chat: Show only the receiver
+
+  chatBox.innerHTML = `
+      <div class="chat-header">
+          <h3>${chatTitle}</h3>
+          <button class="close-chat" data-room="${roomName}">X</button>
+      </div>
+      <div class="messages" id="messages-${encodedRoomName}"></div>
+      <input type="text" id="message-${encodedRoomName}" placeholder="Type a message..." />
+      <button onclick="sendMessage('${roomName}')">Send</button>
+  `;
+
+  const closeButton = chatBox.querySelector('.close-chat');
+  if (closeButton) {
+      closeButton.addEventListener('click', () => {
+          chatsContainer.removeChild(chatBox);
+          delete activeChats[roomName];
+      });
+  }
+
+  chatsContainer.appendChild(chatBox);
+
+  // Ensure the selector matches the encodedRoomName
+  const messageInput = document.querySelector(`#message-${encodedRoomName}`);
+  if (messageInput) {
+      messageInput.addEventListener('keydown', event => {
+          if (event.key === 'Enter') {
+              sendMessage(roomName); // Use plain roomName for server
+          }
+      });
+  } else {
+      console.error(`Message input not found for room: ${roomName}`);
+  }
+
+  activeChats[roomName] = chatBox;
+}
+
+/*function createChatBox(roomName, participants) {
+  const chatsContainer = document.getElementById('chats-container');
+  if (!chatsContainer) {
+      console.error('Chats container not found.');
+      return;
+  }
+
+  if (activeChats[roomName]) return;
+
   const encodedRoomName = encodeRoomName(roomName); // Encode room name for DOM use
 
   const chatBox = document.createElement('div');
@@ -328,60 +384,6 @@ function createChatBox(roomName, participants) {
       <div class="messages" id="messages-${encodedRoomName}"></div>
       <input type="text" id="message-${encodedRoomName}" placeholder="Type a message..." />
       <button onclick="sendMessage('${roomName}')">Send</button>
-  `;
-
-  const closeButton = chatBox.querySelector('.close-chat');
-  if (closeButton) {
-      closeButton.addEventListener('click', () => {
-          chatsContainer.removeChild(chatBox);
-          delete activeChats[roomName];
-      });
-  }
-
-  chatsContainer.appendChild(chatBox);
-
-  const messageInput = document.querySelector(`#message-${encodedRoomName}`);
-  if (messageInput) {
-      messageInput.addEventListener('keydown', event => {
-          if (event.key === 'Enter') {
-              sendMessage(roomName);
-          }
-      });
-  } else {
-      console.error(`Message input not found for room: ${roomName}`);
-  }
-
-  activeChats[roomName] = chatBox;
-}
-
-/*function createChatBox(roomName, participants) {
-  const chatsContainer = document.getElementById('chats-container');
-  if (!chatsContainer) {
-      console.error('Chats container not found.');
-      return;
-  }
-
-  if (activeChats[roomName]) return;
-
-  const encodedRoomName = roomName; // Room name is already encoded
-
-  const chatBox = document.createElement('div');
-  chatBox.className = 'chat-box';
-  chatBox.id = `chat-box-${encodedRoomName}`;
-
-  // Create a title depending on the number of participants
-  const chatTitle = participants.length > 1
-      ? participants.join(', ') // Group chat: list all receivers
-      : participants[0]; // Single chat: show only the receiver
-
-  chatBox.innerHTML = `
-      <div class="chat-header">
-          <h3>${chatTitle}</h3>
-          <button class="close-chat" data-room="${encodedRoomName}">X</button>
-      </div>
-      <div class="messages" id="messages-${encodedRoomName}"></div>
-      <input type="text" id="message-${encodedRoomName}" placeholder="Type a message..." />
-      <button onclick="sendMessage('${encodedRoomName}')">Send</button>
   `;
 
   const closeButton = chatBox.querySelector('.close-chat');
@@ -437,23 +439,6 @@ function sendMessage(roomName) {
   appendMessageToChat(roomName, 'You', message, timestamp);
   input.value = '';
 }
-
-/*function sendMessage(roomName) {
-  const encodedRoomName = roomName; // Room name is already encoded
-  const input = document.getElementById(`message-${encodedRoomName}`);
-  if (!input) {
-      console.error(`Input field not found for room: ${roomName}`);
-      return;
-  }
-
-  const message = input.value.trim();
-  if (!message) return;
-
-  const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  socket.emit('send_message', { username, message, room: roomName, timestamp });
-  appendMessageToChat(roomName, 'You', message, timestamp);
-  input.value = '';
-} */
 
 // Logout
 function logout() {
