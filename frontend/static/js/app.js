@@ -6,7 +6,17 @@ let username = null;
 const activeChats = {}; 
 let myContacts = []; 
 let userStatuses = {}; 
-const roomInputs = {}; // track input elements by room name
+const roomInputs = {};
+
+// Base64 encoding to fix special character username chats
+function encodeRoomName(roomName) {
+  return btoa(roomName); // Base64 encode
+}
+
+function decodeRoomName(encodedName) {
+  return atob(encodedName); // Base64 decode
+}
+
 
 // Part I: Initialization
 document.addEventListener('DOMContentLoaded', () => {
@@ -263,6 +273,55 @@ function createChatBox(roomName, participants) {
 
   if (activeChats[roomName]) return;
 
+  const encodedRoomName = encodeRoomName(roomName); // Encode roomName
+
+  const chatBox = document.createElement('div');
+  chatBox.className = 'chat-box';
+  chatBox.id = `chat-box-${encodedRoomName}`; // Use encodedRoomName
+
+  chatBox.innerHTML = `
+      <div class="chat-header">
+          <h3>${participants.join(', ')}</h3>
+          <button class="close-chat" data-room="${roomName}">X</button>
+      </div>
+      <div class="messages" id="messages-${encodedRoomName}"></div> <!-- Use encodedRoomName -->
+      <input type="text" id="message-${encodedRoomName}" placeholder="Type a message..." /> <!-- Use encodedRoomName -->
+      <button onclick="sendMessage('${roomName}')">Send</button>
+  `;
+
+  const closeButton = chatBox.querySelector('.close-chat');
+  if (closeButton) {
+      closeButton.addEventListener('click', () => {
+          chatsContainer.removeChild(chatBox);
+          delete activeChats[roomName];
+      });
+  }
+
+  chatsContainer.appendChild(chatBox);
+
+  const messageInput = document.querySelector(`#message-${encodedRoomName}`);
+  if (messageInput) {
+      messageInput.addEventListener('keydown', event => {
+          if (event.key === 'Enter') {
+              sendMessage(roomName);
+          }
+      });
+  } else {
+      console.error(`Message input not found for room: ${roomName}`);
+  }
+
+  activeChats[roomName] = chatBox;
+}
+
+/* function createChatBox(roomName, participants) {
+  const chatsContainer = document.getElementById('chats-container');
+  if (!chatsContainer) {
+      console.error('Chats container not found.');
+      return;
+  }
+
+  if (activeChats[roomName]) return;
+
   const escapedRoomName = CSS.escape(roomName); // Escape special characters for CSS compatibility
 
   const chatBox = document.createElement('div');
@@ -304,7 +363,7 @@ function createChatBox(roomName, participants) {
   }
 
   activeChats[roomName] = chatBox;
-}
+} */
 
 /*function createChatBox(roomName, participants) {
   const chatsContainer = document.getElementById('chats-container');
@@ -363,8 +422,8 @@ function createChatBox(roomName, participants) {
 
 // Append a message
 function appendMessageToChat(roomName, sender, message, timestamp) {
-  const escapedRoomName = CSS.escape(roomName);
-  const messagesDiv = document.getElementById(`messages-${escapedRoomName}`);
+  const encodedRoomName = encodeRoomName(roomName); // Use encoded name
+  const messagesDiv = document.getElementById(`messages-${encodedRoomName}`);
   if (!messagesDiv) return;
 
   const messageElement = document.createElement('div');
@@ -373,9 +432,21 @@ function appendMessageToChat(roomName, sender, message, timestamp) {
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
+/* function appendMessageToChat(roomName, sender, message, timestamp) {
+  const escapedRoomName = CSS.escape(roomName);
+  const messagesDiv = document.getElementById(`messages-${escapedRoomName}`);
+  if (!messagesDiv) return;
+
+  const messageElement = document.createElement('div');
+  messageElement.textContent = `[${timestamp}] ${sender}: ${message}`;
+  messagesDiv.appendChild(messageElement);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+} */
+
 // Send message
 function sendMessage(roomName) {
-  const input = roomInputs[roomName]; // Get input field directly
+  const encodedRoomName = encodeRoomName(roomName); // Use encoded name
+  const input = document.getElementById(`message-${encodedRoomName}`);
   if (!input) {
       console.error(`Input field not found for room: ${roomName}`);
       return;
@@ -390,6 +461,22 @@ function sendMessage(roomName) {
   input.value = '';
 }
 
+/*function sendMessage(roomName) {
+  const input = roomInputs[roomName]; // Get input field directly
+  if (!input) {
+      console.error(`Input field not found for room: ${roomName}`);
+      return;
+  }
+
+  const message = input.value.trim();
+  if (!message) return;
+
+  const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  socket.emit('send_message', { username, message, room: roomName, timestamp });
+  appendMessageToChat(roomName, 'You', message, timestamp);
+  input.value = '';
+} */
+
 /* function sendMessage(roomName) {
   const escapedRoomName = CSS.escape(roomName);
   const input = document.getElementById(`message-${escapedRoomName}`);
@@ -402,6 +489,7 @@ function sendMessage(roomName) {
   appendMessageToChat(roomName, 'You', message);
   input.value = '';
 } */
+
 
 // Logout
 function logout() {
