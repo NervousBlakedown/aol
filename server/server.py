@@ -372,102 +372,6 @@ def handle_login(data):
     finally:
         cursor.close()
         conn.close()
-"""def handle_login(data):
-    username = data['username']
-    connected_users[username] = request.sid
-    user_status[username] = 'Online'
-
-    # Fetch undelivered messages
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        # Fetch user ID
-        cursor.execute('SELECT id FROM auth.users WHERE email = %s', (data['email'],))
-        user_row = cursor.fetchone()
-        if not user_row:
-            logging.error(f"User not found: {data['email']}")
-            return
-        user_id = user_row['id']
-
-        # Fetch unread messages
-        cursor.execute('''
-            SELECT sender_id, message, room_name, timestamp 
-            FROM public.messages 
-            WHERE receiver_id = %s AND delivered = FALSE
-        ''', (user_id,))
-        messages = cursor.fetchall()
-
-        for msg in messages:
-            decrypted_message = f.decrypt(msg['message'].encode()).decode()
-            sender_id = msg['sender_id']
-            room_name = msg['room_name']
-            timestamp = msg['timestamp']
-
-            # Emit the message to the client
-            emit('message', {
-                'room': room_name,
-                'username': get_username_by_id(sender_id),
-                'message': decrypted_message,
-                'timestamp': timestamp
-            }, room=request.sid)
-
-        # Mark messages as delivered
-        cursor.execute('UPDATE public.messages SET delivered = TRUE WHERE receiver_id = %s', (user_id,))
-        conn.commit()
-
-    except Exception as e:
-        logging.error(f"Error fetching offline messages: {e}")
-    finally:
-        cursor.close()
-        conn.close()"""
-
-"""def handle_login(data):
-    username = data['username']
-    connected_users[username] = request.sid
-    user_status[username] = 'Online'
-    logging.debug(f"User {username} logged in with SID: {request.sid}")
-    logging.debug(f"Connected users: {connected_users}")
-    emit('user_list', {'users': get_users_with_status()}, broadcast=True)
-    logging.debug(f"{username} connected")
-
-    # Fetch undelivered messages for this user
-    if 'user_id' in session:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        try:
-            receiver_id = session['user_id']
-            cursor.execute('SELECT id, sender_id, message FROM messages WHERE receiver_id = %s', (receiver_id,))
-            undelivered = cursor.fetchall()
-
-            # Mark them as delivered by deleting
-            message_ids = [row['id'] for row in undelivered]
-            if message_ids:
-                cursor.execute('DELETE FROM messages WHERE id = ANY(%s)', (message_ids, ))
-                conn.commit()
-
-            # Decrypt and emit these messages
-            for m in undelivered:
-                encrypted_msg = m['message']
-                decrypted_msg = f.decrypt(encrypted_msg.encode()).decode()
-
-                # Get sender username
-                cursor.execute('SELECT username FROM users WHERE id = %s', (m['sender_id'],))
-                sender_row = cursor.fetchone()
-                sender_username = sender_row['username'] if sender_row else 'Unknown'
-
-                # Determine room name
-                # If this is a one-on-one chat, room name is sorted usernames
-                # Let's find the current user's username and make room name
-                # since we have sender_username and current username:
-                room_name = "_".join(sorted([username, sender_username]))
-
-                # Emit the message to the client
-                emit('message', {'msg': decrypted_msg, 'username': sender_username, 'room': room_name}, room=request.sid)
-        finally:
-            cursor.close()
-            conn.close()"""
-
 
 # WebSocket handler for disconnecting users
 @socketio.on('disconnect')
@@ -484,7 +388,6 @@ def handle_disconnect():
         emit('user_list', {'users': get_users_with_status()}, broadcast=True)
         logging.debug(f"{username_to_remove} disconnected.")
 
-
 # Handle status change requests
 @socketio.on('status_change')
 def handle_status_change(data):
@@ -492,7 +395,6 @@ def handle_status_change(data):
     new_status = data['status']
     user_status[username] = new_status  
     emit('user_list', {'users': get_users_with_status()}, broadcast=True)
-
 
 # Helper function to get users with their statuses
 def get_users_with_status():
@@ -522,6 +424,66 @@ def start_chat(data):
 
 # send message
 @socketio.on('send_message')
+def handle_send_message(data):
+    room = data['room']
+    message = data['message']
+    sender_username = data.get('username')  # Sender's username
+    recipients = data.get('recipients', [])  # List of recipient usernames
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    if not sender_username or not recipients:
+        logging.error("Sender username or recipients not provided in send_message data")
+        emit('error', {'msg': "Sender username and recipients are required."})
+        return
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Fetch sender_id using sender_username
+        cursor.execute('''
+            SELECT id 
+            FROM auth.users 
+            WHERE raw_user_meta_data ->> 'username' = %s
+        ''', (sender_username,))
+        sender_row = cursor.fetchone()
+        if not sender_row:
+            logging.error(f"Sender not found: {sender_username}")
+            emit('error', {'msg': f"Sender {sender_username} not found."})
+            return
+        sender_id = sender_row['id']
+
+        # Format room_name: Sort recipient usernames and exclude the sender
+        formatted_room_name = ", ".join(sorted([username for username in recipients if username != sender_username]))
+
+        # Encrypt the message
+        encrypted_message = f.encrypt(message.encode()).decode()
+
+        # Insert the message into the database
+        cursor.execute('''
+            INSERT INTO public.messages (sender_id, receiver_id, room_name, message, delivered, timestamp)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        ''', (sender_id, None, formatted_room_name, encrypted_message, False, timestamp))
+        conn.commit()
+        logging.info(f"Message successfully inserted into the database with room_name: {formatted_room_name}")
+
+        # Notify online recipients
+        for recipient in recipients:
+            if recipient in connected_users:
+                emit('message', {
+                    'room': formatted_room_name,
+                    'username': sender_username,
+                    'message': message,
+                    'timestamp': timestamp
+                }, room=connected_users[recipient])
+
+    except Exception as e:
+        logging.error(f"Error handling send_message: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+
+"""@socketio.on('send_message')
 def handle_send_message(data):
     room = data['room']
     message = data['message']
@@ -560,120 +522,6 @@ def handle_send_message(data):
         ''', (sender_id, None, room, encrypted_message, False, timestamp))
         conn.commit()
         logging.info("Message successfully inserted into the database.")
-
-    except Exception as e:
-        logging.error(f"Error handling send_message: {e}")
-    finally:
-        cursor.close()
-        conn.close()
-"""def handle_send_message(data):
-    room = data['room']
-    message = data['message']
-    sender_email = data['username']  # Sender's email address
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-    try:
-        # Connect to the database
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        # Fetch sender_id
-        cursor.execute('SELECT id FROM auth.users WHERE email = %s', (sender_email,))
-        sender_row = cursor.fetchone()
-        if not sender_row:
-            logging.error(f"Sender not found: {sender_email}")
-            return
-        sender_id = sender_row['id']
-
-        # Determine receiver_id
-        receiver_id = None
-        if 'receiver_email' in data:
-            receiver_email = data['receiver_email']
-            cursor.execute('SELECT id FROM auth.users WHERE email = %s', (receiver_email,))
-            receiver_row = cursor.fetchone()
-            receiver_id = receiver_row['id'] if receiver_row else None
-
-        # Encrypt the message
-        encrypted_message = f.encrypt(message.encode()).decode()
-
-        # Insert the message into the database
-        cursor.execute('''
-            INSERT INTO public.messages (sender_id, receiver_id, room_name, message, delivered, timestamp)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        ''', (sender_id, receiver_id, room, encrypted_message, False, timestamp))
-        conn.commit()
-        logging.info("Message successfully inserted.")
-
-        # Notify online recipients
-        if room in rooms:
-            recipients = [user for user in rooms[room] if user != sender_email]
-            for recipient in recipients:
-                if recipient in connected_users:
-                    emit('message', {
-                        'room': room,
-                        'username': data['username'],
-                        'message': message,  # Plain message for online users
-                        'timestamp': timestamp
-                    }, room=connected_users[recipient])
-
-    except Exception as e:
-        logging.error(f"Error handling send_message: {e}")
-    finally:
-        cursor.close()
-        conn.close()"""
-"""def handle_send_message(data):
-    room = data['room']
-    message = data['message']
-    sender_email = data['username']
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-    # Encrypt the message
-    encrypted_message = f.encrypt(message.encode()).decode()
-
-    print(f"Message received in room {room} from {sender_email}")
-
-    try:
-        # Fetch sender's ID and username from auth.users
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute('''
-            SELECT id, raw_user_meta_data 
-            FROM auth.users 
-            WHERE email = %s
-        ''', (sender_email,))
-        sender_row = cursor.fetchone()
-        if not sender_row:
-            logging.error("Sender not found in auth.users")
-            return
-
-        sender_id = sender_row['id']
-        sender_username = sender_row['raw_user_meta_data'].get('username', 'Unknown')
-
-        # Save the message in the database
-        cursor.execute('''
-            INSERT INTO public.messages (sender_id, receiver_id, room_name, message, delivered, timestamp)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        ''', (
-            sender_id,
-            None,  # Set to None for now; adapt for specific receiver_id logic
-            room,
-            encrypted_message,
-            False,  # Assume not delivered yet
-            timestamp
-        ))
-        conn.commit()
-
-        # Notify online recipients
-        if room in rooms:
-            recipients = [user for user in rooms[room] if user != sender_email]
-            for recipient in recipients:
-                if recipient in connected_users:
-                    emit('message', {
-                        'room': room,
-                        'username': sender_username,
-                        'message': message,  # Send plain text to online users
-                        'timestamp': timestamp
-                    }, room=connected_users[recipient])
 
     except Exception as e:
         logging.error(f"Error handling send_message: {e}")
