@@ -21,26 +21,28 @@
     <div class="dashboard-content">
         <!-- Left Sidebar -->
         <aside class="dashboard-sidebar">
-            <div class="user-info">
+            <section class="user-info">
                 <h2>Your Info</h2>
-                <p>Status: <select id="status" onchange="updateStatus(this.value)">
-                    <option value="Online">Online</option>
-                    <option value="Away">Away</option>
-                    <option value="Do Not Disturb">Do Not Disturb</option>
-                </select></p>
-            </div>
+                <p>Status: 
+                    <select id="status" onchange="updateStatus(this.value)">
+                        <option value="Online">Online</option>
+                        <option value="Away">Away</option>
+                        <option value="Do Not Disturb">Do Not Disturb</option>
+                    </select>
+                </p>
+            </section>
 
-            <div class="contacts-list-section">
+            <section class="contacts-list-section">
                 <h3>Your Pals</h3>
                 <ul id="contacts-list" class="contacts-list"></ul>
                 <button id="start-chat-button" class="start-chat-btn">Start Chat</button>
-            </div>
+            </section>
 
-            <div class="contacts-search-section">
+            <section class="contacts-search-section">
                 <h3>Add Pals</h3>
                 <input type="text" id="search-input" placeholder="Search users...">
                 <ul id="search-results" class="search-results"></ul>
-            </div>
+            </section>
         </aside>
 
         <!-- Middle Section -->
