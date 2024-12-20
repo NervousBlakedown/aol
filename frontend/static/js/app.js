@@ -181,12 +181,16 @@ function updateContactsList() {
 
   myContacts.sort((a, b) => a.username.localeCompare(b.username));
   myContacts.forEach(contact => {
-    const listItem = document.createElement('li');
-    listItem.innerHTML = `
+    if (contact.username !== username) {
+      const listItem = document.createElement('li');
+      listItem.innerHTML = `
       <input type="checkbox" class="contact-checkbox" value="${contact.username}">
       <label>${contact.username} (${userStatuses[contact.username] || 'Offline'})</label>
     `;
-    contactsList.appendChild(listItem);
+      contactsList.appendChild(listItem);
+
+    }
+    
   });
 }
 

@@ -224,10 +224,8 @@ def search_contacts():
 
     query = request.args.get('query', '').strip().lower()
     if not query:
-        return jsonify([])  # Return empty list if no query provided
-
+        return jsonify([]) 
     try:
-        # Use Supabase Admin API to get all users
         response = supabase_admin.auth.admin.list_users()
         users = response # .users  # List of user objects
 
@@ -238,7 +236,7 @@ def search_contacts():
             user_metadata = user.user_metadata
             if user_metadata and 'username' in user_metadata:
                 username = user_metadata['username']
-                if query in username.lower():  # Case-insensitive search
+                if query in username.lower() and user.id != user_id:  # Case-insensitive search
                     matching_users.append({'username': username})
 
         return jsonify(matching_users), 200
