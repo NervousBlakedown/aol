@@ -516,12 +516,9 @@ def handle_start_chat(data):
 @socketio.on('send_message')
 def handle_send_message(data):
     room = data.get('room')
-    message = data.get('message')  # Message is plain text at this point
+    message = data.get('message') 
     sender_username = data.get('username')
     timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S%z')
-
-    # timestamp = data.get('timestamp', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-
     logging.info(f"Received send_message event: room={room}, message={message}, sender={sender_username}")
 
     if not message:
