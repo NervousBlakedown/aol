@@ -124,6 +124,10 @@ def signup_archive():
 def login_page():
     return render_template('login.html')
 
+@app.route('/login_test', methods=['GET'])
+def login_page():
+    return render_template('login_test.html')
+
 # Create account
 @app.route('/signup', methods=['POST'])
 def signup():
