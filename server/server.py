@@ -419,62 +419,6 @@ def handle_login(data):
         cursor.close()
         conn.close()
 
-"""@socketio.on('login')
-def handle_login(data):
-    username = data.get('username')
-    connected_users[username] = request.sid
-    user_status[username] = 'Online'
-
-    # Fetch undelivered messages
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    try:
-        # Fetch user ID
-        cursor.execute('''
-            SELECT id 
-            FROM auth.users 
-            WHERE raw_user_meta_data ->> 'username' = %s
-        ''', (username,))
-        user_row = cursor.fetchone()
-        if not user_row:
-            logging.error(f"User not found: {username}")
-            return
-        user_id = user_row['id']
-
-        # Fetch undelivered messages
-        cursor.execute('''
-            SELECT sender_id, message, room_name, timestamp 
-            FROM public.messages 
-            WHERE receiver_id = %s AND delivered = FALSE
-        ''', (user_id,))
-        undelivered_messages = cursor.fetchall()
-
-        # Decrypt and emit messages
-        for msg in undelivered_messages:
-            decrypted_message = f.decrypt(msg['message'].encode()).decode()
-            sender_id = msg['sender_id']
-            room_name = msg['room_name']
-            timestamp = msg['timestamp']
-
-            # Emit the decrypted message to the user
-            emit('message', {
-                'room': room_name,
-                'username': get_username_by_id(sender_id),
-                'message': decrypted_message,
-                'timestamp': timestamp
-            }, room=request.sid)
-
-        # Mark messages as delivered
-        cursor.execute('''
-            UPDATE public.messages
-            SET delivered = TRUE
-            WHERE receiver_id = %s AND delivered = FALSE
-        ''', (user_id,))
-        conn.commit()
-    finally:
-        cursor.close()
-        conn.close()"""
-
 # WebSocket handler for disconnecting users
 @socketio.on('disconnect')
 def handle_disconnect():
@@ -789,8 +733,6 @@ def leave_topic(data):
     leave_room(topic_name, sid=request.sid)
     logging.info(f"User {username} left topic: {topic_name}")
     emit('left_topic', {'topic': topic_name, 'username': username}, room=topic_name)
-
-
 
 # Run app
 if __name__ == '__main__':
