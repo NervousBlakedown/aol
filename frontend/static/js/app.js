@@ -21,6 +21,10 @@ function decodeRoomName(encodedName) {
 
 // Init DB
 function initializeSupabase() {
+  if (!window.supabase || !window.supabase.createClient) {
+    console.error("Supabase library not loaded or createClient is undefined.");
+    return;
+  }
   const { createClient } = window.supabase;
   supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
   console.log('Supabase initialized.');

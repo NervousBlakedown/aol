@@ -4,7 +4,7 @@
 
 {% block content %}
 <div id="dashboard" class="dashboard-layout">
-    <!-- Top Bar -->
+    <!-- Top Horizontal Bar -->
     <header class="dashboard-topbar">
         <div class="topbar-left">
             <h1 class="dashboard-logo">BlakeIM</h1>
@@ -21,31 +21,29 @@
     <div class="dashboard-content">
         <!-- Left Sidebar -->
         <aside class="dashboard-sidebar">
-            <section class="user-info">
+            <div class="user-info">
                 <h2>Your Info</h2>
-                <p>Status: 
-                    <select id="status" onchange="updateStatus(this.value)">
-                        <option value="Online">Online</option>
-                        <option value="Away">Away</option>
-                        <option value="Do Not Disturb">Do Not Disturb</option>
-                    </select>
-                </p>
-            </section>
+                <p>Status: <select id="status" onchange="updateStatus(this.value)">
+                    <option value="Online">Online</option>
+                    <option value="Away">Away</option>
+                    <option value="Do Not Disturb">Do Not Disturb</option>
+                </select></p>
+            </div>
 
-            <section class="contacts-list-section">
+            <div class="contacts-list-section">
                 <h3>Your Pals</h3>
                 <ul id="contacts-list" class="contacts-list"></ul>
                 <button id="start-chat-button" class="start-chat-btn">Start Chat</button>
-            </section>
+            </div>
 
-            <section class="contacts-search-section">
+            <div class="contacts-search-section">
                 <h3>Add Pals</h3>
                 <input type="text" id="search-input" placeholder="Search users...">
                 <ul id="search-results" class="search-results"></ul>
-            </section>
+            </div>
         </aside>
 
-        <!-- Middle Section -->
+        <!-- Middle Section (Active Chats) -->
         <main class="dashboard-main">
             <section class="active-chats">
                 <h3>Active Chats</h3>
@@ -53,7 +51,7 @@
             </section>
         </main>
 
-        <!-- Right Sidebar -->
+        <!-- Right Sidebar (Topic Chats) -->
         <aside class="dashboard-topics">
             <section class="topic-chats">
                 <h3>Topic Chats</h3>
