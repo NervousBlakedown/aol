@@ -1,16 +1,15 @@
-<!-- frontend/templates/dashboard.html -->
-<!-- {% extends 'base.html' %}
+{% extends 'base.html' %}
 
 {% block title %}Dashboard - BlakeIM{% endblock %}
 
 {% block content %}
-<div class="layout">
+<div class="dashboard-layout">
     <!-- Sidebar -->
-    <div class="sidebar">
+    <div class="dashboard-sidebar">
         <!-- User Information -->
         <div class="user-info">
             <h2>Welcome, <span id="username-display">{{ username }}</span>!</h2>
-            <button id="logout-button">Logout</button>
+            <button id="logout-button" class="logout-btn">Logout</button>
         </div>
 
         <!-- Status Selector -->
@@ -25,11 +24,11 @@
 
         <!-- Contacts List -->
         <div class="contacts-list-section">
-            <h3>Pals</h3>
+            <h3>Your Pals</h3>
             <div class="contacts-container">
                 <ul id="contacts-list" class="contacts-list"></ul>
             </div>
-            <button id="start-chat-button">Chat</button>
+            <button id="start-chat-button" class="start-chat-btn">Start Chat</button>
         </div>
 
         <!-- Add Contacts/Search Users -->
@@ -41,11 +40,12 @@
     </div>
 
     <!-- Main Content Area -->
-    <div class="main-content">
+    <div class="dashboard-main-content">
         <h3>Active Chats</h3>
         <div id="chats-container" class="chats-container"></div>
     </div>
 </div>
+
 <script>
   document.addEventListener('DOMContentLoaded', () => {
       // Function to populate Pals list with Remove buttons
@@ -57,7 +57,7 @@
               const listItem = document.createElement('li');
               listItem.innerHTML = `
                   <span>${contact.username} (${userStatuses[contact.username] || 'Offline'})</span>
-                  <button class="remove-pal-btn" data-username="${contact.username}">-</button>
+                  <button class="remove-pal-btn" data-username="${contact.username}">Remove</button>
               `;
               contactsList.appendChild(listItem);
           });
@@ -94,4 +94,4 @@
       }
   });
 </script>
-{% endblock %} 
+{% endblock %}
