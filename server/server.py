@@ -216,8 +216,38 @@ def dashboard():
     else:
         return redirect('/login')
 
-# Search Contacts
+# Search Contacts (exclude self from Add Pals List)
 @app.route('/search_contacts', methods=['GET'])
+def search_contacts():
+    if 'user' not in session:
+        return jsonify([]), 401  # Respond with an empty array for unauthorized users
+
+    query = request.args.get('query', '').strip().lower()
+    if not query:
+        return jsonify([])  # Return an empty array for empty queries
+
+    try:
+        user_id = session['user']['id']  # Get the logged-in user's ID
+
+        # Fetch all users via Supabase Admin API
+        response = supabase_admin.auth.admin.list_users()
+        users = response  # Ensure response is iterable
+
+        # Filter users based on the query and exclude the logged-in user
+        matching_users = []
+        for user in users:
+            user_metadata = user.user_metadata
+            if user_metadata and 'username' in user_metadata:
+                username = user_metadata['username']
+                if query in username.lower() and user.id != user_id:
+                    matching_users.append({'username': username})
+
+        return jsonify(matching_users), 200  # Return an array of matching users
+    except Exception as e:
+        logging.error(f"Error searching contacts: {e}")
+        return jsonify([]), 500  # Always return a valid JSON array
+
+"""@app.route('/search_contacts', methods=['GET'])
 def search_contacts():
     if 'user' not in session:
         return jsonify({'error': 'Unauthorized'}), 401
@@ -242,7 +272,7 @@ def search_contacts():
         return jsonify(matching_users), 200
     except Exception as e:
         logging.error(f"Error searching contacts: {e}")
-        return jsonify({'error': 'Failed to fetch contacts'}), 500
+        return jsonify({'error': 'Failed to fetch contacts'}), 500"""
 
 # Add contacts
 @app.route('/add_contact', methods=['POST'])

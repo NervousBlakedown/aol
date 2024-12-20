@@ -123,6 +123,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 fetch(`/search_contacts?query=${query}`)
                     .then(response => response.json())
                     .then(results => {
+                      // Ensure results is an array
+                      if (!Array.isArray(results)) {
+                        console.error('Unexpected response format:', results);
+                        resultsList.innerHTML = '<li>Error fetching users. Try again later.</li>';
+                        return;
+                      }
                         if (results.length === 0) {
                             resultsList.innerHTML = '<li>No users found.</li>';
                             return;
