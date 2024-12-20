@@ -3,81 +3,42 @@
 {% block title %}Dashboard - BlakeIM{% endblock %}
 
 {% block content %}
-<div id="dashboard" class="dashboard-layout">
-    <!-- Top Horizontal Bar -->
-    <header class="dashboard-topbar">
-        <div class="topbar-left">
-            <h1 class="dashboard-logo">BlakeIM</h1>
+<div class="dashboard-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="user-info">
+            <h2>Welcome, <span id="username-display">{{ username }}</span></h2>
+            <button id="logout-button" class="btn-primary">Logout</button>
         </div>
-        <div class="topbar-center">
-            <input type="text" id="global-search" placeholder="Search chats, topics, or Pals...">
+
+        <div class="status-section">
+            <h3>Status</h3>
+            <select id="status" class="status-dropdown" onchange="updateStatus(this.value)">
+                <option value="Online">Online</option>
+                <option value="Away">Away</option>
+                <option value="Do Not Disturb">Do Not Disturb</option>
+            </select>
         </div>
-        <div class="topbar-right">
-            <span>Welcome, <span id="username-display">{{ username }}</span></span>
-            <button id="logout-button" class="logout-btn">Logout</button>
+
+        <div class="contacts-list-section">
+            <h3>Your Pals</h3>
+            <ul id="contacts-list" class="contacts-list"></ul>
+            <button id="start-chat-button" class="btn-primary">Start Chat</button>
         </div>
-    </header>
 
-    <div class="dashboard-content">
-        <!-- Left Sidebar -->
-        <aside class="dashboard-sidebar">
-            <nav class="sidebar-navigation">
-                <ul>
-                    <li><a href="#" class="active"><i class="fas fa-comments"></i> Chats</a></li>
-                    <li><a href="#"><i class="fas fa-users"></i> Pals</a></li>
-                    <li><a href="#"><i class="fas fa-cog"></i> Settings</a></li>
-                </ul>
-            </nav>
+        <div class="contacts-search-section">
+            <h3>Add Pals</h3>
+            <input type="text" id="search-input" class="search-bar" placeholder="Search users...">
+            <ul id="search-results" class="search-results"></ul>
+        </div>
+    </aside>
 
-            <div class="user-info">
-                <h2>Your Info</h2>
-                <p>Status: <select id="status" onchange="updateStatus(this.value)">
-                    <option value="Online">Online</option>
-                    <option value="Away">Away</option>
-                    <option value="Do Not Disturb">Do Not Disturb</option>
-                </select></p>
-            </div>
-
-            <div class="contacts-list-section">
-                <h3>Your Pals</h3>
-                <ul id="contacts-list" class="contacts-list"></ul>
-                <button id="start-chat-button" class="start-chat-btn">Start Chat</button>
-            </div>
-
-            <div class="contacts-search-section">
-                <h3>Add Pals</h3>
-                <input type="text" id="search-input" placeholder="Search users...">
-                <ul id="search-results" class="search-results"></ul>
-            </div>
-        </aside>
-
-        <!-- Middle Section (Active Chats) -->
-        <main class="dashboard-main">
-            <section class="active-chats">
-                <h3>Active Chats</h3>
-                <div id="chats-container" class="chats-container"></div>
-            </section>
-        </main>
-
-        <!-- Right Sidebar (Topic Chats) -->
-        <aside class="dashboard-topics">
-            <section class="topic-chats">
-                <h3>Topic Chats</h3>
-                <div id="topic-chats-container" class="topic-chats-container"></div>
-            </section>
-
-            <section class="shared-details">
-                <h3>Shared Files</h3>
-                <ul class="shared-files-list">
-                    <li><a href="#">File 1</a></li>
-                    <li><a href="#">File 2</a></li>
-                    <li><a href="#">File 3</a></li>
-                </ul>
-            </section>
-        </aside>
-    </div>
+    <!-- Main Content -->
+    <main class="main-content">
+        <h3>Active Chats</h3>
+        <div id="chats-container" class="chats-container"></div>
+    </main>
 </div>
-
 <script>
   document.addEventListener('DOMContentLoaded', () => {
       // Function to populate Pals list with Remove buttons
