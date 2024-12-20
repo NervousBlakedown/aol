@@ -10,12 +10,14 @@
     <script async src="https://unpkg.com/@supabase/supabase-js/dist/umd/supabase.js"></script>
 </head>
 <body>
+    {% if show_video_background %}
     <div class="video-background">
         <video autoplay muted loop id="background-video">
             <source src="{{ url_for('static', filename='assets/videos/vintage_field.mp4') }}" type="video/mp4">
             Your browser does not support the video tag.
         </video>
     </div>
+    {% endif %}
     <div class="overlay">
         {% block content %}{% endblock %}
     </div>

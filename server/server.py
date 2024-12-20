@@ -112,17 +112,17 @@ def get_username_by_id(user_id):
 # Serve signup page by default (root route)
 @app.route('/', methods = ['GET'])
 def default():
-    return render_template('signup.html')
+    return render_template('signup.html', show_video_background = True)
 
 # Serve login page when user clicks "Already have an account? Log in"
 @app.route('/login', methods=['GET'])
 def login_page():
-    return render_template('login.html')
+    return render_template('login.html', show_video_background = True)
 
 # Signup page after clicking 'don't have account? sign up'
 @app.route('/signup', methods=['GET'])
 def signup_from_login():
-    return render_template('signup.html')
+    return render_template('signup.html', show_video_background = True)
 
 # Create account
 @app.route('/signup', methods=['POST'])
@@ -223,6 +223,7 @@ def dashboard():
             return redirect('/login')
     else:
         return redirect('/login')
+    return render_template('dashboard.html', show_video_background = False)
 
 # Search Contacts (exclude self from Add Pals List)
 @app.route('/search_contacts', methods=['GET'])
