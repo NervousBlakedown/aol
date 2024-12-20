@@ -114,6 +114,11 @@ def get_username_by_id(user_id):
 def default():
     return render_template('signup.html')
 
+# Old signup page
+@app.route('/signup_archive')
+def signup_archive():
+    return render_template('signup_archive.html')
+
 # Serve login page when user clicks "Already have an account? Log in"
 @app.route('/login', methods=['GET'])
 def login_page():
