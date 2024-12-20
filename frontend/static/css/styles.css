@@ -1,155 +1,149 @@
-/* General Reset and Styling */
+/* Global Styling */
 body, html {
-  margin: 0;
-  padding: 0;
-  font-family: 'Roboto', sans-serif;
-  background: #f4f5f7;
-  color: #333;
-}
-
-/* Layout */
-.dashboard-layout {
-  display: flex;
-  height: 100vh;
-}
-
-/* Sidebar */
-.sidebar {
-  width: 280px;
-  background: #2b3137;
-  color: #f1f1f1;
-  padding: 20px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.user-info h2 {
-  font-size: 18px;
-  font-weight: bold;
-  margin: 0 0 10px;
-}
-
-.btn-primary {
-  background: #4caf50;
-  color: white;
-  border: none;
-  padding: 10px 15px;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background 0.3s;
-}
-
-.btn-primary:hover {
-  background: #388e3c;
-}
-
-.status-dropdown {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #444;
-  border-radius: 5px;
-  background: #3e4247;
-  color: #f1f1f1;
-  font-size: 14px;
-}
-
-.contacts-list, .search-results {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  overflow-y: auto;
-  max-height: 150px;
-}
-
-.contacts-list li, .search-results li {
-  background: #3e4247;
-  margin: 5px 0;
-  padding: 10px;
-  border-radius: 5px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.search-bar {
-  width: 100%;
-  padding: 10px;
-  border: none;
-  border-radius: 5px;
-  background: #3e4247;
-  color: #f1f1f1;
-  font-size: 14px;
-  margin-bottom: 10px;
-}
-
-/* Main Content */
-.main-content {
-  flex: 1;
-  padding: 20px;
-  overflow-y: auto;
-  background: #ffffff;
-}
-
-.main-content h3 {
-  margin: 0 0 20px;
-  font-size: 24px;
-  color: #333;
-}
-
-.chats-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
-}
-
-/* Chat Box */
-.chat-box {
-  background: #f1f1f1;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column;
-}
-
-.chat-box h3 {
-  background: #4caf50;
-  color: white;
-  margin: 0;
-  padding: 10px;
-  border-radius: 10px 10px 0 0;
-  font-size: 16px;
-}
-
-.chat-box .messages {
-  flex: 1;
-  padding: 10px;
-  overflow-y: auto;
-}
-
-.chat-box input[type="text"] {
-  width: calc(100% - 20px);
-  margin: 10px;
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  box-sizing: border-box;
-}
-
-.chat-box button {
-  margin: 10px;
-  padding: 10px;
-  background: #4caf50;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.chat-box button:hover {
-  background: #388e3c;
-}
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', sans-serif;
+    height: 100%;
+    overflow: hidden;
+    color: white; /* Ensures all text is white */
+  }
+  
+  /* Video Background */
+  .video-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    overflow: hidden;
+  }
+  
+  #background-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  /* Overlay Styling */
+  .overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.6); /* Darker overlay for readability */
+  }
+  
+  .content-wrapper {
+    text-align: center;
+    width: 100%;
+    max-width: 500px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.1); /* Transparent white background */
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+  }
+  
+  /* Main Content Styling */
+  .signup-header h1 {
+    font-size: 36px;
+    color: white; /* White text for readability */
+    margin-bottom: 10px;
+  }
+  
+  .signup-header p {
+    font-size: 18px;
+    color: white; /* White text for readability */
+    margin-bottom: 20px;
+  }
+  
+  /* Form Styling */
+  form {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+    background: none; /* No additional background for the form */
+  }
+  
+  form label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 5px;
+    color: white; /* White text for form labels */
+  }
+  
+  form input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #555;
+    border-radius: 4px;
+    font-size: 14px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white; /* White text for input fields */
+  }
+  
+  form input::placeholder {
+    color: #ddd;
+  }
+  
+  form button {
+    width: 100%;
+    padding: 12px;
+    background-color: #0045ad;
+    color: white;
+    font-size: 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+  }
+  
+  form button:hover {
+    background-color: #00338a;
+    transform: translateY(-2px);
+  }
+  
+  form button:active {
+    transform: scale(0.98);
+  }
+  
+  form small {
+    font-size: 12px;
+    color: #ddd; /* Lighter text for additional info */
+    display: block;
+    margin-bottom: 15px;
+  }
+  
+  /* Footer Links */
+  .form-footer {
+    margin-top: 20px;
+    font-size: 14px;
+    color: white; /* White text for footer */
+  }
+  
+  .form-footer a {
+    color: #4ea4ff;
+    text-decoration: none;
+  }
+  
+  .form-footer a:hover {
+    text-decoration: underline;
+  }
+  
+  /* Error Message Styling */
+  .error-message {
+    background-color: #ff4d4d;
+    color: white;
+    font-size: 14px;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    text-align: center;
+    display: none;
+  }
+  
