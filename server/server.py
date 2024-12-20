@@ -78,6 +78,15 @@ def get_db_connection():
 def handle_connect():
     logging.info(f"Client connected: {request.sid}")
 
+# log room membership
+@socketio.on('join_room')
+def handle_join_room(data):
+    username = data['username']
+    room = data['room']
+    join_room(room)
+    logging.info(f"User {username} joined room {room}. SID: {request.sid}")
+
+
 # Convert ID back to Username for offline message delivery
 def get_username_by_id(user_id):
     try:
@@ -400,10 +409,22 @@ def handle_disconnect():
 # Handle status change requests
 @socketio.on('status_change')
 def handle_status_change(data):
+    username = data.get('username')
+    new_status = data.get('status')
+
+    if username:
+        user_status[username] = new_status  # Update the user's status
+        logging.info(f"User {username} changed status to {new_status}")
+
+        # Broadcast the updated user list to all clients
+        emit('user_list', {'users': get_users_with_status()}, broadcast=True)
+
+"""@socketio.on('status_change')
+def handle_status_change(data):
     username = data['username']
     new_status = data['status']
     user_status[username] = new_status  
-    emit('user_list', {'users': get_users_with_status()}, broadcast=True)
+    emit('user_list', {'users': get_users_with_status()}, broadcast=True)"""
 
 # Helper function to get users with their statuses
 def get_users_with_status():

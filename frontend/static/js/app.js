@@ -43,7 +43,14 @@ function setupSocketIO() {
   socket = io();
 
   socket.on('connect', () => {
-    console.log('Socket.IO connected.');
+    console.log('Socket.IO connected with ID:', socket.id);
+    // test broadcast
+    socket.emit('test_broadcast');
+    console.log('Broadcast test emitted.');
+
+  socket.on('test', (data) => {
+    console.log("Received broadcast message:", data.msg);
+});
     if (username) socket.emit('login', { username });
   });
 
@@ -211,6 +218,18 @@ function startChat() {
   document.querySelectorAll('.contact-checkbox').forEach(cb => (cb.checked = false));
 }
 
+// change online status
+function updateStatus(newStatus) {
+  if (!socket) {
+    console.error('Socket.IO is not initialized. Cannot update status.');
+    return;
+  }
+
+  // Emit the status_change event to the server
+  socket.emit('status_change', { username, status: newStatus });
+  console.log(`Status updated to: ${newStatus}`);
+}
+
 // Send message
 function sendMessage(roomName) {
   const encodedRoomName = encodeRoomName(roomName); // Use encoded name for DOM queries
@@ -322,14 +341,6 @@ function login() {
       alert(`Login failed: ${error.message}`);
     });
 }
-
-// test broadcast
-socket.emit('test_broadcast');
-socket.on('test', (data) => {
-    console.log("Received broadcast message:", data.msg);
-});
-
-
 
 // Create chat box
 function createChatBox(roomName, participants) {
