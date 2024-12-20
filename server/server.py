@@ -477,6 +477,66 @@ def start_chat(data):
 # Send message
 @socketio.on('send_message')
 def handle_send_message(data):
+    room = data.get('room')
+    encrypted_message = data.get('message')  # Assume message is encrypted
+    sender_username = data.get('username')
+    timestamp = data.get('timestamp', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+
+    logging.info(f"Received send_message event: room={room}, encrypted_message={encrypted_message}, sender={sender_username}")
+
+    try:
+        # Decrypt the message before sending to clients
+        decrypted_message = f.decrypt(encrypted_message.encode()).decode()
+        logging.info(f"Decrypted message: {decrypted_message}")
+
+        # Emit the decrypted message to the room
+        emit('message', {
+            'room': room,
+            'username': sender_username,
+            'message': decrypted_message,
+            'timestamp': timestamp
+        }, room=room)
+        logging.info(f"Message from {sender_username} sent to room {room}: {decrypted_message}")
+
+    except Exception as e:
+        logging.error(f"Error decrypting message: {e}")
+        emit('error', {'msg': "Failed to decrypt message."})
+
+# Decrypt messages when fetching from public.messages table
+def fetch_undelivered_messages(receiver_id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        # Fetch undelivered messages for the receiver
+        cursor.execute('''
+            SELECT sender_id, message, room_name, timestamp
+            FROM public.messages
+            WHERE receiver_id = %s AND delivered = FALSE
+        ''', (receiver_id,))
+        messages = cursor.fetchall()
+
+        # Decrypt each message
+        decrypted_messages = []
+        for msg in messages:
+            try:
+                decrypted_message = f.decrypt(msg['message'].encode()).decode()
+                decrypted_messages.append({
+                    'sender_id': msg['sender_id'],
+                    'message': decrypted_message,
+                    'room': msg['room_name'],
+                    'timestamp': msg['timestamp']
+                })
+            except Exception as e:
+                logging.error(f"Error decrypting message: {e}")
+        
+        return decrypted_messages
+    finally:
+        cursor.close()
+        conn.close()
+
+
+"""@socketio.on('send_message')
+def handle_send_message(data):
     room = data['room']
     message = data['message']
     sender_username = data.get('username')
@@ -521,49 +581,6 @@ def handle_send_message(data):
             'timestamp': timestamp
         }, room=room)  # Emit to the specific room
         logging.info(f"Message from {sender_username} sent to room {room}: {message}")
-
-    except Exception as e:
-        logging.error(f"Error handling send_message: {e}")
-    finally:
-        cursor.close()
-        conn.close()
-
-"""@socketio.on('send_message')
-def handle_send_message(data):
-    room = data['room']
-    message = data['message']
-    sender_username = data.get('username')
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-    if not sender_username:
-        logging.error("Sender username not provided in send_message data")
-        emit('error', {'msg': "Sender username is required."})
-        return
-
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        # Fetch sender_id using username
-        cursor.execute('''
-            SELECT id 
-            FROM auth.users 
-            WHERE raw_user_meta_data ->> 'username' = %s
-        ''', (sender_username,))
-        sender_row = cursor.fetchone()
-        if not sender_row:
-            logging.error(f"Sender not found: {sender_username}")
-            emit('error', {'msg': f"Sender {sender_username} not found."})
-            return
-        sender_id = sender_row['id']
-        encrypted_message = f.encrypt(message.encode()).decode()
-
-        # Insert message into DB
-        cursor.execute('''
-            INSERT INTO public.messages (sender_id, receiver_id, room_name, message, delivered, timestamp)
-            VALUES (%s, %s, %s, %s, %s, %s)
-        ''', (sender_id, None, room, encrypted_message, False, timestamp))
-        conn.commit()
-        logging.info("Message successfully inserted into the database.")
 
     except Exception as e:
         logging.error(f"Error handling send_message: {e}")
