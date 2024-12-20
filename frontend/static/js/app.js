@@ -311,8 +311,6 @@ function removePal(username) {
     .catch(error => console.error('Error removing Pal:', error));
 }
 
-
-
 // login
 function login() {
   const email = document.getElementById('email').value.trim();

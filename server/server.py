@@ -33,12 +33,15 @@ gmail_address = os.getenv('GMAIL_ADDRESS')
 gmail_password = os.getenv('GMAIL_PASSWORD')
 if not gmail_address or not gmail_password:
     raise ValueError("Gmail credentials are not set in the environment variables.")
-
-# Encryption
 fernet_key = os.environ.get("FERNET_KEY")
 f = Fernet(fernet_key.encode())
 
+# Test signup page (better design)
+@app.route('/signup_test')
+def signup_test():
+    return render_template('signup_test.html')
 
+# Test
 @app.route('/get_env', methods=['GET'])
 def get_env():
     """
