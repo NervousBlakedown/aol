@@ -474,6 +474,42 @@ def handle_stop_typing(data):
     room = data['room']
     emit('stop_typing', {'username': data['username']}, room=room, include_self=False)
 
+# Remove Pal from Pals list
+@app.route('/remove_contact', methods=['POST'])
+def remove_contact():
+    if 'user' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
+    user_id = session['user']['id']
+    data = request.get_json()
+    contact_username = data.get('username')
+
+    if not contact_username:
+        return jsonify({'success': False, 'message': 'Contact username is required.'}), 400
+
+    try:
+        # Find the contact user by username
+        response = supabase_admin.auth.admin.list_users()
+        contact_user = next(
+            (user for user in response if user.user_metadata.get('username') == contact_username), None
+        )
+
+        if not contact_user:
+            return jsonify({'success': False, 'message': 'User not found.'}), 404
+
+        contact_user_id = contact_user.id
+
+        # Delete the contact from the "contacts" table
+        supabase.table("contacts").delete() \
+            .eq("user_id", user_id).eq("contact_id", contact_user_id) \
+            .execute()
+
+        return jsonify({'success': True, 'message': f'{contact_username} removed successfully.'}), 200
+
+    except Exception as e:
+        logging.error(f"Error removing contact: {e}")
+        return jsonify({'success': False, 'message': 'An error occurred while removing the contact.'}), 500
+
 @app.route('/logout', methods=['POST'])
 def logout():
     session.pop('user', None)

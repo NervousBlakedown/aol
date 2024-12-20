@@ -243,6 +243,24 @@ button:active {
   transform: scale(0.98);
 }
 
+.remove-pal-btn {
+  background-color: #f44336; /* Red color */
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 14px;
+  text-align: center;
+  line-height: 18px;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.remove-pal-btn:hover {
+  background-color: #d32f2f;
+}
+
 /* Links */
 a {
   color: #0288d1;

@@ -1,5 +1,5 @@
 <!-- frontend/templates/dashboard.html -->
-{% extends 'base.html' %}
+<!-- {% extends 'base.html' %}
 
 {% block title %}Dashboard - BlakeIM{% endblock %}
 
@@ -46,4 +46,52 @@
         <div id="chats-container" class="chats-container"></div>
     </div>
 </div>
-{% endblock %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+      // Function to populate Pals list with Remove buttons
+      function updateContactsList() {
+          const contactsList = document.getElementById('contacts-list');
+          contactsList.innerHTML = ''; // Clear existing list
+
+          myContacts.forEach(contact => {
+              const listItem = document.createElement('li');
+              listItem.innerHTML = `
+                  <span>${contact.username} (${userStatuses[contact.username] || 'Offline'})</span>
+                  <button class="remove-pal-btn" data-username="${contact.username}">-</button>
+              `;
+              contactsList.appendChild(listItem);
+          });
+      }
+
+      // Handle Remove Pal button click
+      document.addEventListener('click', (event) => {
+          if (event.target.classList.contains('remove-pal-btn')) {
+              const username = event.target.getAttribute('data-username');
+              if (confirm(`Are you sure you want to remove ${username} from your Pals list?`)) {
+                  removePal(username);
+              }
+          }
+      });
+
+      // Remove Pal API call
+      function removePal(username) {
+          fetch('/remove_contact', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ username }),
+              credentials: 'include'
+          })
+              .then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      alert(`${username} has been removed from your Pals list.`);
+                      fetchMyContacts(); // Refresh the Pals list
+                  } else {
+                      alert(data.message || 'Failed to remove Pal.');
+                  }
+              })
+              .catch(error => console.error('Error removing Pal:', error));
+      }
+  });
+</script>
+{% endblock %} 

@@ -105,6 +105,37 @@ function addPal(username) {
     });
 }
 
+// Remove Pal from Pals list
+// Function to handle removing a pal
+document.addEventListener('click', (event) => {
+  if (event.target.classList.contains('remove-pal-btn')) {
+    const username = event.target.getAttribute('data-username');
+    if (confirm(`Are you sure you want to remove ${username} from your Pals list?`)) {
+      removePal(username);
+    }
+  }
+});
+
+// Remove Pal API call
+function removePal(username) {
+  fetch(`/remove_contact`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username }),
+    credentials: 'include'
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert(`${username} has been removed from your Pals list.`);
+        fetchMyContacts(); // Refresh the Pals list
+      } else {
+        alert(data.message || 'Failed to remove Pal.');
+      }
+    })
+    .catch(error => console.error('Error removing Pal:', error));
+}
+
 // Fetch .env
 function fetchEnvVariables() {
   fetch('/get_env')
