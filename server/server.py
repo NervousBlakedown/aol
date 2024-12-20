@@ -9,7 +9,7 @@ import os
 from dotenv import load_dotenv
 import psycopg2
 from psycopg2.extras import RealDictCursor
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from server.auth_utils import reset_password as reset_user_password
 from supabase import create_client, Client
 from cryptography.fernet import Fernet
@@ -518,7 +518,9 @@ def handle_send_message(data):
     room = data.get('room')
     message = data.get('message')  # Message is plain text at this point
     sender_username = data.get('username')
-    timestamp = data.get('timestamp', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S%z')
+
+    # timestamp = data.get('timestamp', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
     logging.info(f"Received send_message event: room={room}, message={message}, sender={sender_username}")
 
@@ -544,7 +546,7 @@ def handle_send_message(data):
             return
         sender_id = sender_row['id']
 
-        # Encrypt the message
+        # Encrypt message
         encrypted_message = f.encrypt(message.encode()).decode()
         logging.info(f"Encrypted message: {encrypted_message}")
 
@@ -560,7 +562,7 @@ def handle_send_message(data):
         emit('message', {
             'room': room,
             'username': sender_username,
-            'message': message,  # Emit plain text to other users
+            'message': message,
             'timestamp': timestamp
         }, room=room)
 
