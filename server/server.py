@@ -119,6 +119,11 @@ def default():
 def login_page():
     return render_template('login.html')
 
+# Signup page after clicking 'don't have account? sign up'
+@app.route('/signup', methods=['GET'])
+def signup_from_login():
+    return render_template('signup.html')
+
 # Create account
 @app.route('/signup', methods=['POST'])
 def signup():
