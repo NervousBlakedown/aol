@@ -379,71 +379,7 @@ def handle_login(data):
         cursor.close()
         conn.close()
 
-"""@socketio.on('login')
-def handle_login(data):
-    username = data.get('username')  # Fetch username safely
-    if not username:
-        logging.error("Username not provided in login data")
-        emit('error', {'msg': "Username is required for login."})
-        return
-    connected_users[username] = request.sid
-    user_status[username] = 'Online'
-    logging.info(f"User {username} logged in. Current users: {connected_users}")
-    logging.info(f"User statuses: {user_status}")
 
-    # Add logs around broadcast
-    logging.info("Attempting to broadcast user list...")
-    try:
-        emit('user_list', {'users': get_users_with_status()}, broadcast=True)
-        logging.info("User list broadcast successful.")
-    except Exception as e:
-        logging.error(f"Error broadcasting user list: {e}")
-
-    # Fetch undelivered messages
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        # Fetch user ID based on username
-        cursor.execute('''
-            SELECT id 
-            FROM auth.users 
-            WHERE raw_user_meta_data ->> 'username' = %s
-        ''', (username,))
-        user_row = cursor.fetchone()
-        if not user_row:
-            logging.error(f"User not found: {username}")
-            return
-        user_id = user_row['id']
-
-        # Fetch unread messages
-        cursor.execute('''
-            SELECT sender_id, message, room_name, timestamp 
-            FROM public.messages 
-            WHERE receiver_id = %s AND delivered = FALSE
-        ''', (user_id,))
-        messages = cursor.fetchall()
-
-        for msg in messages:
-            decrypted_message = f.decrypt(msg['message'].encode()).decode()
-            sender_id = msg['sender_id']
-            room_name = msg['room_name']
-            timestamp = msg['timestamp']
-
-            # Emit the message to the client
-            emit('message', {
-                'room': room_name,
-                'username': get_username_by_id(sender_id),  # Convert sender_id to username
-                'message': decrypted_message,
-                'timestamp': timestamp
-            }, room=request.sid)
-
-        # Mark messages as delivered
-        cursor.execute('UPDATE public.messages SET delivered = TRUE WHERE receiver_id = %s', (user_id,))
-        conn.commit()
-    finally:
-        cursor.close()
-        conn.close()"""
 
 # WebSocket handler for disconnecting users
 @socketio.on('disconnect')
@@ -569,32 +505,7 @@ def handle_send_message(data):
         cursor.close()
         conn.close()
 
-"""@socketio.on('send_message')
-def handle_send_message(data):
-    room = data.get('room')
-    encrypted_message = data.get('message')  # Assume message is encrypted
-    sender_username = data.get('username')
-    timestamp = data.get('timestamp', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
-    logging.info(f"Received send_message event: room={room}, encrypted_message={encrypted_message}, sender={sender_username}")
-
-    try:
-        # Decrypt the message before sending to clients
-        decrypted_message = f.decrypt(encrypted_message.encode()).decode()
-        logging.info(f"Decrypted message: {decrypted_message}")
-
-        # Emit the decrypted message to the room
-        emit('message', {
-            'room': room,
-            'username': sender_username,
-            'message': decrypted_message,
-            'timestamp': timestamp
-        }, room=room)
-        logging.info(f"Message from {sender_username} sent to room {room}: {decrypted_message}")
-
-    except Exception as e:
-        logging.error(f"Error decrypting message: {e}")
-        emit('error', {'msg': "Failed to decrypt message."})"""
 
 # Decrypt messages when fetching from public.messages table
 def fetch_undelivered_messages(receiver_id):

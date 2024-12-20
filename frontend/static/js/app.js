@@ -65,12 +65,6 @@ function setupSocketIO() {
     createChatBox(room, chatTitle);
   });
   
-  /*socket.on('chat_started', data => {
-    console.log('chat_started event received:', data); // Debugging
-    const roomName = data.room;
-    if (!activeChats[roomName]) createChatBox(roomName, data.users);
-  }); */
-
   socket.on('message', data => {
     console.log('Received message:', data);
     appendMessageToChat(data.room, data.username, data.message, data.timestamp); // data.msg
