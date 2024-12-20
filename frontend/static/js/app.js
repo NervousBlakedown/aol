@@ -54,11 +54,22 @@ function setupSocketIO() {
     if (username) socket.emit('login', { username });
   });
 
-  socket.on('chat_started', data => {
+  socket.on('chat_started', (data) => {
+    const { room, users } = data;
+  
+    // If sender initiated the chat, the chat box is already created
+    if (activeChats[room]) return;
+  
+    // Generate title excluding the current user's name
+    const chatTitle = users.filter(user => user !== username).join(', ');
+    createChatBox(room, chatTitle);
+  });
+  
+  /*socket.on('chat_started', data => {
     console.log('chat_started event received:', data); // Debugging
     const roomName = data.room;
     if (!activeChats[roomName]) createChatBox(roomName, data.users);
-  });
+  }); */
 
   socket.on('message', data => {
     appendMessageToChat(data.room, data.username, data.msg, data.timestamp);
@@ -188,6 +199,30 @@ function updateContactsList() {
 // Start Chat
 function startChat() {
   const selectedContacts = Array.from(
+    document.querySelectorAll('.contact-checkbox:checked')
+  ).map(cb => cb.value);
+
+  if (selectedContacts.length === 0) {
+    alert('Please select at least one Pal.');
+    return;
+  }
+
+  // Generate room name and chat participants
+  const roomParticipants = [username, ...selectedContacts].sort();
+  const roomName = roomParticipants.join('_');
+
+  console.log(`Starting chat with: ${selectedContacts}, Room: ${roomName}`);
+
+  // Avoid creating duplicate chat boxes
+  if (!activeChats[roomName]) {
+    const chatTitle = selectedContacts.join(', '); // Exclude sender's name
+    createChatBox(roomName, chatTitle); // Only include other participants in the title
+    socket.emit('start_chat', { users: roomParticipants, room: roomName });
+  }
+}
+
+/* function startChat() {
+  const selectedContacts = Array.from(
       document.querySelectorAll('.contact-checkbox:checked')
   ).map(cb => cb.value);
 
@@ -216,7 +251,7 @@ function startChat() {
 
   // Deselect all checkboxes
   document.querySelectorAll('.contact-checkbox').forEach(cb => (cb.checked = false));
-}
+} */
 
 // change online status
 function updateStatus(newStatus) {
@@ -343,7 +378,43 @@ function login() {
 }
 
 // Create chat box
-function createChatBox(roomName, participants) {
+function createChatBox(roomName, chatTitle) {
+  const chatsContainer = document.getElementById('chats-container');
+  if (!chatsContainer) {
+    console.error('Chats container not found.');
+    return;
+  }
+
+  if (activeChats[roomName]) return; // Prevent duplicate boxes
+
+  const encodedRoomName = encodeRoomName(roomName);
+
+  const chatBox = document.createElement('div');
+  chatBox.className = 'chat-box';
+  chatBox.id = `chat-box-${encodedRoomName}`;
+
+  chatBox.innerHTML = `
+    <div class="chat-header">
+      <h3>${chatTitle}</h3>
+      <button class="close-chat" data-room="${encodedRoomName}">X</button>
+    </div>
+    <div class="messages" id="messages-${encodedRoomName}"></div>
+    <input type="text" id="message-${encodedRoomName}" placeholder="Type a message..." />
+    <button onclick="sendMessage('${roomName}')">Send</button>
+  `;
+
+  chatsContainer.appendChild(chatBox);
+
+  const closeButton = chatBox.querySelector('.close-chat');
+  closeButton.addEventListener('click', () => {
+    chatsContainer.removeChild(chatBox);
+    delete activeChats[roomName];
+  });
+
+  activeChats[roomName] = chatBox;
+}
+
+/* function createChatBox(roomName, participants) {
   const chatsContainer = document.getElementById('chats-container');
   if (!chatsContainer) {
       console.error('Chats container not found.');
@@ -400,7 +471,7 @@ function createChatBox(roomName, participants) {
   }
 
   activeChats[roomName] = chatBox;
-}
+} */
 
 // Append message
 function appendMessageToChat(roomName, sender, message, timestamp) {
