@@ -547,7 +547,7 @@ def handle_send_message(data):
         encrypted_message = f.encrypt(message.encode()).decode()
         logging.info(f"Encrypted message: {encrypted_message}")
 
-        # Insert encrypted message into the database
+        # Insert encrypted message into DB
         cursor.execute('''
             INSERT INTO public.messages (sender_id, receiver_id, room_name, message, delivered, timestamp)
             VALUES (%s, NULL, %s, %s, FALSE, %s)

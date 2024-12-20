@@ -49,7 +49,7 @@ function setupSocketIO() {
     console.log('Broadcast test emitted.');
 
   socket.on('test', (data) => {
-    console.log("Received broadcast message:", data.msg);
+    console.log("Received broadcast message:", data.message); // data.msg
 });
     if (username) socket.emit('login', { username });
   });
@@ -72,7 +72,8 @@ function setupSocketIO() {
   }); */
 
   socket.on('message', data => {
-    appendMessageToChat(data.room, data.username, data.msg, data.timestamp);
+    console.log('Received message:', data);
+    appendMessageToChat(data.room, data.username, data.message, data.timestamp); // data.msg
   });
 
   socket.on('user_list', data => {
