@@ -21,6 +21,14 @@
     <div class="dashboard-content">
         <!-- Left Sidebar -->
         <aside class="dashboard-sidebar">
+            <nav class="sidebar-navigation">
+                <ul>
+                    <li><a href="#" class="active"><i class="fas fa-comments"></i> Chats</a></li>
+                    <li><a href="#"><i class="fas fa-users"></i> Pals</a></li>
+                    <li><a href="#"><i class="fas fa-cog"></i> Settings</a></li>
+                </ul>
+            </nav>
+
             <div class="user-info">
                 <h2>Your Info</h2>
                 <p>Status: <select id="status" onchange="updateStatus(this.value)">
@@ -56,6 +64,15 @@
             <section class="topic-chats">
                 <h3>Topic Chats</h3>
                 <div id="topic-chats-container" class="topic-chats-container"></div>
+            </section>
+
+            <section class="shared-details">
+                <h3>Shared Files</h3>
+                <ul class="shared-files-list">
+                    <li><a href="#">File 1</a></li>
+                    <li><a href="#">File 2</a></li>
+                    <li><a href="#">File 3</a></li>
+                </ul>
             </section>
         </aside>
     </div>
