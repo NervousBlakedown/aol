@@ -329,6 +329,71 @@ def handle_login(data):
     connected_users[username] = request.sid
     user_status[username] = 'Online'
 
+    logging.info(f"User {username} logged in. Fetching undelivered messages.")
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        # Fetch user ID
+        cursor.execute('''
+            SELECT id 
+            FROM auth.users 
+            WHERE raw_user_meta_data ->> 'username' = %s
+        ''', (username,))
+        user_row = cursor.fetchone()
+        if not user_row:
+            logging.error(f"User not found: {username}")
+            return
+        user_id = user_row['id']
+
+        # Fetch undelivered messages
+        cursor.execute('''
+            SELECT id, sender_id, message, room_name, timestamp 
+            FROM public.messages 
+            WHERE receiver_id = %s AND delivered = FALSE
+        ''', (user_id,))
+        undelivered_messages = cursor.fetchall()
+
+        # Decrypt and emit messages
+        for msg in undelivered_messages:
+            try:
+                decrypted_message = f.decrypt(msg['message'].encode()).decode()
+                sender_id = msg['sender_id']
+                room_name = msg['room_name']
+                timestamp = msg['timestamp']
+
+                # Emit the decrypted message to the user
+                emit('message', {
+                    'room': room_name,
+                    'username': get_username_by_id(sender_id),
+                    'message': decrypted_message,
+                    'timestamp': timestamp
+                }, room=request.sid)
+
+                logging.info(f"Delivered message from {sender_id} to {username} in room {room_name}: {decrypted_message}")
+            except Exception as e:
+                logging.error(f"Error decrypting message ID {msg['id']}: {e}")
+
+        # Mark all messages as delivered
+        message_ids = [msg['id'] for msg in undelivered_messages]
+        if message_ids:
+            cursor.execute('''
+                UPDATE public.messages
+                SET delivered = TRUE
+                WHERE id = ANY(%s)
+            ''', (message_ids,))
+            conn.commit()
+            logging.info(f"Marked {len(message_ids)} messages as delivered for user {username}.")
+    finally:
+        cursor.close()
+        conn.close()
+
+"""@socketio.on('login')
+def handle_login(data):
+    username = data.get('username')
+    connected_users[username] = request.sid
+    user_status[username] = 'Online'
+
     # Fetch undelivered messages
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -377,9 +442,7 @@ def handle_login(data):
         conn.commit()
     finally:
         cursor.close()
-        conn.close()
-
-
+        conn.close()"""
 
 # WebSocket handler for disconnecting users
 @socketio.on('disconnect')
@@ -486,8 +549,13 @@ def handle_send_message(data):
         # Insert encrypted message into DB
         cursor.execute('''
             INSERT INTO public.messages (sender_id, receiver_id, room_name, message, delivered, timestamp)
+            VALUES ((SELECT id FROM auth.users WHERE raw_user_meta_data ->> 'username' = %s), NULL, %s, %s, FALSE, %s)
+        ''', (sender_username, room, encrypted_message, timestamp))
+
+        """cursor.execute('''
+            INSERT INTO public.messages (sender_id, receiver_id, room_name, message, delivered, timestamp)
             VALUES (%s, NULL, %s, %s, FALSE, %s)
-        ''', (sender_id, room, encrypted_message, timestamp))
+        ''', (sender_id, room, encrypted_message, timestamp))"""
         conn.commit()
         logging.info(f"Message successfully inserted into the database for room: {room}")
 
