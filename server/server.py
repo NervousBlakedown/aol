@@ -506,7 +506,7 @@ def handle_start_chat(data):
             join_room(room_name, sid=connected_users[username])
             logging.info(f"User {username} joined room {room_name}")
         else:
-            logging.warning(f"User {username} is not connected and cannot join room {room_name}")
+            logging.info(f"User {username} is not connected and cannot join room {room_name}")
 
     # Notify clients about the chat room
     emit('chat_started', {'room': room_name, 'users': usernames}, room=room_name)
