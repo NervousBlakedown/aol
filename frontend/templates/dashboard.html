@@ -22,17 +22,21 @@
         <!-- Left Sidebar -->
         <aside class="dashboard-sidebar">
             <div class="user-info">
-                <h3>Your Info</h3>
+                <h2>Your Info</h2>
                 <p>Status: <select id="status" onchange="updateStatus(this.value)">
                     <option value="Online">Online</option>
                     <option value="Away">Away</option>
                     <option value="Do Not Disturb">Do Not Disturb</option>
                 </select></p>
+            </div>
 
+            <div class="contacts-list-section">
                 <h3>Your Pals</h3>
                 <ul id="contacts-list" class="contacts-list"></ul>
                 <button id="start-chat-button" class="start-chat-btn">Start Chat</button>
+            </div>
 
+            <div class="contacts-search-section">
                 <h3>Add Pals</h3>
                 <input type="text" id="search-input" placeholder="Search users...">
                 <ul id="search-results" class="search-results"></ul>
@@ -56,88 +60,6 @@
         </aside>
     </div>
 </div>
-
-<style>
-    /* General Layout */
-    .dashboard-layout {
-        display: grid;
-        grid-template-rows: auto 1fr;
-        grid-template-columns: 300px auto 300px;
-        gap: 20px;
-        height: 100vh;
-        background: linear-gradient(135deg, #001f4d, #003b73);
-        color: #333;
-    }
-
-    .dashboard-topbar {
-        grid-column: 1 / 4;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        background-color: #0045ad;
-        color: white;
-        padding: 10px 20px;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    .dashboard-sidebar,
-    .dashboard-main,
-    .dashboard-topics {
-        background-color: #ffffff;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        overflow-y: auto;
-    }
-
-    .dashboard-sidebar h3,
-    .dashboard-main h3,
-    .dashboard-topics h3 {
-        font-size: 18px;
-        color: #0045ad;
-        margin-bottom: 10px;
-    }
-
-    /* Active Chats and Topics */
-    .chats-container,
-    .topic-chats-container {
-        max-height: 80vh;
-        overflow-y: auto;
-        padding: 10px;
-        background-color: #f4f4f4;
-        border-radius: 8px;
-        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
-    }
-
-    .chats-container div,
-    .topic-chats-container div {
-        padding: 10px;
-        border-bottom: 1px solid #ddd;
-    }
-
-    .chats-container div:last-child,
-    .topic-chats-container div:last-child {
-        border-bottom: none;
-    }
-
-    /* Responsive Design */
-    @media (max-width: 1024px) {
-        .dashboard-layout {
-            grid-template-columns: 1fr;
-            grid-template-rows: auto auto auto auto;
-        }
-
-        .dashboard-topbar {
-            grid-column: 1 / 2;
-        }
-
-        .dashboard-sidebar,
-        .dashboard-main,
-        .dashboard-topics {
-            grid-column: 1 / 2;
-        }
-    }
-</style>
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
