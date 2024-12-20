@@ -1,273 +1,149 @@
-/* Global resets and base styling */
+/* Global Styling */
 body, html {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  font-family: 'Segoe UI', Tahoma, Verdana, sans-serif;
-  background: linear-gradient(to bottom, #e0f7fa, #80deea);
-  color: #00796b;
-}
-
-/* Layout containers */
-.layout {
-  display: flex;
-  height: 100vh; /* Fill the viewport height */
-  overflow: hidden;
-}
-
-/* Sidebar styling */
-.sidebar {
-  width: 300px;
-  background: rgba(255, 255, 255, 0.9);
-  display: flex;
-  flex-direction: column;
-  padding: 20px;
-  box-sizing: border-box;
-  border-right: 1px solid #80deea;
-  overflow-y: auto; /* Allow scrolling */
-}
-
-/* User info (top of sidebar) */
-.user-info {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-.user-info h2 {
-  margin-bottom: 10px;
-}
-
-/* Status section in sidebar */
-.status-section {
-  margin-bottom: 20px;
-}
-
-.status-section h3 {
-  margin-bottom: 10px;
-}
-
-.status-section select {
-  width: 100%;
-}
-
-/* Search contacts */
-.contacts-search-section {
-  margin-bottom: 20px;
-}
-
-.contacts-search-section h3 {
-  margin-bottom: 10px;
-}
-
-#search-input {
-  width: 100%;
-  padding: 5px;
-  margin-bottom: 10px;
-}
-
-#search-results {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-/* Search results item */
-.search-results li {
-  padding: 5px 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #ddd;
-}
-
-.search-results button {
-  padding: 4px 6px;
-  font-size: 0.9em;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-/* Contacts list in sidebar */
-.contacts-list-section h3 {
-  margin-bottom: 10px;
-}
-
-.contacts-container {
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  padding: 10px;
-  max-height: 200px;
-  overflow-y: auto;
-  background-color: #f9f9f9;
-}
-
-#contacts-list {
-  list-style-type: none;
-  padding: 0;
-  margin: 0;
-}
-
-#contacts-list li {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 5px 0;
-  border-bottom: 1px solid #ddd;
-}
-
-.contact-checkbox {
-  margin-right: 8px;
-}
-
-.contact-label {
-  font-size: 1em;
-  color: #333;
-}
-
-button#start-chat-button {
-  margin-top: 10px;
-}
-
-/* Main content area */
-.main-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 20px;
-  box-sizing: border-box;
-  overflow-y: auto;
-}
-
-.main-content h3 {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-/* Chats container */
-#chats-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  justify-content: flex-start;
-  align-items: flex-start;
-  overflow-y: auto;
-}
-
-/* Chat box styling */
-.chat-box {
-  width: 300px;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 10px;
-  border: 1px solid #80deea;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-  display: flex;
-  flex-direction: column;
-}
-
-.chat-box h3 {
-  background: #00796b;
-  color: white;
-  margin: 0;
-  padding: 10px;
-  border-radius: 10px 10px 0 0;
-  text-align: center;
-}
-
-.messages {
-  flex: 1;
-  overflow-y: auto;
-  padding: 10px;
-  background: rgba(255, 255, 255, 0.9);
-  border-top: 1px solid #80deea;
-  border-bottom: 1px solid #80deea;
-  font-size: 14px;
-  color: #00796b;
-}
-
-.messages div {
-  margin-bottom: 5px;
-}
-
-.typing-indicator {
-  font-style: italic;
-  color: #00796b;
-  padding: 10px;
-  font-size: 12px;
-}
-
-.chat-box input[type="text"] {
-  width: calc(100% - 20px);
-  margin: 10px;
-  padding: 8px;
-  border: 1px solid #80deea;
-  border-radius: 5px;
-  box-sizing: border-box; /* Ensure padding is included in width */
-}
-
-.chat-box button {
-  margin: 10px;
-  padding: 8px 10px;
-  background: linear-gradient(to bottom, #80deea, #00acc1);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: transform 0.2s, background 0.3s;
-}
-
-.chat-box button:hover {
-  background: linear-gradient(to bottom, #00acc1, #00796b);
-}
-
-.chat-box button:active {
-  transform: scale(0.98);
-}
-
-/* Buttons */
-button {
-  padding: 10px 20px;
-  background: linear-gradient(to bottom, #80deea, #00acc1);
-  color: white;
-  border: none;
-  border-radius: 15px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: transform 0.2s, background 0.3s;
-}
-
-button:hover {
-  background: linear-gradient(to bottom, #00acc1, #00796b);
-}
-
-button:active {
-  transform: scale(0.98);
-}
-
-.remove-pal-btn {
-  background-color: #f44336; /* Red color */
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  font-size: 14px;
-  text-align: center;
-  line-height: 18px;
-  cursor: pointer;
-  margin-left: 10px;
-}
-
-.remove-pal-btn:hover {
-  background-color: #d32f2f;
-}
-
-/* Links */
-a {
-  color: #0288d1;
-  text-decoration: none;
-}
-
-a:hover {
-  color: #01579b;
-  text-decoration: underline;
-}
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', sans-serif;
+    height: 100%;
+    overflow: hidden;
+    color: white; /* Ensures all text is white */
+  }
+  
+  /* Video Background */
+  .video-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    overflow: hidden;
+  }
+  
+  #background-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  /* Overlay Styling */
+  .overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.6); /* Darker overlay for readability */
+  }
+  
+  .content-wrapper {
+    text-align: center;
+    width: 100%;
+    max-width: 500px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.1); /* Transparent white background */
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+  }
+  
+  /* Main Content Styling */
+  .signup-header h1 {
+    font-size: 36px;
+    color: white; /* White text for readability */
+    margin-bottom: 10px;
+  }
+  
+  .signup-header p {
+    font-size: 18px;
+    color: white; /* White text for readability */
+    margin-bottom: 20px;
+  }
+  
+  /* Form Styling */
+  form {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+    background: none; /* No additional background for the form */
+  }
+  
+  form label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 5px;
+    color: white; /* White text for form labels */
+  }
+  
+  form input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #555;
+    border-radius: 4px;
+    font-size: 14px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white; /* White text for input fields */
+  }
+  
+  form input::placeholder {
+    color: #ddd;
+  }
+  
+  form button {
+    width: 100%;
+    padding: 12px;
+    background-color: #0045ad;
+    color: white;
+    font-size: 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s, transform 0.2s;
+  }
+  
+  form button:hover {
+    background-color: #00338a;
+    transform: translateY(-2px);
+  }
+  
+  form button:active {
+    transform: scale(0.98);
+  }
+  
+  form small {
+    font-size: 12px;
+    color: #ddd; /* Lighter text for additional info */
+    display: block;
+    margin-bottom: 15px;
+  }
+  
+  /* Footer Links */
+  .form-footer {
+    margin-top: 20px;
+    font-size: 14px;
+    color: white; /* White text for footer */
+  }
+  
+  .form-footer a {
+    color: #4ea4ff;
+    text-decoration: none;
+  }
+  
+  .form-footer a:hover {
+    text-decoration: underline;
+  }
+  
+  /* Error Message Styling */
+  .error-message {
+    background-color: #ff4d4d;
+    color: white;
+    font-size: 14px;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    text-align: center;
+    display: none;
+  }
+  
