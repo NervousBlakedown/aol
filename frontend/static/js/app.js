@@ -396,31 +396,6 @@ function createChatBox(roomName, chatTitle) {
 
 // Append message
 function appendMessageToChat(roomName, sender, message, timestamp) {
-  const encodedRoomName = encodeRoomName(roomName);
-  const messagesDiv = document.getElementById(`messages-${encodedRoomName}`);
-  if (!messagesDiv) return;
-
-  // Format the timestamp to include AM/PM
-  let formattedTime = timestamp;
-  try {
-    const date = new Date(timestamp);
-    formattedTime = date.toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: true // This ensures AM/PM format
-    });
-  } catch (error) {
-    console.error('Error formatting timestamp:', error);
-  }
-
-  const messageElement = document.createElement('div');
-  messageElement.textContent = `[${formattedTime}] ${sender}: ${message}`;
-  messagesDiv.appendChild(messageElement);
-  messagesDiv.scrollTop = messagesDiv.scrollHeight;
-}
-
-/*function appendMessageToChat(roomName, sender, message, timestamp) {
   const encodedRoomName = encodeRoomName(roomName); // Use encoded name
   const messagesDiv = document.getElementById(`messages-${encodedRoomName}`);
   if (!messagesDiv) return;
@@ -429,7 +404,7 @@ function appendMessageToChat(roomName, sender, message, timestamp) {
   messageElement.textContent = `[${timestamp}] ${sender}: ${message}`;
   messagesDiv.appendChild(messageElement);
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
-} */
+}
 
 // Logout
 function logout() {
