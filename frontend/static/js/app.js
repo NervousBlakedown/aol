@@ -205,7 +205,6 @@ function startChat() {
   // Generate room name and chat participants
   const roomParticipants = [username, ...selectedContacts].sort();
   const roomName = roomParticipants.join('_');
-
   console.log(`Starting chat with: ${selectedContacts}, Room: ${roomName}`);
 
   // Avoid creating duplicate chat boxes
@@ -214,6 +213,8 @@ function startChat() {
     createChatBox(roomName, chatTitle); // Only include other participants in the title
     socket.emit('start_chat', { users: roomParticipants, room: roomName });
   }
+  // Deselect all checkboxes
+  document.querySelectorAll('.contact-checkbox').forEach(cb => (cb.checked = false));
 }
 
 // change online status
