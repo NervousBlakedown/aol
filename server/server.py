@@ -497,7 +497,7 @@ def handle_send_message(data):
             'username': sender_username,
             'message': message,
             'timestamp': timestamp
-        }, room=room)
+        }, room=room, include_self = False) # exclude sender; better than front-end logic
 
     except Exception as e:
         logging.error(f"Error handling send_message: {e}")
