@@ -419,13 +419,6 @@ def handle_status_change(data):
         # Broadcast the updated user list to all clients
         emit('user_list', {'users': get_users_with_status()}, broadcast=True)
 
-"""@socketio.on('status_change')
-def handle_status_change(data):
-    username = data['username']
-    new_status = data['status']
-    user_status[username] = new_status  
-    emit('user_list', {'users': get_users_with_status()}, broadcast=True)"""
-
 # Helper function to get users with their statuses
 def get_users_with_status():
     users_with_status = [{'username': user, 'status': user_status.get(user, 'Offline')} for user in connected_users]
@@ -448,6 +441,24 @@ def generate_room_name(users):
 
 # start chat
 @socketio.on('start_chat')
+def handle_start_chat(data):
+    usernames = data['users']  # List of participants
+    room_name = "_".join(sorted(usernames))  # Generate a consistent room name
+
+    logging.info(f"Start chat event received for users: {usernames}, room: {room_name}")
+
+    # Add each user to the room
+    for username in usernames:
+        if username in connected_users:  # Ensure the user is online
+            join_room(room_name, sid=connected_users[username])
+            logging.info(f"User {username} joined room {room_name}")
+        else:
+            logging.warning(f"User {username} is not connected and cannot join room {room_name}")
+
+    # Notify clients about the chat room
+    emit('chat_started', {'room': room_name, 'users': usernames}, room=room_name)
+
+"""@socketio.on('start_chat')
 def start_chat(data):
     room_name = data['room']  # Plain room name
     users = data['users']
@@ -461,10 +472,63 @@ def start_chat(data):
         if user in connected_users:
             join_room(room_name, sid=connected_users[user])
 
-    emit('chat_started', {'room': room_name, 'users': users}, room=room_name)
+    emit('chat_started', {'room': room_name, 'users': users}, room=room_name)"""
 
 # Send message
 @socketio.on('send_message')
+def handle_send_message(data):
+    room = data['room']
+    message = data['message']
+    sender_username = data.get('username')
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    if not sender_username:
+        logging.error("Sender username not provided in send_message data")
+        emit('error', {'msg': "Sender username is required."})
+        return
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Fetch sender_id using username
+        cursor.execute('''
+            SELECT id 
+            FROM auth.users 
+            WHERE raw_user_meta_data ->> 'username' = %s
+        ''', (sender_username,))
+        sender_row = cursor.fetchone()
+        if not sender_row:
+            logging.error(f"Sender not found: {sender_username}")
+            emit('error', {'msg': f"Sender {sender_username} not found."})
+            return
+        sender_id = sender_row['id']
+        encrypted_message = f.encrypt(message.encode()).decode()
+
+        # Insert message into DB
+        cursor.execute('''
+            INSERT INTO public.messages (sender_id, receiver_id, room_name, message, delivered, timestamp)
+            VALUES (%s, %s, %s, %s, %s, %s)
+        ''', (sender_id, None, room, encrypted_message, False, timestamp))
+        conn.commit()
+        logging.info("Message successfully inserted into the database.")
+
+        # Emit the message to the room
+        emit('message', {
+            'room': room,
+            'username': sender_username,
+            'message': message,
+            'timestamp': timestamp
+        }, room=room)  # Emit to the specific room
+        logging.info(f"Message from {sender_username} sent to room {room}: {message}")
+
+    except Exception as e:
+        logging.error(f"Error handling send_message: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+
+"""@socketio.on('send_message')
 def handle_send_message(data):
     room = data['room']
     message = data['message']
@@ -505,7 +569,7 @@ def handle_send_message(data):
         logging.error(f"Error handling send_message: {e}")
     finally:
         cursor.close()
-        conn.close()
+        conn.close()"""
 
 # Typing notifications
 @socketio.on('typing')
