@@ -25,12 +25,10 @@ SUPABASE_KEY = os.getenv('SUPABASE_KEY')
 SUPABASE_SERVICE_ROLE_KEY = os.getenv('SUPABASE_SERVICE_ROLE_KEY')
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 supabase_admin: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-
 app = Flask(__name__, static_folder=static_dir, template_folder=template_dir)
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins = "*")
 app.secret_key = 'my_secret_key'  # TODO: Replace with secure, randomly generated key
 app.permanent_session_lifetime = timedelta(minutes = 30)
-
 gmail_address = os.getenv('GMAIL_ADDRESS')
 gmail_password = os.getenv('GMAIL_PASSWORD')
 if not gmail_address or not gmail_password:
@@ -74,6 +72,11 @@ def get_db_connection():
     except psycopg2.Error as e:
         logging.error(f"Error connecting to database: {e}")
         raise e
+
+# test socket connection
+@socketio.on('connect')
+def handle_connect():
+    logging.info(f"Client connected: {request.sid}")
 
 # Convert ID back to Username for offline message delivery
 def get_username_by_id(user_id):
@@ -325,6 +328,14 @@ def handle_login(data):
     logging.info(f"User {username} logged in. Current users: {connected_users}")
     logging.info(f"User statuses: {user_status}")
 
+    # Add logs around broadcast
+    logging.info("Attempting to broadcast user list...")
+    try:
+        emit('user_list', {'users': get_users_with_status()}, broadcast=True)
+        logging.info("User list broadcast successful.")
+    except Exception as e:
+        logging.error(f"Error broadcasting user list: {e}")
+
     # Fetch undelivered messages
     try:
         conn = get_db_connection()
@@ -402,6 +413,12 @@ def get_users_with_status():
 
 """def get_users_with_status():
     return [{'username': user, 'status': user_status[user]} for user in connected_users]"""
+
+# Test broadcast: serious BUG
+@socketio.on('test_broadcast')
+def test_broadcast():
+    emit('test', {'msg': 'Broadcast test message'}, broadcast=True)
+    logging.info("Broadcast test message sent.")
 
 # Helper to generate a unique room name based on participants
 def generate_room_name(users):

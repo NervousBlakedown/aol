@@ -213,6 +213,7 @@ function setupSocketIO() {
   });
 
   socket.on('user_list', data => {
+    console.log("Received user list:", data.users);
     userStatuses = {};
     data.users.forEach(user => {
       userStatuses[user.username] = user.status;
@@ -221,6 +222,12 @@ function setupSocketIO() {
     updateContactsList();
   });
 }
+
+// test broadcast
+socket.emit('test_broadcast');
+socket.on('test', (data) => {
+    console.log("Received broadcast message:", data.msg);
+});
 
 // Fetch username for dashboard
 function initializeDashboard() {
