@@ -1,4 +1,5 @@
 // frontend/static/js/app.js
+// prerequisites
 let SUPABASE_URL, SUPABASE_KEY;
 let supabase;
 let socket;
@@ -18,7 +19,56 @@ function decodeRoomName(encodedName) {
   return atob(encodedName);
 }
 
-// Initialization
+// Init DB
+function initializeSupabase() {
+  const { createClient } = window.supabase;
+  supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+  console.log('Supabase initialized.');
+}
+
+// Fetch .env
+function fetchEnvVariables() {
+  fetch('/get_env')
+    .then(response => response.json())
+    .then(env => {
+      SUPABASE_URL = env.SUPABASE_URL;
+      SUPABASE_KEY = env.SUPABASE_KEY;
+      initializeSupabase();
+    })
+    .catch(error => console.error('Error fetching environment variables:', error));
+}
+
+// Set up Socket.IO
+function setupSocketIO() {
+  socket = io();
+
+  socket.on('connect', () => {
+    console.log('Socket.IO connected.');
+    if (username) socket.emit('login', { username });
+  });
+
+  socket.on('chat_started', data => {
+    console.log('chat_started event received:', data); // Debugging
+    const roomName = data.room;
+    if (!activeChats[roomName]) createChatBox(roomName, data.users);
+  });
+
+  socket.on('message', data => {
+    appendMessageToChat(data.room, data.username, data.msg, data.timestamp);
+  });
+
+  socket.on('user_list', data => {
+    console.log("Received user list:", data.users);
+    userStatuses = {};
+    data.users.forEach(user => {
+      userStatuses[user.username] = user.status;
+    });
+    console.log("Updated user statuses:", userStatuses); 
+    updateContactsList();
+  });
+}
+
+// Page Initialization
 document.addEventListener('DOMContentLoaded', () => {
   fetchEnvVariables();
 
@@ -82,6 +132,103 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+// core features (dashboard-specific)
+// Fetch username for dashboard
+function initializeDashboard() {
+  fetch('/get_username', { credentials: 'include' })
+    .then(response => response.json())
+    .then(data => {
+      if (data.username) {
+        username = data.username;
+        document.getElementById('username-display').textContent = username; //`Welcome, ${username}!`;
+        socket.emit('login', { username });
+      } else {
+        alert('Error fetching username.');
+        window.location.href = '/login';
+      }
+    })
+    .catch(err => console.error('Error fetching username:', err));
+}
+
+// Fetch contacts list
+function fetchMyContacts() {
+  fetch('/get_my_contacts', { credentials: 'include' })
+    .then(response => response.json())
+    .then(data => {
+      myContacts = data;
+      updateContactsList();
+    })
+    .catch(err => console.error('Error fetching contacts:', err));
+}
+
+// Update contacts list UI
+function updateContactsList() {
+  const contactsList = document.getElementById('contacts-list');
+  contactsList.innerHTML = '';
+
+  myContacts.sort((a, b) => a.username.localeCompare(b.username));
+  myContacts.forEach(contact => {
+    const listItem = document.createElement('li');
+    listItem.innerHTML = `
+      <input type="checkbox" class="contact-checkbox" value="${contact.username}">
+      <label>${contact.username} (${userStatuses[contact.username] || 'Offline'})</label>
+    `;
+    contactsList.appendChild(listItem);
+  });
+}
+
+// Messaging and Chat Functions
+// Start Chat
+function startChat() {
+  const selectedContacts = Array.from(
+      document.querySelectorAll('.contact-checkbox:checked')
+  ).map(cb => cb.value);
+
+  if (selectedContacts.length === 0) {
+      alert('Please select at least one Pal.');
+      return;
+  }
+
+  let roomName;
+  const receivers = selectedContacts;
+
+  // Generate plain room name
+  if (receivers.length === 1) {
+      roomName = receivers[0]; // Single chat: Receiver's username
+  } else {
+      const roomParticipants = [username, ...receivers].sort();
+      roomName = roomParticipants.join('_'); // Group chat: Sorted participants
+  }
+
+  console.log(`Starting chat with: ${receivers} (Room Name: ${roomName})`);
+
+  if (!activeChats[roomName]) {
+      createChatBox(roomName, receivers); // Pass receivers for chat title
+      socket.emit('start_chat', { users: [username, ...receivers], room: roomName }); // Use plain room name for server
+  }
+
+  // Deselect all checkboxes
+  document.querySelectorAll('.contact-checkbox').forEach(cb => (cb.checked = false));
+}
+
+// Send message
+function sendMessage(roomName) {
+  const encodedRoomName = encodeRoomName(roomName); // Use encoded name for DOM queries
+  const input = document.getElementById(`message-${encodedRoomName}`);
+  if (!input) {
+      console.error(`Input field not found for room: ${roomName}`);
+      return;
+  }
+
+  const message = input.value.trim();
+  if (!message) return;
+
+  const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  socket.emit('send_message', { username, message, room: roomName, timestamp }); // Use plain room name for server
+  appendMessageToChat(roomName, 'You', message, timestamp);
+  input.value = '';
+}
+
 // Add Pal to Pals list
 function addPal(username) {
   fetch('/add_contact', {
@@ -136,24 +283,7 @@ function removePal(username) {
     .catch(error => console.error('Error removing Pal:', error));
 }
 
-// Fetch .env
-function fetchEnvVariables() {
-  fetch('/get_env')
-    .then(response => response.json())
-    .then(env => {
-      SUPABASE_URL = env.SUPABASE_URL;
-      SUPABASE_KEY = env.SUPABASE_KEY;
-      initializeSupabase();
-    })
-    .catch(error => console.error('Error fetching environment variables:', error));
-}
 
-// Init DB
-function initializeSupabase() {
-  const { createClient } = window.supabase;
-  supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-  console.log('Supabase initialized.');
-}
 
 // login
 function login() {
@@ -193,118 +323,13 @@ function login() {
     });
 }
 
-// Set up Socket.IO
-function setupSocketIO() {
-  socket = io();
-
-  socket.on('connect', () => {
-    console.log('Socket.IO connected.');
-    if (username) socket.emit('login', { username });
-  });
-
-  socket.on('chat_started', data => {
-    console.log('chat_started event received:', data); // Debugging
-    const roomName = data.room;
-    if (!activeChats[roomName]) createChatBox(roomName, data.users);
-  });
-
-  socket.on('message', data => {
-    appendMessageToChat(data.room, data.username, data.msg, data.timestamp);
-  });
-
-  socket.on('user_list', data => {
-    console.log("Received user list:", data.users);
-    userStatuses = {};
-    data.users.forEach(user => {
-      userStatuses[user.username] = user.status;
-    });
-    console.log("Updated user statuses:", userStatuses); // Debugging log
-    updateContactsList();
-  });
-}
-
 // test broadcast
 socket.emit('test_broadcast');
 socket.on('test', (data) => {
     console.log("Received broadcast message:", data.msg);
 });
 
-// Fetch username for dashboard
-function initializeDashboard() {
-  fetch('/get_username', { credentials: 'include' })
-    .then(response => response.json())
-    .then(data => {
-      if (data.username) {
-        username = data.username;
-        document.getElementById('username-display').textContent = username; //`Welcome, ${username}!`;
-        socket.emit('login', { username });
-      } else {
-        alert('Error fetching username.');
-        window.location.href = '/login';
-      }
-    })
-    .catch(err => console.error('Error fetching username:', err));
-}
 
-// Fetch contacts list
-function fetchMyContacts() {
-  fetch('/get_my_contacts', { credentials: 'include' })
-    .then(response => response.json())
-    .then(data => {
-      myContacts = data;
-      updateContactsList();
-    })
-    .catch(err => console.error('Error fetching contacts:', err));
-}
-
-// Update contacts list UI
-function updateContactsList() {
-  const contactsList = document.getElementById('contacts-list');
-  contactsList.innerHTML = '';
-
-  myContacts.sort((a, b) => a.username.localeCompare(b.username));
-  myContacts.forEach(contact => {
-    const listItem = document.createElement('li');
-    listItem.innerHTML = `
-      <input type="checkbox" class="contact-checkbox" value="${contact.username}">
-      <label>${contact.username} (${userStatuses[contact.username] || 'Offline'})</label>
-    `;
-    contactsList.appendChild(listItem);
-  });
-}
-
-// Start Chat
-function startChat() {
-  const selectedContacts = Array.from(
-      document.querySelectorAll('.contact-checkbox:checked')
-  ).map(cb => cb.value);
-
-  if (selectedContacts.length === 0) {
-      alert('Please select at least one Pal.');
-      return;
-  }
-
-  let roomName;
-  const receivers = selectedContacts;
-
-  // Generate plain room name
-  if (receivers.length === 1) {
-      roomName = receivers[0]; // Single chat: Receiver's username
-  } else {
-      const roomParticipants = [username, ...receivers].sort();
-      roomName = roomParticipants.join('_'); // Group chat: Sorted participants
-  }
-
-  console.log(`Starting chat with: ${receivers} (Room Name: ${roomName})`);
-
-  if (!activeChats[roomName]) {
-      createChatBox(roomName, receivers); // Pass receivers for chat title
-      socket.emit('start_chat', { users: [username, ...receivers], room: roomName }); // Use plain room name for server
-  }
-
-  // Deselect all checkboxes
-  document.querySelectorAll('.contact-checkbox').forEach(cb => (cb.checked = false));
-}
 
 // Create chat box
 function createChatBox(roomName, participants) {
@@ -376,24 +401,6 @@ function appendMessageToChat(roomName, sender, message, timestamp) {
   messageElement.textContent = `[${timestamp}] ${sender}: ${message}`;
   messagesDiv.appendChild(messageElement);
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
-}
-
-// Send message
-function sendMessage(roomName) {
-  const encodedRoomName = encodeRoomName(roomName); // Use encoded name for DOM queries
-  const input = document.getElementById(`message-${encodedRoomName}`);
-  if (!input) {
-      console.error(`Input field not found for room: ${roomName}`);
-      return;
-  }
-
-  const message = input.value.trim();
-  if (!message) return;
-
-  const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  socket.emit('send_message', { username, message, room: roomName, timestamp }); // Use plain room name for server
-  appendMessageToChat(roomName, 'You', message, timestamp);
-  input.value = '';
 }
 
 // Logout
