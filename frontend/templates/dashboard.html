@@ -4,50 +4,110 @@
 
 {% block content %}
 <div id="dashboard" class="dashboard-layout">
-    <!-- Sidebar -->
-    <aside class="dashboard-sidebar">
-        <div class="user-info">
-            <h2>Welcome, <span id="username-display">{{ username }}</span>!</h2>
+    <!-- Top Bar -->
+    <header class="dashboard-topbar">
+        <div class="topbar-left">
+            <h1 class="dashboard-logo">BlakeIM</h1>
+        </div>
+        <div class="topbar-center">
+            <input type="text" id="global-search" placeholder="Search chats, topics, or Pals...">
+        </div>
+        <div class="topbar-right">
+            <span>Welcome, <span id="username-display">{{ username }}</span></span>
             <button id="logout-button" class="logout-btn">Logout</button>
         </div>
+    </header>
 
-        <div class="status-section">
-            <h3>Status</h3>
-            <select id="status" onchange="updateStatus(this.value)">
-                <option value="Online">Online</option>
-                <option value="Away">Away</option>
-                <option value="Do Not Disturb">Do Not Disturb</option>
-            </select>
-        </div>
-
-        <div class="contacts-list-section">
-            <h3>Your Pals</h3>
-            <div class="contacts-container">
-                <ul id="contacts-list" class="contacts-list"></ul>
+    <div class="dashboard-content">
+        <!-- Left Sidebar -->
+        <aside class="dashboard-sidebar">
+            <div class="user-info">
+                <h2>Your Info</h2>
+                <p>Status: <select id="status" onchange="updateStatus(this.value)">
+                    <option value="Online">Online</option>
+                    <option value="Away">Away</option>
+                    <option value="Do Not Disturb">Do Not Disturb</option>
+                </select></p>
             </div>
-            <button id="start-chat-button" class="start-chat-btn">Start Chat</button>
-        </div>
 
-        <div class="contacts-search-section">
-            <h3>Add Pals</h3>
-            <input type="text" id="search-input" placeholder="Search users...">
-            <ul id="search-results" class="search-results"></ul>
-        </div>
-    </aside>
+            <div class="contacts-list-section">
+                <h3>Your Pals</h3>
+                <ul id="contacts-list" class="contacts-list"></ul>
+                <button id="start-chat-button" class="start-chat-btn">Start Chat</button>
+            </div>
 
-    <!-- Main Content -->
-    <main class="dashboard-main">
-        <section class="active-chats">
-            <h3>Active Chats</h3>
-            <div id="chats-container" class="chats-container"></div>
-        </section>
+            <div class="contacts-search-section">
+                <h3>Add Pals</h3>
+                <input type="text" id="search-input" placeholder="Search users...">
+                <ul id="search-results" class="search-results"></ul>
+            </div>
+        </aside>
 
-        <section class="topic-chats">
-            <h3>Topic Chats</h3>
-            <div id="topic-chats-container" class="topic-chats-container"></div>
-        </section>
-    </main>
+        <!-- Middle Section -->
+        <main class="dashboard-main">
+            <section class="active-chats">
+                <h3>Active Chats</h3>
+                <div id="chats-container" class="chats-container" style="overflow-y: auto; max-height: 80vh;"></div>
+            </section>
+        </main>
+
+        <!-- Right Sidebar -->
+        <aside class="dashboard-topics">
+            <section class="topic-chats">
+                <h3>Topic Chats</h3>
+                <div id="topic-chats-container" class="topic-chats-container" style="overflow-y: auto; max-height: 80vh;"></div>
+            </section>
+        </aside>
+    </div>
 </div>
+
+<style>
+    /* General Layout */
+    .dashboard-layout {
+        display: grid;
+        grid-template-rows: auto 1fr;
+        grid-template-columns: 300px auto 300px;
+        height: 100vh;
+        gap: 0;
+    }
+
+    .dashboard-topbar {
+        grid-column: 1 / 4;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 20px;
+        background-color: #0045ad;
+        color: white;
+    }
+
+    .dashboard-sidebar, .dashboard-topics {
+        background-color: #f9f9f9;
+        padding: 20px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .dashboard-main {
+        padding: 20px;
+        overflow-y: auto;
+    }
+
+    /* Responsive Layout */
+    @media (max-width: 1024px) {
+        .dashboard-layout {
+            grid-template-columns: 1fr;
+            grid-template-rows: auto auto auto auto;
+        }
+
+        .dashboard-topbar {
+            grid-column: 1 / 2;
+        }
+
+        .dashboard-sidebar, .dashboard-main, .dashboard-topics {
+            grid-column: 1 / 2;
+        }
+    }
+</style>
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
