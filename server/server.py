@@ -322,7 +322,8 @@ def handle_login(data):
 
     connected_users[username] = request.sid
     user_status[username] = 'Online'
-    logging.info(f"User {username} logged in.")
+    logging.info(f"User {username} logged in. Current users: {connected_users}")
+    logging.info(f"User statuses: {user_status}")
 
     # Fetch undelivered messages
     try:
@@ -395,7 +396,12 @@ def handle_status_change(data):
 
 # Helper function to get users with their statuses
 def get_users_with_status():
-    return [{'username': user, 'status': user_status[user]} for user in connected_users]
+    users_with_status = [{'username': user, 'status': user_status.get(user, 'Offline')} for user in connected_users]
+    logging.info(f"User list broadcast: {users_with_status}")
+    return users_with_status
+
+"""def get_users_with_status():
+    return [{'username': user, 'status': user_status[user]} for user in connected_users]"""
 
 # Helper to generate a unique room name based on participants
 def generate_room_name(users):

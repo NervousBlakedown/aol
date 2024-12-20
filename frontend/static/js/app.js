@@ -217,6 +217,7 @@ function setupSocketIO() {
     data.users.forEach(user => {
       userStatuses[user.username] = user.status;
     });
+    console.log("Updated user statuses:", userStatuses); // Debugging log
     updateContactsList();
   });
 }
