@@ -110,7 +110,7 @@ def get_username_by_id(user_id):
         conn.close()
 
 # Serve signup page by default (root route)
-@app.route('/', methods = ['GET'])
+@app.route(['/', '/signup'], methods = ['GET'])
 def default():
     return render_template('signup.html')
 
