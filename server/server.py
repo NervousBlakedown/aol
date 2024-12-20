@@ -110,23 +110,14 @@ def get_username_by_id(user_id):
         conn.close()
 
 # Serve signup page by default (root route)
-@app.route(['/', '/signup'], methods = ['GET'])
+@app.route('/', methods = ['GET'])
 def default():
     return render_template('signup.html')
-
-# Old signup page
-@app.route('/signup_archive')
-def signup_archive():
-    return render_template('signup_archive.html')
 
 # Serve login page when user clicks "Already have an account? Log in"
 @app.route('/login', methods=['GET'])
 def login_page():
     return render_template('login.html')
-
-@app.route('/login_test', methods=['GET'])
-def login_page_test():
-    return render_template('login_test.html')
 
 # Create account
 @app.route('/signup', methods=['POST'])
