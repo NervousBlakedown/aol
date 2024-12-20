@@ -1,92 +1,31 @@
-{% extends 'base.html' %}
+{% extends 'base_test.html' %}
 
 {% block title %}Signup - BlakeIM{% endblock %}
 
-{% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/styles_test.css') }}">
-{% endblock %}
-
 {% block content %}
-<div class="video-background">
-    <video autoplay muted loop id="background-video">
-        <source src="{{ url_for('static', filename='assets/videos/earth_messages_red.mp4') }}" type="video/mp4">
-        Your browser does not support the video tag.
-    </video>
-</div>
+<div class="content-wrapper">
+    <div class="signup-header">
+        <h1>Welcome to BlakeIM</h1>
+        <p>Join a network of seamless connections. Work, collaborate, and grow globally.</p>
+    </div>
 
-<div class="overlay">
-    <div class="content-wrapper">
-        <div class="main-content">
-            <div class="content-header">
-                <h1>Welcome to BlakeIM</h1>
-                <p>Join a network of seamless connections. Work, collaborate, and grow globally.</p>
-            </div>
+    <form id="signup-form">
+        <label for="full-name">Full Legal Name</label>
+        <input type="text" id="full-name" placeholder="John Doe" required>
 
-            <div class="form-container">
-                <div class="error-message" id="error-message" style="display: none;">Something went wrong.</div>
+        <label for="email">Email</label>
+        <input type="email" id="email" placeholder="you@company.com" required>
 
-                <form id="signup-form">
-                    <label for="full-name">Full Legal Name</label>
-                    <input type="text" id="full-name" placeholder="John Doe" required>
-                    <small>Full name as it appears on official documents.</small>
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="Enter a strong password" required>
+        <small>Password must include uppercase, lowercase, numbers, and at least 14 characters.</small>
 
-                    <label for="email">Email</label>
-                    <input type="email" id="email" placeholder="you@company.com" required>
-                    <small>Enter a valid business email address.</small>
+        <button type="button" id="create-account-button" class="primary-btn">Sign Up for Free</button>
+    </form>
 
-                    <label for="password">Password</label>
-                    <input type="password" id="password" placeholder="Enter a strong password" required>
-                    <small>Password must include uppercase, lowercase, numbers, and at least 14 characters.</small>
-
-                    <button type="button" id="create-account-button" class="primary-btn">Sign Up for Free</button>
-                </form>
-
-                <div class="form-footer">
-                    <p>Already have an account? <a href="{{ url_for('login_page') }}">Log in</a></p>
-                    <p><a href="#">Privacy Policy</a> and <a href="#">Terms and Conditions</a></p>
-                </div>
-            </div>
-        </div>
+    <div class="form-footer">
+        <p>Already have an account? <a href="{{ url_for('login_page') }}">Log in</a></p>
+        <p><a href="#">Privacy Policy</a> and <a href="#">Terms and Conditions</a></p>
     </div>
 </div>
-
-<audio id="signup_sound" src="{{ url_for('static', filename='assets/sounds/retro_console_startup.mp3') }}" preload="auto"></audio>
-
-<script>
-  document.addEventListener('click', function playSoundOnce() {
-    const signupSound = document.getElementById('signup_sound');
-    signupSound.play().catch(error => console.log('Audio playback error:', error));
-    document.removeEventListener('click', playSoundOnce);
-  }, { once: true });
-
-  document.getElementById('create-account-button').addEventListener('click', async function () {
-    const fullName = document.getElementById('full-name').value.trim();
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value.trim();
-
-    if (!fullName || !email || !password) {
-      alert('Please fill out all fields.');
-      return;
-    }
-
-    try {
-      const response = await fetch('/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ full_name: fullName, email, password })
-      });
-
-      const data = await response.json();
-      if (response.ok && data.success) {
-        alert(data.message);
-        window.location.href = '/login'; // Redirect to login page
-      } else {
-        alert(data.message || 'Signup failed. Please try again.');
-      }
-    } catch (error) {
-      console.error('Signup error:', error);
-      alert('An error occurred. Please try again.');
-    }
-  });
-</script>
 {% endblock %}

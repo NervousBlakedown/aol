@@ -41,7 +41,7 @@ body, html {
   .content-wrapper {
     text-align: center;
     width: 100%;
-    max-width: 600px;
+    max-width: 500px;
     padding: 20px;
     background: rgba(255, 255, 255, 0.1); /* Transparent white background */
     border-radius: 10px;
@@ -49,27 +49,34 @@ body, html {
   }
   
   /* Main Content Styling */
-  .content-header h1 {
+  .signup-header h1 {
     font-size: 36px;
     color: white; /* White text for readability */
     margin-bottom: 10px;
   }
   
-  .content-header p {
+  .signup-header p {
     font-size: 18px;
     color: white; /* White text for readability */
     margin-bottom: 20px;
   }
   
   /* Form Styling */
-  .form-container label {
+  form {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+    background: none; /* No additional background for the form */
+  }
+  
+  form label {
     display: block;
     font-size: 14px;
     margin-bottom: 5px;
     color: white; /* White text for form labels */
   }
   
-  .form-container input {
+  form input {
     width: 100%;
     padding: 10px;
     margin-bottom: 15px;
@@ -80,11 +87,11 @@ body, html {
     color: white; /* White text for input fields */
   }
   
-  .form-container input::placeholder {
+  form input::placeholder {
     color: #ddd;
   }
   
-  .form-container button {
+  form button {
     width: 100%;
     padding: 12px;
     background-color: #0045ad;
@@ -96,37 +103,24 @@ body, html {
     transition: background-color 0.3s, transform 0.2s;
   }
   
-  .form-container button:hover {
+  form button:hover {
     background-color: #00338a;
     transform: translateY(-2px);
   }
   
-  .form-container button:active {
+  form button:active {
     transform: scale(0.98);
   }
   
-  .form-container small {
+  form small {
     font-size: 12px;
     color: #ddd; /* Lighter text for additional info */
     display: block;
     margin-bottom: 15px;
   }
   
-  /* Error Message Styling */
-  .error-message {
-    background-color: #ff4d4d;
-    color: white;
-    font-size: 14px;
-    padding: 10px;
-    margin-bottom: 15px;
-    border-radius: 4px;
-    text-align: center;
-    display: none;
-  }
-  
   /* Footer Links */
   .form-footer {
-    text-align: center;
     margin-top: 20px;
     font-size: 14px;
     color: white; /* White text for footer */
@@ -139,5 +133,17 @@ body, html {
   
   .form-footer a:hover {
     text-decoration: underline;
+  }
+  
+  /* Error Message Styling */
+  .error-message {
+    background-color: #ff4d4d;
+    color: white;
+    font-size: 14px;
+    padding: 10px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    text-align: center;
+    display: none;
   }
   
