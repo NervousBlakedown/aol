@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Contact Us - BlakeOL{% endblock %}
+
+{% set page_style = 'css/auth.css' %}
+{% set show_video_background = True %}
+
+{% block content %}
+<div class="contact-container">
+    <section class="contact-header">
+        <h1>Contact <span class="highlight">BlakeOL</span></h1>
+        <p>Have questions, concerns, or feedback? Let us know how we can help!</p>
+    </section>
+
+    <form class="contact-form" method="POST" action="/send_message">
+        <label for="name">Your Name</label>
+        <input type="text" id="name" name="name" placeholder="Enter name" required>
+        
+        <label for="email">Your Email</label>
+        <input type="email" id="email" name="email" placeholder="Enter email address" required>
+        
+        <label for="subject">Subject</label>
+        <input type="text" id="subject" name="subject" placeholder="Enter the subject of your message" required>
+        
+        <label for="message">Your Message</label>
+        <textarea id="message" name="message" rows="5" placeholder="Write your message here" required></textarea>
+        
+        <button type="submit" class="contact-button">Send Message</button>
+    </form>
+
+    <section class="contact-footer">
+        <p>We aim to respond to all inquiries within 24-48 hours. Thank you for reaching out!</p>
+        <a href="/signup" class="cta-button">Join BlakeOL</a>
+        <a href="/login" class="cta-button">Login</a>
+
+    </section>
+</div>
+{% endblock %}

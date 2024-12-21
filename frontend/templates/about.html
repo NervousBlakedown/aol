@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block title %}About - BlakeOL{% endblock %}
+{% set page_style = 'css/auth.css' %}
+{% set show_video_background = True %}
+
+{% block content %}
+<div class="about-container" style="background: none;">
+    <!-- Hero Section -->
+    <section class="hero">
+        <h1>Welcome to <span class="highlight">BlakeOL</span></h1>
+        <p>Instant messaging made fun again.</p>
+    </section>
+
+    <!-- Mission Section -->
+    <section class="mission">
+        <h2>Our Mission</h2>
+        <p>
+            At <strong>BlakeOL</strong>, we believe communication is more than just exchanging words—it's about building trust, fostering meaningful relationships, and serving one another.
+            Hi, I'm Blake, and like many people who remembers life when you actually had to purposely go on the internet, I've been on a mission to make digitalspeak fun again. Rooted in the Catholic worldview, my goal is to create a space valuing the dignity of every human person.
+        </p>
+    </section>
+
+    <!-- Why BlakeOL Section -->
+    <section class="why-blakeol">
+        <h2>Why Choose BlakeOL?</h2>
+        <p>
+            In an age dominated by software designed to distract you, BlakeOL uses a minimal UI to focus your attention on what matters: people. With message and password encryption, no ads, and no costs, I build software for people, not profits. Yeah, it's that good. BlakeOL stands apart by prioritizing meaningful dialogue and well-being over distractions.
+            Our platform is built with security, clarity, and user well-being in mind.
+        </p>
+        <p>
+            Whether you're connecting with friends, collaborating with teams, or supporting loved ones, every interaction on BlakeOL is designed to foster <em>trust</em> and <em>understanding</em>.
+        </p>
+    </section>
+
+    <!-- Feature Comparison -->
+    <section class="feature-comparison">
+        <h2>Us vs. the Other Guys</h2>
+        <table style="margin: 0 auto;">
+            <tr>
+                <th>Feature</th>
+                <th>BlakeOL</th>
+                <th>Discord</th>
+                <th>Telegram</th>
+                <th>Gab</th>
+                <th>GroupMe</th>
+            </tr>
+            <tr>
+                <td>Topic Chats</td>
+                <td>✅ Unique</td>
+                <td>❌ Channels only</td>
+                <td>❌ Groups only</td>
+                <td>❌ Groups only</td>
+                <td>❌ Groups only</td>
+            </tr>
+            <tr>
+                <td>End-to-End Encryption</td>
+                <td>✅ Full chats</td>
+                <td>❌ Partial</td>
+                <td>✅ Optional</td>
+                <td>❌ No</td>
+                <td>❌ No</td>
+            </tr>
+            <tr>
+                <td>Privacy & No Tracking</td>
+                <td>✅ Yes</td>
+                <td>❌ Data shared</td>
+                <td>❌ Data shared</td>
+                <td>❌ Data shared</td>
+                <td>❌ Data shared</td>
+            </tr>
+            <tr>
+                <td>Simple, Intuitive UI</td>
+                <td>✅ Minimalist</td>
+                <td>❌ Complex</td>
+                <td>❌ Complex</td>
+                <td>❌ Basic</td>
+                <td>❌ Basic</td>
+            </tr>
+            <tr>
+                <td>Customizable Chats</td>
+                <td>✅ Yes</td>
+                <td>❌ Limited</td>
+                <td>❌ Limited</td>
+                <td>❌ Limited</td>
+                <td>❌ No</td>
+            </tr>
+        </table>
+    </section>
+
+    <!-- Call to Action -->
+    <section class="call-to-action">
+        <h2>Join Our Community</h2>
+        <p>What are you waiting for? Stop reading this and join BlakeOL account below to experience communication that uplifts, connects, and inspires.</p>
+        <a href="/signup" class="cta-button">Join BlakeOL</a>
+    </section>
+</div>
+{% endblock %}

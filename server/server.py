@@ -124,6 +124,16 @@ def login_page():
 def signup_from_login():
     return render_template('signup.html', show_video_background = True)
 
+# About page
+@app.route('/about', methods = ['GET'])
+def about_page():
+    return render_template('about.html')
+
+# Contact page
+@app.route('/contact', methods = ['GET'])
+def contact_page():
+    return render_template('contact.html')
+
 # Create account
 @app.route('/signup', methods=['POST'])
 def signup():

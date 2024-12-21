@@ -406,7 +406,7 @@ function createChatBox(roomName, chatTitle) {
 function formatTimestamp(timestamp) {
   const date = new Date(timestamp);
   if (isNaN(date.getTime())) {
-      console.error('Invalid timestamp:', timestamp);
+      // console.error('Invalid timestamp:', timestamp);
       return timestamp; // Fallback to raw timestamp if invalid
   }
   return date.toLocaleTimeString([], { 
