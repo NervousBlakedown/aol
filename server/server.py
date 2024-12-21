@@ -509,7 +509,7 @@ def handle_send_message(data):
     message = data.get('message') 
     sender_username = data.get('username')
     timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S%z')
-    logging.info(f"Received send_message event: room={room}, message={message}, sender={sender_username}")
+    logging.info(f"Received send_message event: room={room}, sender={sender_username}")
 
     if not message:
         logging.error("Message is missing or empty in send_message data")
