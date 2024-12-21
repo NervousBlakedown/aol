@@ -223,3 +223,77 @@ body, html {
 ::-webkit-scrollbar-thumb:hover {
     background-color: #2a5d85;
 }
+
+/* Chat Message Styling */
+.message {
+    margin: 5px 0;
+    padding: 8px 12px;
+    border-radius: 6px;
+    max-width: 70%;
+    font-size: 14px;
+    word-wrap: break-word;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Sender Messages */
+.message.sender {
+    background-color: #1b4965;
+    color: #ffffff;
+    align-self: flex-end;
+    text-align: left;
+    border-top-right-radius: 0;
+}
+
+/* Receiver Messages */
+.message.receiver {
+    background-color: #e0e0e0;
+    color: #1b4965;
+    align-self: flex-start;
+    text-align: left;
+    border-top-left-radius: 0;
+}
+
+/* Meta Information (Username + Timestamp) */
+.message-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* Username Styling */
+.message-sender {
+    flex: 1; /* Ensures the sender name takes available space */
+    text-align: left;
+    font-weight: bold;
+}
+
+.message.sender .message-sender {
+    color: #ffffff; /* Sender's name on dark background */
+}
+
+.message.receiver .message-sender {
+    color: #1b4965; /* Receiver's name on light background */
+}
+
+/* Timestamp Styling */
+.message-timestamp {
+    font-size: 10px;
+    color: #a0a0a0;
+    font-style: italic;
+    opacity: 0.8;
+    text-align: right;
+}
+
+/* Message Text */
+.message-text {
+    display: block;
+    font-size: 14px;
+    margin-top: 2px;
+    word-wrap: break-word;
+}
+

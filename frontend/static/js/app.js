@@ -402,8 +402,53 @@ function createChatBox(roomName, chatTitle) {
   activeChats[roomName] = chatBox;
 }
 
-// Append message
+// Function to format timestamps consistently
+function formatTimestamp(timestamp) {
+  const date = new Date(timestamp);
+  if (isNaN(date.getTime())) {
+      console.error('Invalid timestamp:', timestamp);
+      return timestamp; // Fallback to raw timestamp if invalid
+  }
+  return date.toLocaleTimeString([], { 
+    hour: '2-digit', 
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true
+  });
+}
+
+// Append a message to the chat window
 function appendMessageToChat(roomName, sender, message, timestamp) {
+  const encodedRoomName = encodeRoomName(roomName); // Use encoded name for DOM queries
+  const messagesDiv = document.getElementById(`messages-${encodedRoomName}`);
+  if (!messagesDiv) {
+      console.error(`Messages container not found for room: ${roomName}`);
+      return;
+  }
+
+  const formattedTimestamp = formatTimestamp(timestamp); // Ensure consistent formatting
+
+  const messageElement = document.createElement('div');
+  messageElement.className = sender === 'You' ? 'message sender' : 'message receiver';
+
+  messageElement.innerHTML = `
+    <div class="message-meta">
+        <span class="message-sender">${sender}</span>
+        <span class="message-timestamp">${formattedTimestamp}</span>
+    </div>
+    <span class="message-text">${message}</span>
+  `;
+  /*messageElement.innerHTML = `
+      //<span class="message-text">${message}</span>
+      //<span class="message-timestamp">${formattedTimestamp}</span>
+  `; */
+
+  messagesDiv.appendChild(messageElement);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+// Append message
+/* function appendMessageToChat(roomName, sender, message, timestamp) {
   const encodedRoomName = encodeRoomName(roomName); // Use encoded name
   const messagesDiv = document.getElementById(`messages-${encodedRoomName}`);
   if (!messagesDiv) return;
@@ -412,7 +457,7 @@ function appendMessageToChat(roomName, sender, message, timestamp) {
   messageElement.textContent = `[${timestamp}] ${sender}: ${message}`;
   messagesDiv.appendChild(messageElement);
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
-}
+} */
 
 // Logout
 function logout() {
