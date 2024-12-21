@@ -2,7 +2,7 @@
 body, html {
     margin: 0;
     padding: 0;
-    font-family: 'Poppins', sans-serif;
+    font-family: 'Noto Sans', sans-serif;
     height: 100%;
     overflow-y: auto;
     overflow-x: hidden;
@@ -69,6 +69,18 @@ form button {
     border-radius: 4px;
     font-size: 16px;
 }
+
+.form-footer {
+    gap: 15px;
+    margin-top: 20px;
+    text-align: center;
+}
+
+.form-footer .cta-button {
+    margin-top: 5px; /* Adds a small gap between buttons */
+    display: inline-block;
+}
+
 
 /* About Page Enhanced Styling */
 /* General About Container */
@@ -179,9 +191,29 @@ form button {
     text-decoration: none;
     border-radius: 8px;
     transition: background 0.3s ease;
+    text-align: center;
 }
 
 .cta-button:hover {
     background: gray;
 }
 
+h1, h2, h3, .cta-button {
+    font-family: 'Noto Sans', sans-serif;
+}
+
+#signup-form {
+    display: flex;
+    flex-direction: column;
+    align-items: left; /* Center-align everything inside the form */
+    gap: 10px; /* Small spacing between form elements */
+    margin: 0 auto;
+}
+
+#signup-form .cta-buttons {
+    display: flex;
+    justify-content: center; /* Centers buttons horizontally */
+    gap: 15px; /* Spacing between buttons */
+    margin-top: 20px; /* Space above the buttons */
+    flex-wrap: wrap;
+}

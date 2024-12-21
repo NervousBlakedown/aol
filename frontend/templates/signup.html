@@ -22,12 +22,15 @@
         <input type="password" id="password" placeholder="Enter password" required>
         <small>Password must be stronger than Hulk Hogan in 1983.</small>
 
-        <button type="button" id="create-account-button" class="primary-btn">Create Account</button>
+        <button type="button" id="create-account-button" class="cta-button">Create Account</button>
     </form>
 
-    <div class="form-footer">
-        <p>Already on BlakeOL? <a href="{{ url_for('login_page') }}">Log in</a></p>
-        <a href = "{{ url_for('about_page') }}">Our Story</a>
+     <div class="form-footer">
+        <a href="{{ url_for('login_page') }}" class="cta-button">Login</a>
+        <!--<p>Already on BlakeOL? <a href="{{ url_for('login_page') }}">Log in</a></p>-->
+        <a href="{{ url_for('about_page') }}" class="cta-button">Our Story</a>
+        <!--<a href = "{{ url_for('about_page') }}">Our Story</a> -->
+        <a href="{{ url_for('contact_page') }}" class="cta-button">Contact Us</a>
         <p><a href="#">Privacy Policy</a> and <a href="#">Terms and Conditions</a></p>
     </div>
 </div>

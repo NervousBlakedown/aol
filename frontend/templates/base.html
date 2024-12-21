@@ -8,6 +8,11 @@
     <!-- Dynamically include the stylesheet -->
     <link rel="stylesheet" href="{% if page_style %}{{ url_for('static', filename=page_style) }}{% else %}{{ url_for('static', filename='css/styles.css') }}{% endif %}">
     <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}"> -->
+
+     <!-- Google Fonts -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;700&display=swap">
+    
     <script src="https://cdn.socket.io/4.5.1/socket.io.min.js"></script>
     <script async src="https://unpkg.com/@supabase/supabase-js/dist/umd/supabase.js"></script>
 </head>
