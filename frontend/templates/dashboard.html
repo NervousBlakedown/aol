@@ -23,7 +23,7 @@
         <div class="collapsible" data-toggle="tools-section">
             <h3>Tools <span class="toggle-icon">▼</span></h3>
             <div id="tools-section" class="collapsible-content">
-                <input type="text" id="search-input" class="search-input" placeholder="Search chats, topics, pals...">
+                <input type="text" id="tools-search-input" class="search-input" placeholder="Search chats, topics, pals..." onclick="event.stopPropagation();">
                 <button class="btn btn-primary">Notifications</button>
                 <button class="btn btn-secondary">Settings</button>
             </div>
@@ -32,7 +32,7 @@
         <div class="collapsible" data-toggle="status-section">
             <h3>Status <span class="toggle-icon">▼</span></h3>
             <div id="status-section" class="collapsible-content">
-                <select id="status" class="dropdown" onchange="updateStatus(this.value)">
+                <select id="status" class="dropdown" onchange="updateStatus(this.value)" onclick="event.stopPropagation();">
                     <option value="Online">Online</option>
                     <option value="Away">Away</option>
                     <option value="Do Not Disturb">Do Not Disturb</option>
@@ -51,7 +51,7 @@
         <div class="collapsible" data-toggle="search-section">
             <h3>Add Pals <span class="toggle-icon">▼</span></h3>
             <div id="search-section" class="collapsible-content">
-                <input type="text" id="search-input" class="search-input" placeholder="Search users...">
+                <input type="text" id="search-input" class="search-input" placeholder="Search users..." onclick="event.stopPropagation();">
                 <ul id="search-results" class="search-results"></ul>
             </div>
         </div>
@@ -97,9 +97,11 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // Collapsible Toggle Logic
         document.querySelectorAll('.collapsible').forEach((section) => {
-            section.addEventListener('click', () => {
+            section.addEventListener('click', (event) => {
+                const isInputClicked = event.target.tagName === 'INPUT' || event.target.tagName === 'SELECT' || event.target.tagName === 'BUTTON';
+                if (isInputClicked) return;
+
                 const contentId = section.getAttribute('data-toggle');
                 const content = document.getElementById(contentId);
                 const icon = section.querySelector('.toggle-icon');
