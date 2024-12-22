@@ -321,9 +321,26 @@ function openTopicChat(topicName) {
       delete activeChats[roomName];
   });
 
+  
+
+
+  // Fetch historical messages
+  fetch(`/get_topic_history?topic=${encodeURIComponent(topicName)}`)
+  .then(response => response.json())
+  .then(data => {
+    const messagesDiv = document.getElementById(`messages-${encodedRoomName}`);
+    if (!messagesDiv) {
+      console.error(`Messages container not found for topic: ${topicName}`);
+      return;
+    }
+
+    data.messages.forEach(msg => {
+      appendMessageToChat(roomName, msg.username, msg.text, msg.timestamp);
+    });
+  })
+  .catch(err => console.error('Error fetching topic chat history:', err));
   activeChats[roomName] = chatBox;
 }
-
 
 // change online status
 function updateStatus(newStatus) {

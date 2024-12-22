@@ -273,33 +273,6 @@ def search_contacts():
         logging.error(f"Error searching contacts: {e}")
         return jsonify([]), 500  # Always return a valid JSON array
 
-"""@app.route('/search_contacts', methods=['GET'])
-def search_contacts():
-    if 'user' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
-
-    query = request.args.get('query', '').strip().lower()
-    if not query:
-        return jsonify([]) 
-    try:
-        response = supabase_admin.auth.admin.list_users()
-        users = response # .users  # List of user objects
-
-        # Filter users based on username in raw_user_meta_data
-        matching_users = []
-        for user in users:
-            # user_metadata = user.get('user_metadata', {})
-            user_metadata = user.user_metadata
-            if user_metadata and 'username' in user_metadata:
-                username = user_metadata['username']
-                if query in username.lower() and user.id != user_id:  # Case-insensitive search
-                    matching_users.append({'username': username})
-
-        return jsonify(matching_users), 200
-    except Exception as e:
-        logging.error(f"Error searching contacts: {e}")
-        return jsonify({'error': 'Failed to fetch contacts'}), 500"""
-
 # Add contacts
 @app.route('/add_contact', methods=['POST'])
 def add_contact():
@@ -522,6 +495,44 @@ def join_topic_chat(data):
     }, room=room)
     print(f'{username} joined topic chat: {room}')
 
+@app.route('/get_topic_history')
+def get_topic_history():
+    topic = request.args.get('topic')
+    if not topic:
+        return jsonify({'error': 'Topic is required'}), 400
+
+    try:
+        # Fetch messages from the database
+        messages = db.fetch_topic_messages(topic)  # Example DB function
+        return jsonify({'messages': messages}), 200
+    except Exception as e:
+        print(f"Error fetching topic messages: {e}")
+        return jsonify({'error': 'Failed to fetch messages'}), 500
+
+
+@app.route('/send_topic_message', methods=['POST'])
+def send_topic_message():
+    data = request.get_json()
+    topic = data.get('topic')
+    username = data.get('username')
+    message = data.get('message')
+
+    if not topic or not username or not message:
+        return jsonify({'error': 'Topic, username, and message are required'}), 400
+
+    try:
+        db.store_topic_message(topic, username, message)  # Save message to DB
+        socketio.emit('message', {
+            'room': f"topic_{topic}",
+            'username': username,
+            'message': message,
+            'timestamp': datetime.now().isoformat()
+        })
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        print(f"Error storing topic message: {e}")
+        return jsonify({'error': 'Failed to store message'}), 500
+
 # Send message
 @socketio.on('send_message')
 def handle_send_message(data):
@@ -583,8 +594,6 @@ def handle_send_message(data):
     finally:
         cursor.close()
         conn.close()
-
-
 
 # Decrypt messages when fetching from public.messages table
 def fetch_undelivered_messages(receiver_id):
