@@ -261,6 +261,32 @@ function sendMessage(roomName) {
   input.value = '';
 }
 
+// listen for typing events
+messageInput.addEventListener('input', () => {
+  socket.emit('typing', { room: roomName, username });
+  clearTimeout(typingTimeout);
+  typingTimeout = setTimeout(() => {
+    socket.emit('stop_typing', { room: roomName, username });
+  }, 2000); // Stop typing after 2 seconds of no input
+});
+
+// Handle incoming typing events
+socket.on('typing', (data) => {
+  const typingIndicator = document.getElementById(`typing-${roomName}`);
+  if (typingIndicator) {
+    typingIndicator.textContent = `${data.username} is typing...`;
+    typingIndicator.style.display = 'block';
+  }
+});
+
+// Handle stop typing events
+socket.on('stop_typing', (data) => {
+  const typingIndicator = document.getElementById(`typing-${roomName}`);
+  if (typingIndicator) {
+    typingIndicator.style.display = 'none';
+  }
+});
+
 // Add Pal to Pals list
 function addPal(username) {
   fetch('/add_contact', {
@@ -375,6 +401,7 @@ function createChatBox(roomName, chatTitle) {
       <button class="close-chat" data-room="${encodedRoomName}">X</button>
     </div>
     <div class="messages" id="messages-${encodedRoomName}"></div>
+    <div class="typing-indicator" id="typing-${roomName}" style="display: none;"></div>
     <input type="text" id="message-${encodedRoomName}" placeholder="Type a message..." />
     <button onclick="sendMessage('${roomName}')">Send</button>
   `;

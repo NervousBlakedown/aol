@@ -297,6 +297,14 @@ button:hover {
     max-height: 100vh;
 }
 
+.typing-indicator {
+    font-style: italic;
+    color: #00796b;
+    padding: 5px;
+    font-size: 12px;
+    display: none;
+  }
+  
 /* Responsive Design */
 @media (max-width: 768px) {
     .dashboard-layout {
