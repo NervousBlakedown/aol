@@ -328,3 +328,92 @@ h1, h2, h3, .cta-button {
     text-decoration: none;
     transition: background-color 0.3s ease, transform 0.2s ease;
 }
+
+/* Feature Table Styling */
+.feature-table {
+    width: 90%;
+    margin: 0 auto;
+    border-collapse: collapse;
+    text-align: center;
+}
+
+.feature-table th, .feature-table td {
+    padding: 10px 15px;
+    border-bottom: 1px solid #ddd;
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* Header Styling */
+.feature-table th {
+    background-color: #002855;
+    color: white;
+    font-size: 16px;
+}
+
+/* Icon Styling */
+.feature-table td .icon {
+    display: block; /* Ensures each icon is on its own line */
+    font-size: 20px;
+    line-height: 1.5;
+    text-align: center;
+}
+
+/* Text Styling */
+.feature-table td {
+    font-size: 14px;
+    text-align: center;
+    padding: 5px;
+}
+
+/* Adjusting Icon Column Width */
+.feature-table td .icon {
+    width: 50px; /* Ensures consistent width for icon cells */
+    margin: 0 auto;
+}
+
+/* Contact Form Styling */
+.contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-width: 400px; /* Adjust this if necessary */
+    margin: 0 auto;
+    text-align: left;
+}
+
+/* Input and Textarea Styling */
+.contact-form input,
+.contact-form textarea {
+    width: 100%; /* Make all inputs and textarea span full width */
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+/* Specific Styling for Textarea */
+.contact-form textarea {
+    resize: vertical;
+    min-height: 150px; /* Ensures enough space for typing */
+    box-sizing: border-box; /* Includes padding and border in width */
+}
+
+/* Submit Button */
+.contact-form .contact-button {
+    background-color: #002855;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.contact-form .contact-button:hover {
+    background-color: #00509e;
+}
+
+
+
