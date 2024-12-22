@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - BlakeOL{% endblock %}
+
+{% set page_style = 'css/dashboard.css' %}
+
+{% block content %}
+<div class="dashboard-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="user-info">
+            <h2>Welcome, <span id="username-display">{{ username }}</span></h2>
+            <button id="logout-button" class="btn btn-danger">Logout</button>
+        </div>
+
+        <div class="status-section">
+            <h3>Status</h3>
+            <select id="status" class="dropdown" onchange="updateStatus(this.value)">
+                <option value="Online">Online</option>
+                <option value="Away">Away</option>
+                <option value="Do Not Disturb">Do Not Disturb</option>
+            </select>
+        </div>
+
+        <div class="contacts-list-section">
+            <h3>Your Pals</h3>
+            <ul id="contacts-list" class="contacts-list"></ul>
+            <button id="start-chat-button" class="btn btn-primary">Start Chat</button>
+        </div>
+
+        <div class="contacts-search-section">
+            <h3>Add Pals</h3>
+            <input type="text" id="search-input" class="search-input" placeholder="Search users...">
+            <ul id="search-results" class="search-results"></ul>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="chats-layout">
+            <!-- Active Chats -->
+            <section class="active-chats">
+                <h3 class="section-title">Active Chats</h3>
+                <div id="chats-container" class="chats-container"></div>
+            </section>
+
+            <!-- Topics Chat -->
+            <section class="topics-chats">
+                <h3 class="section-title">Topics Chats</h3>
+                <div id="topics-container" class="topics-container">
+                    <p>No topics available. Start a new one!</p>
+                </div>
+            </section>
+        </div>
+    </main>
+</div>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+      // Function to populate Pals list with Remove buttons
+      function updateContactsList() {
+          const contactsList = document.getElementById('contacts-list');
+          contactsList.innerHTML = ''; // Clear existing list
+
+          myContacts.forEach(contact => {
+              const listItem = document.createElement('li');
+              listItem.innerHTML = `
+                  <span>${contact.username} (${userStatuses[contact.username] || 'Offline'})</span>
+                  <button class="remove-pal-btn" data-username="${contact.username}">Remove</button>
+              `;
+              contactsList.appendChild(listItem);
+          });
+      }
+
+      // Handle Remove Pal button click
+      document.addEventListener('click', (event) => {
+          if (event.target.classList.contains('remove-pal-btn')) {
+              const username = event.target.getAttribute('data-username');
+              if (confirm(`Are you sure you want to remove ${username} from your Pals list?`)) {
+                  removePal(username);
+              }
+          }
+      });
+
+      // Remove Pal API call
+      function removePal(username) {
+          fetch('/remove_contact', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ username }),
+              credentials: 'include'
+          })
+              .then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      alert(`${username} has been removed from your Pals list.`);
+                      fetchMyContacts(); // Refresh the Pals list
+                  } else {
+                      alert(data.message || 'Failed to remove Pal.');
+                  }
+              })
+              .catch(error => console.error('Error removing Pal:', error));
+      }
+  });
+</script>
+{% endblock %}

@@ -9,6 +9,15 @@ body, html {
     overflow: hidden;
 }
 
+body.dark-mode {
+    background-color: #000c1a;
+    color: #ffffff;
+}
+
+body.dark-mode .sidebar {
+    background-color: #000c1a;
+}
+
 /* Dashboard Layout */
 .dashboard-layout {
     display: flex;
@@ -64,6 +73,11 @@ body, html {
     opacity: 0.9;
 }
 
+.search-input::placeholder {
+    font-style: italic;
+    opacity: 0.8;
+}
+
 /* Main Content */
 .main-content {
     flex: 1;
@@ -106,6 +120,23 @@ body, html {
     color: #ffffff;
     border-bottom: 1px solid #004080;
     padding-bottom: 5px;
+}
+
+.top-navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #001c3d;
+    padding: 10px 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+}
+
+.top-navbar .search-bar input {
+    border: none;
+    padding: 8px 12px;
+    border-radius: 20px;
+    width: 200px;
 }
 
 /* Chat Box */
@@ -184,6 +215,20 @@ body, html {
     background-color: #00509e;
 }
 
+.sidebar {
+    background: linear-gradient(135deg, #001c3d, #003366);
+    box-shadow: 4px 0 8px rgba(0, 0, 0, 0.2);
+    border-right: 1px solid #004080;
+}
+
+.sidebar .user-info {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
+}
+
+
 /* Buttons */
 button {
     margin-top: 10px;
@@ -198,6 +243,53 @@ button {
 
 button:hover {
     background: #00509e;
+    transform: scale(1.05);
+    transition: all 0.2s ease-in-out;
+}
+
+.chats-container-layout {
+    gap: 20px;
+}
+
+.collapsible-content {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 15px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.collapsible-content:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+}
+
+.skeleton-loader {
+    width: 100%;
+    height: 20px;
+    background: linear-gradient(90deg, #001c3d, #003366);
+    border-radius: 4px;
+    margin-bottom: 8px;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+
+.notifications-dropdown {
+    position: absolute;
+    top: 60px;
+    right: 20px;
+    background: #002855;
+    border-radius: 8px;
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+    padding: 15px;
+    width: 300px;
+    z-index: 100;
 }
 
 /* Responsive Design */

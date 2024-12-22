@@ -235,6 +235,11 @@ def dashboard():
         return redirect('/login')
     return render_template('dashboard.html', show_video_background = False)
 
+"""# dashboard test
+@app.route('/dashboard_test', methods = ['GET'])
+def dashboard_test():
+    return render_template('dashboard_test.html')"""
+
 # Search Contacts (exclude self from Add Pals List)
 @app.route('/search_contacts', methods=['GET'])
 def search_contacts():
