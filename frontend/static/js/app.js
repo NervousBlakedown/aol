@@ -1,5 +1,4 @@
 // frontend/static/js/app.js
-// prerequisites
 let SUPABASE_URL, SUPABASE_KEY;
 let supabase;
 let socket;
@@ -9,6 +8,8 @@ const activeChats = {};
 let myContacts = []; 
 let userStatuses = {}; 
 const roomInputs = {};
+const roomEncodings = {}; // Global mapping of room names to encoded room names
+
 
 // Base64 encoding to fix special character username chats
 function encodeRoomName(roomName) {
@@ -72,6 +73,25 @@ function setupSocketIO() {
   socket.on('message', data => {
     console.log('Received message:', data);
     appendMessageToChat(data.room, data.username, data.message, data.timestamp); // data.msg
+  });
+
+  // Handle incoming typing events
+  socket.on('typing', (data) => {
+    const encodedRoomName = roomEncodings[data.room]; // Map room to encoded name
+    const typingIndicator = document.getElementById(`typing-${encodedRoomName}`); // RoomName
+    if (typingIndicator) {
+      typingIndicator.textContent = `${data.username} is typing...`;
+      typingIndicator.style.display = 'block';
+    }
+  });
+
+// Handle stop typing events
+  socket.on('stop_typing', (data) => {
+    const encodedRoomName = roomEncodings[data.room]; // Map room to encoded name
+    const typingIndicator = document.getElementById(`typing-${encodedRoomName}`);
+    if (typingIndicator) {
+      typingIndicator.style.display = 'none';
+    }
   });
 
   socket.on('user_list', data => {
@@ -261,31 +281,7 @@ function sendMessage(roomName) {
   input.value = '';
 }
 
-// listen for typing events
-messageInput.addEventListener('input', () => {
-  socket.emit('typing', { room: roomName, username });
-  clearTimeout(typingTimeout);
-  typingTimeout = setTimeout(() => {
-    socket.emit('stop_typing', { room: roomName, username });
-  }, 2000); // Stop typing after 2 seconds of no input
-});
 
-// Handle incoming typing events
-socket.on('typing', (data) => {
-  const typingIndicator = document.getElementById(`typing-${roomName}`);
-  if (typingIndicator) {
-    typingIndicator.textContent = `${data.username} is typing...`;
-    typingIndicator.style.display = 'block';
-  }
-});
-
-// Handle stop typing events
-socket.on('stop_typing', (data) => {
-  const typingIndicator = document.getElementById(`typing-${roomName}`);
-  if (typingIndicator) {
-    typingIndicator.style.display = 'none';
-  }
-});
 
 // Add Pal to Pals list
 function addPal(username) {
@@ -390,6 +386,7 @@ function createChatBox(roomName, chatTitle) {
   if (activeChats[roomName]) return; // Prevent duplicate boxes
 
   const encodedRoomName = encodeRoomName(roomName);
+  roomEncodings[roomName] = encodedRoomName;
 
   const chatBox = document.createElement('div');
   chatBox.className = 'chat-box';
@@ -401,7 +398,7 @@ function createChatBox(roomName, chatTitle) {
       <button class="close-chat" data-room="${encodedRoomName}">X</button>
     </div>
     <div class="messages" id="messages-${encodedRoomName}"></div>
-    <div class="typing-indicator" id="typing-${roomName}" style="display: none;"></div>
+    <div class="typing-indicator" id="typing-${encodedRoomName}" style="display: none;"></div>
     <input type="text" id="message-${encodedRoomName}" placeholder="Type a message..." />
     <button onclick="sendMessage('${roomName}')">Send</button>
   `;
@@ -414,6 +411,15 @@ function createChatBox(roomName, chatTitle) {
     console.error(`Message input not found for room: ${roomName}`);
     return;
   }
+
+  // listen for typing events
+  messageInput.addEventListener('input', () => {
+    socket.emit('typing', { room: roomName, username });
+    clearTimeout(typingTimeout);
+    typingTimeout = setTimeout(() => {
+      socket.emit('stop_typing', { room: roomName, username });
+    }, 2000); // Stop typing after 2 seconds of no input
+  });
 
   messageInput.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {

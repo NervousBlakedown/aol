@@ -304,7 +304,7 @@ button:hover {
     font-size: 12px;
     display: none;
   }
-  
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .dashboard-layout {
