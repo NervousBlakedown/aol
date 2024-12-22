@@ -292,6 +292,11 @@ button:hover {
     z-index: 100;
 }
 
+.sidebar {
+    overflow-y: auto;
+    max-height: 100vh;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .dashboard-layout {
