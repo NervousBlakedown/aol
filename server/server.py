@@ -489,7 +489,6 @@ def test_broadcast():
 def generate_room_name(users):
     return "_".join(sorted(users))  # Use sorted usernames to keep names consistent
 
-
 # start chat
 @socketio.on('start_chat')
 def handle_start_chat(data):
@@ -508,6 +507,20 @@ def handle_start_chat(data):
 
     # Notify clients about the chat room
     emit('chat_started', {'room': room_name, 'users': usernames}, room=room_name)
+
+# Join topics functionality
+@socketio.on('join_topic_chat')
+def join_topic_chat(data):
+    room = data['room']
+    username = data['username']
+    join_room(room)
+    emit('message', {
+        'room': room,
+        'username': 'System',
+        'message': f'{username} has joined the {room.replace("topic_", "")} topic chat.',
+        'timestamp': datetime.now().strftime('%H:%M:%S')
+    }, room=room)
+    print(f'{username} joined topic chat: {room}')
 
 # Send message
 @socketio.on('send_message')

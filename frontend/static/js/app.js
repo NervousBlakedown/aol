@@ -251,6 +251,80 @@ function startChat() {
   document.querySelectorAll('.contact-checkbox').forEach(cb => (cb.checked = false));
 }
 
+// create Topic chats (different from private chats)
+function openTopicChat(topicName) {
+  const topicsContainer = document.getElementById('topics-container');
+  if (!topicsContainer) {
+      console.error('Topics container not found.');
+      return;
+  }
+
+  // Prevent duplicate topic chats
+  if (document.getElementById(`topic-chat-${topicName}`)) {
+    console.warn(`Topic chat for "${topicName}" is already open.`);
+    return;
+  }
+
+  const roomName = `topic_${topicName}`;
+  if (activeChats[roomName]) {
+      console.log(`Topic chat "${topicName}" is already open.`);
+      return;
+  }
+
+  const encodedRoomName = encodeRoomName(roomName);
+  roomEncodings[roomName] = encodedRoomName;
+
+  const chatBox = document.createElement('div');
+  chatBox.className = 'topic-chat-box';
+  chatBox.id = `chat-box-${encodedRoomName}`;
+
+  chatBox.innerHTML = `
+      <div class="chat-header">
+          <h3>${topicName}</h3>
+          <button class="close-chat" data-room="${encodedRoomName}">X</button>
+      </div>
+      <div class="messages" id="messages-${encodedRoomName}"></div>
+      <div class="chat-input">
+        <input type="text" id="message-${encodedRoomName}" placeholder="Type a message..." />
+        <button onclick="sendMessage('${roomName}')">Send</button>
+      </div>
+  `;
+
+  topicsContainer.appendChild(chatBox);
+
+  const messageInput = document.getElementById(`message-${encodedRoomName}`);
+  if (!messageInput) {
+      console.error(`Message input not found for topic: ${topicName}`);
+      return;
+  }
+
+  // Typing events
+  messageInput.addEventListener('input', () => {
+      socket.emit('typing', { room: roomName, username });
+      clearTimeout(typingTimeout);
+      typingTimeout = setTimeout(() => {
+          socket.emit('stop_typing', { room: roomName, username });
+      }, 2000);
+  });
+
+  // Send message on Enter
+  messageInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+          sendMessage(roomName);
+      }
+  });
+
+  // Close button
+  const closeButton = chatBox.querySelector('.close-chat');
+  closeButton.addEventListener('click', () => {
+      topicsContainer.removeChild(chatBox);
+      delete activeChats[roomName];
+  });
+
+  activeChats[roomName] = chatBox;
+}
+
+
 // change online status
 function updateStatus(newStatus) {
   if (!socket) {

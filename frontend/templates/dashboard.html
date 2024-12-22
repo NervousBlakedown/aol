@@ -16,7 +16,7 @@
         <div class="collapsible" data-toggle="profile-section">
             <h3>Profile <span class="toggle-icon">▼</span></h3>
             <div id="profile-section" class="collapsible-content">
-                <p>View and edit your profile information here.</p>
+                <p>This feature coming soon!</p>
             </div>
         </div>
 
@@ -77,7 +77,7 @@
         <div class="chats-container-layout" style="display: flex; gap: 20px;">
             <!-- Active Chats -->
             <div class="collapsible" data-toggle="active-chats" style="flex: 2;">
-                <h3 class="section-title">Active Chats <span class="toggle-icon">▼</span></h3>
+                <h3 class="section-title">Chats <span class="toggle-icon">▼</span></h3>
                 <div id="active-chats" class="collapsible-content">
                     <div id="chats-container" class="chats-container"></div>
                 </div>
@@ -85,9 +85,20 @@
 
             <!-- Topics Chat -->
             <div class="collapsible" data-toggle="topics-chats" style="flex: 2;">
-                <h3 class="section-title">Topics Chats <span class="toggle-icon">▼</span></h3>
+                <h3 class="section-title">Topics<span class="toggle-icon">▼</span></h3>
                 <div id="topics-chats" class="collapsible-content">
-                    <p>No topics available. Start a new one!</p>
+                    <div class="topics-buttons">
+                        <button class="cta-button topic-button" data-tooltip="Discuss current events" onclick="openTopicChat('News')">News</button>
+                        <button class="cta-button topic-button" data-tooltip= "Gaming, tech, etc." onclick="openTopicChat('Tech')">Tech</button>
+                        <button class="cta-button topic-button" data-tooltip= "Catholic teachings, Joel Osteen's teeth, etc." onclick="openTopicChat('Religion')">Religion</button>
+                        <button class="cta-button topic-button" data-tooltip= "Political views, political news, etc." onclick="openTopicChat('Politics')">Politics</button>
+                        <button class="cta-button topic-button" data-tooltip= "Let's go, sports team!" onclick="openTopicChat('Sports')">Sports</button>
+                        <button class="cta-button topic-button" data-tooltip= "Blue Steel, Safari, El Tigre-so many looks, so little time." onclick="openTopicChat('Fashion')">Fashion</button>
+                        <button class="cta-button topic-button" data-tooltip= "Miscellaneous hijinks" onclick="openTopicChat('Random')">Random</button>
+                        <button class="cta-button topic-button" data-tooltip="Plan events with friends, organize the Uber, etc." onclick="openTopicChat('Events')">Events</button>
+                    </div>
+                    <!-- Topic Chats Container (Right Side) -->
+                    <div id="topics-container" class="topics-container">
                 </div>
             </div>
         </div>

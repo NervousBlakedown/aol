@@ -139,6 +139,19 @@ body.dark-mode .sidebar {
     width: 200px;
 }
 
+.topics-container {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end; /* Align chats to the right */
+    gap: 10px;
+    padding: 10px;
+    max-width: 50%;
+    margin-left: auto; /* Push to the right */
+    overflow-y: auto;
+    height: 60vh; /* Adjust height as needed */
+}
+
 /* Chat Box */
 .chat-box {
     background-color: #002855;
@@ -304,6 +317,140 @@ button:hover {
     font-size: 12px;
     display: none;
   }
+
+/* Topic Buttons */
+.topic-button {
+    position: relative;
+    margin: 5px;
+    padding: 8px 12px; /* Compact padding */
+    background-color: #004080; /* Slightly lighter blue */
+    color: white;
+    font-size: 14px; /* Slightly smaller font */
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: center;
+    transition: background-color 0.3s ease;
+}
+
+.topic-button:hover {
+    background-color: #00509e; /* Subtle hover effect */
+}
+
+/* Tooltip Styling */
+.topic-button::after {
+    content: attr(data-tooltip); /* Fetch text from data-tooltip */
+    position: absolute;
+    bottom: 110%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 28, 61, 0.9);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    z-index: 100;
+}
+
+.topic-button:hover::after {
+    opacity: 1;
+    visibility: visible;
+}
+
+#topics-chats {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.topics-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+/* Topics Container Grid */
+#topics-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px; /* Space between chats */
+    padding: 10px;
+    margin-top: 10px;
+    width: 100%;
+    max-width: 100%;
+    max-height: 500px; /* Adjust as needed */
+    overflow-y: auto; /* Scrollbar for overflow chats */
+}
+
+/* Individual Topic Chat Box */
+.topic-chat-box {
+    background: #002855;
+    color: white;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 350px; 
+    width: 100%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    border: 1px solid #004080;
+}
+
+/* Chat Header */
+.topic-chat-box .chat-header {
+    background: #003366; /* Slightly darker for header */
+    padding: 8px 10px;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #004080;
+}
+
+/* Chat Messages Area */
+.topic-chat-box .messages {
+    flex: 1;
+    padding: 8px;
+    overflow-y: auto;
+    background: #001c3d;
+}
+
+/* Chat Input Section */
+.topic-chat-box .chat-input {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    background: #002244;
+    border-top: 1px solid #004080;
+}
+
+.topic-chat-box .chat-input input {
+    flex: 1;
+    padding: 6px 10px;
+    margin-right: 8px;
+    border: none;
+    border-radius: 4px;
+    outline: none;
+}
+
+.topic-chat-box .chat-input button {
+    padding: 6px 12px;
+    background: #0078D7;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.topic-chat-box .chat-input button:hover {
+    background: #005bb5;
+}
 
 /* Responsive Design */
 @media (max-width: 768px) {
