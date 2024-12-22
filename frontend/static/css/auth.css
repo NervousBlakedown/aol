@@ -217,3 +217,114 @@ h1, h2, h3, .cta-button {
     margin-top: 20px; /* Space above the buttons */
     flex-wrap: wrap;
 }
+
+/* Donation Page Styling */
+.donation-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.donation-header {
+    font-size: 28px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #002855;
+}
+
+.donation-subtext {
+    font-size: 16px;
+    margin-bottom: 20px;
+    color: #333333;
+}
+
+.donation-amounts {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.donation-button {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #f5f5f5;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.donation-button:hover {
+    background-color: #e0f7fa;
+}
+
+.donation-button.selected {
+    background-color: #00796b;
+    color: #ffffff;
+}
+
+.hidden {
+    display: none;
+}
+
+.custom-amount-input {
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    width: 100%;
+    margin-top: 10px;
+    margin-bottom: 20px;
+}
+
+.payment-section {
+    margin-top: 20px;
+}
+
+.donate-now-button {
+    padding: 15px 30px;
+    font-size: 18px;
+    background-color: #002855;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.donate-now-button:hover {
+    background-color: gray;
+}
+
+.payment-text {
+    font-size: 14px;
+    color: #666666;
+    margin-bottom: 10px;
+}
+
+/* Home Button Styling */
+.home-button-container {
+    margin-top: 20px;
+    text-align: center;
+    justify-content: center;
+    display: flex;
+    align-items: center;
+}
+
+.home-button {
+    display: inline-block;
+    margin-top: 15px;
+    background-color: #002855; /* Maastricht Blue */
+    color: white;
+    font-size: 16px;
+    padding: 10px 20px;
+    border-radius: 5px;
+    text-align: center;
+    text-decoration: none;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}

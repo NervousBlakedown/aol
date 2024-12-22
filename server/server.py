@@ -17,8 +17,6 @@ logging.basicConfig(level=logging.DEBUG)
 base_dir = os.path.abspath(os.path.dirname(__name__))
 static_dir = os.path.join(base_dir, 'frontend', 'static')
 template_dir = os.path.join(base_dir, 'frontend', 'templates')
-
-# Load .env
 load_dotenv()
 SUPABASE_URL = os.getenv('SUPABASE_URL')
 SUPABASE_KEY = os.getenv('SUPABASE_KEY')
@@ -41,7 +39,7 @@ f = Fernet(fernet_key.encode())
 def signup_test():
     return render_template('signup_test.html')
 
-# Test
+# Test .env
 @app.route('/get_env', methods=['GET'])
 def get_env():
     """
@@ -89,6 +87,10 @@ def handle_join_room(data):
     join_room(room)
     logging.info(f"User {username} joined room {room}. SID: {request.sid}")
 
+# Donation page
+@app.route('/donate', methods = ['GET'])
+def handle_donate():
+    return render_template('donation.html')
 
 # Convert ID back to Username for offline message delivery
 def get_username_by_id(user_id):
@@ -109,7 +111,7 @@ def get_username_by_id(user_id):
         cursor.close()
         conn.close()
 
-# Serve signup page by default (root route)
+# Default page
 @app.route('/', methods = ['GET'])
 def default():
     return render_template('signup.html', show_video_background = True)

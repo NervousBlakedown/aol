@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+{% block title %}Donate to BlakeOL{% endblock %}
+{% set page_style = 'css/auth.css' %}
+{% set show_video_background = True %}
+
+{% block content %}
+<div class="donation-container">
+    <h1 class="donation-header">Support BlakeOL</h1>
+    <p class="donation-subtext">
+        BlakeOL is free to use, but if you'd like to buy me coffee or say thanks if you are enjoying the platform, your donations keep BlakeOL running and improve the platform for everyone.
+    </p>
+
+    <!-- Donation Amount Options -->
+    <div class="donation-amounts">
+        <button class="donation-button" data-amount="5">$5</button>
+        <button class="donation-button" data-amount="10">$10</button>
+        <button class="donation-button" data-amount="25">$25</button>
+        <button class="donation-button" data-amount="50">$50</button>
+        <button class="donation-button" data-amount="custom">Custom Amount</button>
+    </div>
+
+    <!-- Custom Donation Input -->
+    <div class="custom-donation hidden" id="custom-donation-container">
+        <label for="custom-amount">Enter your custom donation amount:</label>
+        <input type="number" id="custom-amount" class="custom-amount-input" placeholder="Enter amount (USD)" min="1" />
+    </div>
+
+    <!-- Payment Information -->
+    <div class="payment-section">
+        <p class="payment-text">All payments are securely processed via Stripe.</p>
+        <button id="donate-now-button" class="donate-now-button">Donate</button>
+    </div>
+</div>
+
+    <!-- Home Button -->
+    <div class="home-button-container">
+        <a href="/" class="cta-button home-button">Home</a>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const donationButtons = document.querySelectorAll('.donation-button');
+        const customDonationContainer = document.getElementById('custom-donation-container');
+        const customAmountInput = document.getElementById('custom-amount');
+        const donateNowButton = document.getElementById('donate-now-button');
+
+        let selectedAmount = 5; // Default amount
+
+        donationButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                // Highlight selected button
+                donationButtons.forEach(btn => btn.classList.remove('selected'));
+                button.classList.add('selected');
+
+                // Handle custom amount visibility
+                if (button.dataset.amount === 'custom') {
+                    customDonationContainer.classList.remove('hidden');
+                    selectedAmount = null; // No fixed amount
+                } else {
+                    customDonationContainer.classList.add('hidden');
+                    selectedAmount = button.dataset.amount;
+                }
+            });
+        });
+
+        donateNowButton.addEventListener('click', () => {
+            const finalAmount = selectedAmount || customAmountInput.value;
+
+            if (!finalAmount || finalAmount <= 0) {
+                alert('Please select or enter a valid donation amount.');
+                return;
+            }
+
+            // Trigger payment (Stripe/other gateway integration would go here)
+            alert(`Thank you for donating $${finalAmount} to BlakeOL!`);
+        });
+    });
+</script>
+{% endblock %}
