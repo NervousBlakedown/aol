@@ -75,6 +75,24 @@ function setupSocketIO() {
     appendMessageToChat(data.room, data.username, data.message, data.timestamp); // data.msg
   });
 
+  // Listen for incoming topic messages
+  socket.on('topic_message', (data) => {
+    const { topic, username, message, timestamp } = data;
+    const chatBox = document.getElementById(`messages-${encodeRoomName(topic)}`);
+
+    if (chatBox) {
+      const messageElement = document.createElement('div');
+      messageElement.className = 'message';
+      messageElement.innerHTML = `
+        <div><strong>${username}:</strong> ${message}</div>
+        <div class="timestamp">${new Date(timestamp).toLocaleTimeString()}</div>
+      `;
+      chatBox.appendChild(messageElement);
+      chatBox.scrollTop = chatBox.scrollHeight; // Scroll to bottom
+    }
+  });
+
+
   // Handle incoming typing events
   socket.on('typing', (data) => {
     const encodedRoomName = roomEncodings[data.room]; // Map room to encoded name
@@ -322,8 +340,6 @@ function openTopicChat(topicName) {
   });
 
   
-
-
   // Fetch historical messages
   fetch(`/get_topic_history?topic=${encodeURIComponent(topicName)}`)
   .then(response => response.json())
@@ -342,6 +358,31 @@ function openTopicChat(topicName) {
   activeChats[roomName] = chatBox;
 }
 
+// Load Topics table messages
+function loadTopicHistory(topicName) {
+  fetch(`/get_topic_history?topic=${topicName}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.messages) {
+        const chatBox = document.getElementById(`messages-${topicName}`);
+        chatBox.innerHTML = ''; // Clear previous messages
+
+        data.messages.forEach(msg => {
+          const messageElement = document.createElement('div');
+          messageElement.className = 'message';
+          messageElement.innerHTML = `
+            <div><strong>${msg.username}:</strong> ${msg.message}</div>
+            <div class="timestamp">${new Date(msg.timestamp).toLocaleString()}</div>
+          `;
+          chatBox.appendChild(messageElement);
+        });
+
+        chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll to bottom
+      }
+    })
+    .catch(error => console.error('Error loading topic history:', error));
+}
+
 // change online status
 function updateStatus(newStatus) {
   if (!socket) {
@@ -354,7 +395,7 @@ function updateStatus(newStatus) {
   console.log(`Status updated to: ${newStatus}`);
 }
 
-// Send message
+// Send message (Private, not Topic)
 function sendMessage(roomName) {
   const encodedRoomName = encodeRoomName(roomName); // Use encoded name for DOM queries
   const input = document.getElementById(`message-${encodedRoomName}`);
@@ -372,6 +413,32 @@ function sendMessage(roomName) {
   input.value = '';
 }
 
+// Send Topic Message with Real-Time UI Update
+function sendTopicMessage(topicName) {
+  const input = document.getElementById(`message-${encodeRoomName(topicName)}`);
+  const message = input.value.trim();
+
+  if (!message) {
+    console.warn('Cannot send an empty message.');
+    return;
+  }
+
+  fetch('/send_topic_message', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ topic: topicName, username, message })
+  })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // appendMessageToChat(topicName, username, message, new Date().toLocaleTimeString());
+        input.value = '';
+      } else {
+        console.error('Failed to send message:', data.error);
+      }
+    })
+    .catch(error => console.error('Error:', error));
+}
 
 
 // Add Pal to Pals list

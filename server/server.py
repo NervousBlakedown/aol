@@ -495,6 +495,7 @@ def join_topic_chat(data):
     }, room=room)
     print(f'{username} joined topic chat: {room}')
 
+# Fetch Topic messages (persistent, decrypted before sending)
 @app.route('/get_topic_history')
 def get_topic_history():
     topic = request.args.get('topic')
@@ -502,38 +503,103 @@ def get_topic_history():
         return jsonify({'error': 'Topic is required'}), 400
 
     try:
-        # Fetch messages from the database
-        messages = db.fetch_topic_messages(topic)  # Example DB function
+        # Fetch messages from the Supabase 'topics' table
+        response = supabase.table('topics').select('username, message, created_at')\
+            .eq('name', topic)\
+            .order('created_at', desc=False)\
+            .execute()
+
+        if not response.data:
+            return jsonify({'messages': []}), 200
+
+        # Decrypt messages
+        messages = []
+        for record in response.data:
+            decrypted_message = decrypt_message(record['message'])  # Decrypt the message
+            messages.append({
+                'username': record['username'],
+                'message': decrypted_message,
+                'timestamp': record['created_at']
+            })
+
         return jsonify({'messages': messages}), 200
+
     except Exception as e:
         print(f"Error fetching topic messages: {e}")
         return jsonify({'error': 'Failed to fetch messages'}), 500
 
 
+# Handles Topic messages, not private
 @app.route('/send_topic_message', methods=['POST'])
 def send_topic_message():
     data = request.get_json()
-    topic = data.get('topic')
-    username = data.get('username')
-    message = data.get('message')
+    topic = data.get('topic')  # Topic name
+    username = data.get('username')  # Sender's username
+    message = data.get('message')  # Plain text message
 
-    if not topic or not username or not message:
+    timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S%z')
+    logging.info(f"Received send_topic_message event: topic={topic}, sender={username}")
+
+    if not all([topic, username, message]):
+        logging.error("Topic, username, or message is missing.")
         return jsonify({'error': 'Topic, username, and message are required'}), 400
 
     try:
-        db.store_topic_message(topic, username, message)  # Save message to DB
-        socketio.emit('message', {
-            'room': f"topic_{topic}",
+        logging.info("🔌 Attempting to connect to the database...")
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Validate username in auth.users
+        cursor.execute('''
+            SELECT id 
+            FROM auth.users 
+            WHERE raw_user_meta_data ->> 'username' = %s
+        ''', (username,))
+        sender_row = cursor.fetchone()
+
+        if not sender_row:
+            logging.error(f"Username not found in auth.users: {username}")
+            return jsonify({'error': f"Sender {username} not found."}), 404
+
+        sender_id = sender_row['id']
+        logging.info(f"Sender ID fetched: {sender_id}")
+
+        # Encrypt the message
+        encrypted_message = f.encrypt(message.encode()).decode()
+        logging.info(f"Encrypted message: {encrypted_message}")
+
+        # Insert encrypted message into public.topics
+        cursor.execute('''
+            INSERT INTO public.topics (name, username, message, created_at)
+            VALUES (%s, 
+                    (SELECT raw_user_meta_data ->> 'username' FROM auth.users WHERE raw_user_meta_data ->> 'username' = %s),
+                    %s,
+                    %s)
+        ''', (topic, username, encrypted_message, timestamp))
+
+        conn.commit()
+        logging.info(f"Message successfully inserted into public.topics for topic: {topic}")
+
+        # Emit the decrypted message to the topic room
+        socketio.emit('topic_message', {
+            'topic': topic,
             'username': username,
             'message': message,
-            'timestamp': datetime.now().isoformat()
-        })
-        return jsonify({'success': True}), 200
-    except Exception as e:
-        print(f"Error storing topic message: {e}")
-        return jsonify({'error': 'Failed to store message'}), 500
+            'timestamp': timestamp
+        }, room=f"topic_{topic}", include_self=False)  # Avoid echoing back to sender
 
-# Send message
+        return jsonify({'success': True, 'message': 'Message sent successfully'}), 200
+
+    except Exception as e:
+        logging.error(f"Error in send_topic_message: {e}")
+        return jsonify({'error': 'Failed to send topic message'}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+# Send message (Private, not Topic)
 @socketio.on('send_message')
 def handle_send_message(data):
     room = data.get('room')
@@ -573,11 +639,6 @@ def handle_send_message(data):
             INSERT INTO public.messages (sender_id, receiver_id, room_name, message, delivered, timestamp)
             VALUES ((SELECT id FROM auth.users WHERE raw_user_meta_data ->> 'username' = %s), NULL, %s, %s, FALSE, %s)
         ''', (sender_username, room, encrypted_message, timestamp))
-
-        """cursor.execute('''
-            INSERT INTO public.messages (sender_id, receiver_id, room_name, message, delivered, timestamp)
-            VALUES (%s, NULL, %s, %s, FALSE, %s)
-        ''', (sender_id, room, encrypted_message, timestamp))"""
         conn.commit()
         logging.info(f"Message successfully inserted into the database for room: {room}")
 
