@@ -75,22 +75,33 @@ function setupSocketIO() {
     appendMessageToChat(data.room, data.username, data.message, data.timestamp); // data.msg
   });
 
-  // Listen for incoming topic messages
+  // Listen for incoming Topic messages (not Private)
   socket.on('topic_message', (data) => {
+    console.log('Received topic message:', data);
+  
     const { topic, username, message, timestamp } = data;
+  
+    console.log(`Extracted Message: ${message}`);
+    console.log(`Username: ${username}, Timestamp: ${timestamp}`);
+  
+    if (!message) {
+      console.error('Received topic message with undefined content:', data);
+      return;
+    }
+  
     const chatBox = document.getElementById(`messages-${encodeRoomName(topic)}`);
-
     if (chatBox) {
       const messageElement = document.createElement('div');
       messageElement.className = 'message';
       messageElement.innerHTML = `
-        <div><strong>${username}:</strong> ${message}</div>
+        <div><strong>${username}</strong>: ${message}</div>
         <div class="timestamp">${new Date(timestamp).toLocaleTimeString()}</div>
       `;
       chatBox.appendChild(messageElement);
       chatBox.scrollTop = chatBox.scrollHeight; // Scroll to bottom
     }
   });
+  
 
 
   // Handle incoming typing events
@@ -367,7 +378,7 @@ function openTopicChat(topicName) {
     }
 
     data.messages.forEach(msg => {
-      appendMessageToChat(roomName, msg.username, msg.text, msg.timestamp);
+      appendMessageToChat(roomName, msg.username, msg.message, msg.timestamp);
     });
   })
   .catch(err => console.error('Error fetching topic chat history:', err));
@@ -377,27 +388,65 @@ function openTopicChat(topicName) {
 
 // Load Topics table messages
 function loadTopicHistory(topicName) {
-  fetch(`/get_topic_history?topic=${topicName}`)
-    .then(response => response.json())
+  console.log(`Fetching topic history for: ${topicName}`);
+  
+  fetch(`/get_topic_history?topic=${encodeURIComponent(topicName)}`)
+    .then(response => {
+      if (!response.ok) {
+        throw new Error(`Network response was not ok (${response.status})`);
+      }
+      return response.json();
+    })
     .then(data => {
-      if (data.messages) {
+      console.log('Fetched Data:', data); // Log the entire JSON response
+
+      if (data.messages && Array.isArray(data.messages)) {
         const chatBox = document.getElementById(`messages-${topicName}`);
+        if (!chatBox) {
+          console.error(`Chat box for topic "${topicName}" not found.`);
+          return;
+        }
+
         chatBox.innerHTML = ''; // Clear previous messages
 
-        data.messages.forEach(msg => {
+        data.messages.forEach((msg, index) => {
+          console.log(`Message #${index + 1}:`, msg); // Log each message object
+          console.log(`Username: ${msg.username}, Message: ${msg.message}, Timestamp: ${msg.timestamp}`);
+
+          // Explicit checks for each property
+          const displayedMessage = msg?.message || '[Empty Message]';
+          const displayedUsername = msg?.username || '[Unknown User]';
+          const displayedTimestamp = msg?.timestamp
+            ? new Date(msg.timestamp).toLocaleString()
+            : '[Invalid Timestamp]';
+
+          console.log(`Rendering - Username: ${displayedUsername}, Message: ${displayedMessage}, Timestamp: ${displayedTimestamp}`);
+
           const messageElement = document.createElement('div');
           messageElement.className = 'message';
-          messageElement.innerHTML = `
-            <div><strong>${msg.username}:</strong> ${msg.message}</div>
-            <div class="timestamp">${new Date(msg.timestamp).toLocaleString()}</div>
-          `;
+
+          // Use textContent instead of innerHTML for message security
+          const userElement = document.createElement('div');
+          userElement.innerHTML = `<strong>${displayedUsername}</strong>: ${displayedMessage}`;
+          
+          const timestampElement = document.createElement('div');
+          timestampElement.className = 'timestamp';
+          timestampElement.textContent = displayedTimestamp;
+
+          messageElement.appendChild(userElement);
+          messageElement.appendChild(timestampElement);
+
           chatBox.appendChild(messageElement);
         });
 
         chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll to bottom
+      } else {
+        console.warn('No messages returned from the server.');
       }
     })
-    .catch(error => console.error('Error loading topic history:', error));
+    .catch(error => {
+      console.error('Error loading topic history:', error);
+    });
 }
 
 // change online status
