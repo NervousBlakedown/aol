@@ -495,7 +495,7 @@ def join_topic_chat(data):
     }, room=room)
     print(f'{username} joined topic chat: {room}')
 
-# Fetch Topic messages (persistent, decrypted before sending)
+# Fetch all Topic messages and decrypt from encrypted DB
 @app.route('/get_topic_history')
 def get_topic_history():
     topic = request.args.get('topic')
@@ -503,31 +503,64 @@ def get_topic_history():
         return jsonify({'error': 'Topic is required'}), 400
 
     try:
-        # Fetch messages from the Supabase 'topics' table
-        response = supabase.table('topics').select('username, message, created_at')\
-            .eq('name', topic)\
-            .order('created_at', desc=False)\
-            .execute()
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Fetch topic messages for the specific topic (last 7 days)
+        cursor.execute('''
+            SELECT sender_id, message, timestamp 
+            FROM public.messages 
+            WHERE room_name = %s 
+              AND timestamp >= NOW() - INTERVAL '7 days'
+            ORDER BY timestamp ASC;
+        ''', (f"topic_{topic}",))
+        
+        messages = cursor.fetchall()
+        decrypted_messages = []
 
-        if not response.data:
-            return jsonify({'messages': []}), 200
+        for record in messages:
+            try:
+                # Ensure the message exists before attempting decryption
+                encrypted_message = record['message']
+                if not encrypted_message:
+                    logging.warning(f"Empty message found in record: {record}")
+                    decrypted_message = '[Empty Message]'
+                else:
+                    # Decrypt the message
+                    decrypted_message = f.decrypt(encrypted_message.encode()).decode()
+                    logging.info(f"Decrypted Message: {decrypted_message}")
+                
+                # Fetch sender username directly
+                cursor.execute('''
+                    SELECT raw_user_meta_data ->> 'username' AS username 
+                    FROM auth.users 
+                    WHERE id = %s;
+                ''', (record['sender_id'],))
+                
+                sender_row = cursor.fetchone()
+                username = sender_row['username'] if sender_row else 'Unknown'
+                
+                decrypted_messages.append({
+                    'username': username,
+                    'message': decrypted_message,
+                    'timestamp': record['timestamp']
+                })
+            except Exception as e:
+                logging.error(f"Error decrypting or processing message: {e}")
+                decrypted_messages.append({
+                    'username': 'System',
+                    'message': '[Failed to decrypt message]',
+                    'timestamp': record['timestamp']
+                })
 
-        # Decrypt messages
-        messages = []
-        for record in response.data:
-            decrypted_message = decrypt_message(record['message'])  # Decrypt the message
-            messages.append({
-                'username': record['username'],
-                'message': decrypted_message,
-                'timestamp': record['created_at']
-            })
-
-        return jsonify({'messages': messages}), 200
+        cursor.close()
+        conn.close()
+        logging.info(f"Final Decrypted Messages: {decrypted_messages}")
+        return jsonify({'messages': decrypted_messages}), 200
 
     except Exception as e:
-        print(f"Error fetching topic messages: {e}")
+        logging.error(f"Error fetching topic messages: {e}")
         return jsonify({'error': 'Failed to fetch messages'}), 500
-
 
 # Handles Topic messages, not private
 @app.route('/send_topic_message', methods=['POST'])

@@ -269,7 +269,7 @@ function startChat() {
   document.querySelectorAll('.contact-checkbox').forEach(cb => (cb.checked = false));
 }
 
-// create Topic chats (different from private chats)
+// create Topic chats (different from Private chats)
 function openTopicChat(topicName) {
   const topicsContainer = document.getElementById('topics-container');
   if (!topicsContainer) {
@@ -291,6 +291,13 @@ function openTopicChat(topicName) {
 
   const encodedRoomName = encodeRoomName(roomName);
   roomEncodings[roomName] = encodedRoomName;
+
+  // If activeChats already has messages, reuse them
+  if (activeChats[roomName]) {
+    console.log(`Reopening topic chat: ${topicName}`);
+    topicsContainer.appendChild(activeChats[roomName].chatBox);
+    return;
+  }
 
   const chatBox = document.createElement('div');
   chatBox.className = 'topic-chat-box';
@@ -339,7 +346,6 @@ function openTopicChat(topicName) {
       delete activeChats[roomName];
   });
 
-  
   // Fetch historical messages
   fetch(`/get_topic_history?topic=${encodeURIComponent(topicName)}`)
   .then(response => response.json())
@@ -350,12 +356,23 @@ function openTopicChat(topicName) {
       return;
     }
 
+    // Load saved messages first client side
+    if (activeChats[roomName]?.messages) {
+      // Load saved messages first
+      activeChats[roomName].messages.forEach(msgHTML => {
+        const msgDiv = document.createElement('div');
+        msgDiv.innerHTML = msgHTML;
+        messagesDiv.appendChild(msgDiv);
+      });
+    }
+
     data.messages.forEach(msg => {
       appendMessageToChat(roomName, msg.username, msg.text, msg.timestamp);
     });
   })
   .catch(err => console.error('Error fetching topic chat history:', err));
-  activeChats[roomName] = chatBox;
+  activeChats[roomName] = { chatBox, messages: [] }; // stored
+  // activeChats[roomName] = chatBox;
 }
 
 // Load Topics table messages
