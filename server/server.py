@@ -773,6 +773,47 @@ def logout():
     session.pop('user', None)
     return jsonify({'success': True, 'message': 'Logged out successfully.'}), 200
 
+# Topics notifications route
+# Subscribe to a topic
+@app.route('/subscribe_topic', methods=['POST'])
+def subscribe_topic():
+    if 'user' not in session:
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
+    data = request.get_json()
+    topic = data.get('topic')
+    subscribe = data.get('subscribe')  # True to subscribe, False to unsubscribe
+    user_id = session['user']['id']
+
+    if not topic:
+        return jsonify({'success': False, 'message': 'Topic is required'}), 400
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        if subscribe:
+            cursor.execute(
+                "INSERT INTO public.topic_subscriptions (user_id, topic) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+                (user_id, topic)
+            )
+        else:
+            cursor.execute(
+                "DELETE FROM public.topic_subscriptions WHERE user_id = %s AND topic = %s",
+                (user_id, topic)
+            )
+
+        conn.commit()
+        return jsonify({'success': True, 'message': f"{'Subscribed to' if subscribe else 'Unsubscribed from'} {topic}"}), 200
+
+    except Exception as e:
+        logging.error(f"Error subscribing to topic: {e}")
+        return jsonify({'success': False, 'message': 'Error updating topic subscription'}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
 # Password forget GET request
 @app.route('/forgot_password', methods=['GET'])
 def forgot_password_page():

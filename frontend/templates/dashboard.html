@@ -8,10 +8,26 @@
 <div class="dashboard-layout">
     <!-- Sidebar -->
     <aside class="sidebar">
-        <div class="user-info">
-            <h2>Welcome, <span id="username-display">{{ username }}</span></h2>
-            <button id="logout-button" class="btn btn-danger">Logout</button>
-        </div>
+        <div class="user-info-card">
+            <div class="user-avatar">
+                <img src="/static/images/avatar-placeholder.png" alt="User Avatar">
+            </div>
+            <div class="user-details">
+                <h3>Welcome, <span id="username-display">{{ username }}</span></h3>
+                <div class="user-status">
+                    <h4>Status</h4>
+                    <div class="status-buttons">
+                        <button class="status-btn" id="status-online" onclick="updateStatusUI('Online')">Online</button>
+                        <button class="status-btn" id="status-away" onclick="updateStatusUI('Away')">Away</button>
+                        <button class="status-btn" id="status-dnd" onclick="updateStatusUI('Do Not Disturb')">Do Not Disturb</button>
+                    </div>
+                </div>
+            </div>
+            <div class="user-actions">
+                <button id="settings-button" class="btn-icon">⚙️</button>
+                <button id="logout-button" class="btn-icon btn-danger">⛔</button>
+            </div>
+        </div>      
 
         <div class="collapsible" data-toggle="profile-section">
             <h3>Profile <span class="toggle-icon">▼</span></h3>

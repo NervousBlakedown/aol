@@ -9,7 +9,19 @@ let myContacts = [];
 let userStatuses = {}; 
 const roomInputs = {};
 const roomEncodings = {}; // Global mapping of room names to encoded room names
+/*import * as React from 'react';
+import Button from '@mui/material/Button';
+import Stack from '@mui/material/Stack'; */
 
+/*export default function TextButtons() {
+  return (
+    <Stack direction="row" spacing={2}>
+      <Button>Primary</Button>
+      <Button disabled>Disabled</Button>
+      <Button href="#text-buttons">Link</Button>
+    </Stack>
+  );
+} */
 
 // Base64 encoding to fix special character username chats
 function encodeRoomName(roomName) {
