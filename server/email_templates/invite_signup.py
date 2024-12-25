@@ -71,7 +71,7 @@ html_template = """
         <p>I'm Blake, creator of BlakeOL, and I'm inviting you
         to join BlakeOL: an instant messaging web app where communication 
         and collaboration come together seamlessly.</p>
-        <p>The internet used to feel like an open portal to a world of endless possibilities. Now, it feels anyting but. 
+        <p>The internet used to feel like an open portal to a world of endless possibilities. Now, it feels anything but. 
         Because modern tech companies are interested in profit over people, I wanted to build a platform that 
         focuses on user experience and summons a time when talking to friends after school on 
         mom and dad's computer was 
