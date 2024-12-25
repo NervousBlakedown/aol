@@ -15,13 +15,13 @@
             <div class="user-details">
                 <h3>Welcome, <span id="username-display">{{ username }}</span></h3>
                 <div class="user-status">
-                    <h4>Status</h4>
-                    <div class="status-buttons">
-                        <button class="status-btn" id="status-online" onclick="updateStatusUI('Online')">Online</button>
-                        <button class="status-btn" id="status-away" onclick="updateStatusUI('Away')">Away</button>
-                        <button class="status-btn" id="status-dnd" onclick="updateStatusUI('Do Not Disturb')">Do Not Disturb</button>
+                    <!--<h4>Status</h4>-->
+                    <div class="status-container">
+                        <span id="status-online" class="status-option active">Online</span>
+                        <span id="status-away" class="status-option">Away</span>
+                        <span id="status-dnd" class="status-option">Do Not Disturb</span>
                     </div>
-                </div>
+                </div>                
             </div>
             <div class="user-actions">
                 <button id="settings-button" class="btn-icon">⚙️</button>
@@ -148,6 +148,48 @@
                 }
             });
         });
+        // begin
+        const statusOptions = document.querySelectorAll('.status-option');
+        statusOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                // Remove active class from all status options
+                statusOptions.forEach(opt => opt.classList.remove('active'));
+
+                // Add active class to the clicked status option
+                option.classList.add('active');
+
+                // Optional: Send status change to the backend
+                const selectedStatus = option.textContent.trim().toLowerCase();
+                console.log(`User status changed to: ${selectedStatus}`);
+
+                // Example Backend Call (Optional)
+                fetch('/api/update-status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: selectedStatus })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        console.log('✅ Status updated successfully');
+                    } else {
+                        console.error('❌ Failed to update status');
+                    }
+                });
+
+                // Persist status in localStorage
+                localStorage.setItem('userStatus', selectedStatus);
+            });
+        });
+
+        // Load Status on Page Refresh (Optional)
+        const savedStatus = localStorage.getItem('userStatus');
+        if (savedStatus) {
+            const activeOption = document.getElementById(`status-${savedStatus}`);
+            if (activeOption) {
+                statusOptions.forEach(opt => opt.classList.remove('active'));
+                activeOption.classList.add('active');
+            }
+        }
     });
 </script>
 {% endblock %}

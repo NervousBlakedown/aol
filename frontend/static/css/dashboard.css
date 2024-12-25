@@ -492,6 +492,47 @@ button:hover {
     gap: 10px;
 }
 
+/* Status Container */
+.status-container {
+    display: flex;
+    gap: 15px;
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    margin-top: 5px;
+}
+
+/* Default Styling for Status Options */
+.status-option {
+    cursor: pointer;
+    color: #888; /* Default Gray */
+    text-transform: uppercase;
+    transition: color 0.2s ease-in-out, text-shadow 0.2s ease-in-out;
+}
+
+/* Active Status Highlight */
+.status-option.active {
+    text-shadow: 0 0 5px rgba(40, 167, 69, 0.6); /* Green glow for active */
+}
+
+/* Specific Colors for Each Status */
+#status-online.active {
+    color: #28a745; /* Green for Online */
+}
+
+#status-away.active {
+    color: #ffc107; /* Yellow for Away */
+}
+
+#status-dnd.active {
+    color: #dc3545; /* Red for Do Not Disturb */
+}
+
+/* Hover Effect for Words */
+.status-option:hover {
+    color: #555;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .dashboard-layout {

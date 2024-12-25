@@ -243,6 +243,19 @@ def dashboard():
 def dashboard_test():
     return render_template('dashboard_test.html')"""
 
+# Online status changes
+@app.route('/api/update-status', methods=['POST'])
+def update_status():
+    data = request.get_json()
+    user_status = data.get('status')
+
+    if user_status in ['online', 'away', 'do not disturb']:
+        current_user.status = user_status
+        db.session.commit()
+        return jsonify({"success": True, "status": user_status})
+    else:
+        return jsonify({"success": False, "message": "Invalid status"}), 400
+
 # Search Contacts (exclude self from Add Pals List)
 @app.route('/search_contacts', methods=['GET'])
 def search_contacts():
