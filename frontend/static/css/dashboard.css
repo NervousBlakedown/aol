@@ -550,3 +550,111 @@ button:hover {
         border-radius: 0;
     }
 }
+
+/* Notifications Dropdown */
+.notifications-dropdown {
+    display: none;
+    position: absolute;
+    top: 50px;
+    right: 10px;
+    width: 250px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    z-index: 1000;
+}
+
+.notifications-dropdown ul {
+    list-style: none;
+    padding: 10px;
+    margin: 0;
+}
+
+.notifications-dropdown li {
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.notifications-dropdown li:hover {
+    background-color: #f9f9f9;
+}
+
+/* Profile Section Styling */
+#profile-section {
+    padding: 15px;
+    font-family: Arial, sans-serif;
+}
+
+.profile-header {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.profile-header img {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 2px solid #ddd;
+    margin-bottom: 5px;
+}
+
+.profile-header h4 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.profile-bio {
+    margin: 10px 0;
+    text-align: center;
+}
+
+.profile-bio p {
+    font-style: italic;
+    font-size: 14px;
+    margin: 0 0 5px;
+}
+
+.profile-status {
+    margin: 10px 0;
+    text-align: center;
+}
+
+.profile-preferences {
+    margin: 15px 0;
+    border-top: 1px solid #ddd;
+    padding-top: 10px;
+}
+
+.profile-preferences label {
+    display: flex;
+    justify-content: space-between;
+    margin: 5px 0;
+}
+
+.profile-account {
+    margin: 15px 0;
+    border-top: 1px solid #ddd;
+    padding-top: 10px;
+}
+
+.profile-account button {
+    width: 100%;
+    margin: 5px 0;
+    padding: 8px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.profile-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+}
+
+.profile-actions button {
+    flex: 1;
+    margin: 0 5px;
+    padding: 8px;
+}
+

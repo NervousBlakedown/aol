@@ -100,8 +100,6 @@ function setupSocketIO() {
       chatBox.scrollTop = chatBox.scrollHeight; // Scroll to bottom
     }
   });
-  
-
 
   // Handle incoming typing events
   socket.on('typing', (data) => {
@@ -448,6 +446,94 @@ function loadTopicHistory(topicName) {
     });
 }
 
+// Edit Bio
+function editBio() {
+  const newBio = prompt('Enter your new bio:');
+  if (newBio !== null) {
+      fetch('/api/update-bio', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ bio: newBio }),
+          credentials: 'include'
+      })
+      .then(response => response.json())
+      .then(data => {
+          if (data.success) {
+              document.getElementById('profile-bio').textContent = `"${newBio}"`;
+              console.log('✅ Bio updated successfully.');
+          } else {
+              console.error('❌ Failed to update bio:', data.message);
+          }
+      })
+      .catch(error => console.error('❌ Error:', error));
+  }
+}
+
+// Change Password
+// Change Password
+function changePassword() {
+  const newPassword = prompt('Enter your new password (minimum 8 characters):');
+  if (!newPassword) {
+      console.warn('❌ Password change canceled by user.');
+      return;
+  }
+
+  if (newPassword.length < 8) {
+      alert('❌ Password must be at least 8 characters long.');
+      return;
+  }
+
+  fetch('/api/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: newPassword }),
+      credentials: 'include'
+  })
+  .then(response => response.json())
+  .then(data => {
+      if (data.success) {
+          alert('✅ Password changed successfully! Please log in again with your new password.');
+          logout(); // Log out user to force re-authentication
+      } else {
+          alert(`❌ Failed to change password: ${data.message}`);
+          console.error('❌ Password change error:', data.message);
+      }
+  })
+  .catch(error => {
+      console.error('❌ Error changing password:', error);
+      alert('❌ An error occurred while changing the password. Please try again later.');
+  });
+}
+
+// Deactivate Account
+function deactivateAccount() {
+  const confirmation = confirm('⚠️ Are you sure you want to deactivate your account? This action cannot be undone.');
+  if (!confirmation) {
+      console.warn('❌ Account deactivation canceled by user.');
+      return;
+  }
+
+  fetch('/api/deactivate-account', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include'
+  })
+  .then(response => response.json())
+  .then(data => {
+      if (data.success) {
+          alert('✅ Your account has been deactivated. Goodbye!');
+          logout(); // Log out user after account deactivation
+      } else {
+          alert(`❌ Failed to deactivate account: ${data.message}`);
+          console.error('❌ Account deactivation error:', data.message);
+      }
+  })
+  .catch(error => {
+      console.error('❌ Error deactivating account:', error);
+      alert('❌ An error occurred while deactivating your account. Please try again later.');
+  });
+}
+
 // change online status
 function updateStatus(newStatus) {
   if (!socket) {
@@ -459,6 +545,65 @@ function updateStatus(newStatus) {
   socket.emit('status_change', { username, status: newStatus });
   console.log(`Status updated to: ${newStatus}`);
 }
+
+// Handle Notifications Dropdown
+function initializeNotifications() {
+  const notificationsButton = document.getElementById('notifications-button');
+  const notificationsDropdown = document.getElementById('notifications-dropdown');
+  const notificationCount = document.getElementById('notification-count');
+
+  if (!notificationsButton || !notificationsDropdown || !notificationCount) {
+    console.error('❌ Notifications elements not found in the DOM.');
+    return;
+  }
+
+  // Toggle Dropdown Visibility
+  notificationsButton.addEventListener('click', () => {
+    notificationsDropdown.style.display = notificationsDropdown.style.display === 'block' ? 'none' : 'block';
+  });
+
+  // Fetch Notifications from the Backend
+  function fetchNotifications() {
+    fetch('/api/get-notifications', { credentials: 'include' })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success && data.notifications) {
+          notificationsDropdown.innerHTML = ''; // Clear existing notifications
+
+          data.notifications.forEach(notification => {
+            const notificationItem = document.createElement('li');
+            notificationItem.textContent = notification.message;
+            notificationItem.onclick = () => handleNotificationClick(notification.link);
+            notificationsDropdown.appendChild(notificationItem);
+          });
+
+          // Update Notification Count
+          notificationCount.textContent = data.notifications.length;
+          notificationCount.style.display = data.notifications.length > 0 ? 'inline' : 'none';
+        } else {
+          console.warn('No notifications found or error fetching notifications.');
+          notificationsDropdown.innerHTML = '<li>No new notifications</li>';
+          notificationCount.style.display = 'none';
+        }
+      })
+      .catch(error => console.error('❌ Error fetching notifications:', error));
+  }
+
+  // Handle Clicking on a Notification
+  function handleNotificationClick(link) {
+    if (link) {
+      window.location.href = link;
+    }
+    notificationsDropdown.style.display = 'none';
+  }
+
+  // Initial Fetch on Load
+  fetchNotifications();
+
+  // Fetch Notifications Periodically (e.g., every 30 seconds)
+  setInterval(fetchNotifications, 30000);
+}
+
 
 // Send message (Private, not Topic)
 function sendMessage(roomName) {

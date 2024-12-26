@@ -21,20 +21,74 @@
                         <span id="status-away" class="status-option" onclick="updateStatus('away')">Away</span>
                         <span id="status-dnd" class="status-option" onclick="updateStatus('do not disturb')">Do Not Disturb</span>
                     </div>
+                    <div class="user-actions">
+                        <button id="settings-button" class="btn-icon">⚙️</button>
+                        <button id="logout-button" class="btn-icon btn-danger">Logout</button>
+                        <button id="notifications-button" class="btn-icon">
+                            🔔 <span id="notification-count" class="badge">3</span>
+                        </button>
+                    </div>
+                    <div id="notifications-dropdown" class="notifications-dropdown">
+                        <ul>
+                            <li onclick="navigateToNotification('message')">Alex sent you a message.</li>
+                            <li onclick="navigateToNotification('topic')">Topic: Tech has new activity.</li>
+                            <li onclick="navigateToNotification('status')">Your status was changed to Away.</li>
+                        </ul>
                 </div>                
-            </div>
-            <div class="user-actions">
-                <button id="settings-button" class="btn-icon">⚙️</button>
-                <button id="logout-button" class="btn-icon btn-danger">⛔</button>
             </div>
         </div>      
 
         <div class="collapsible" data-toggle="profile-section">
             <h3>Profile <span class="toggle-icon">▼</span></h3>
             <div id="profile-section" class="collapsible-content">
-                <p>This feature coming soon!</p>
+                <!-- Avatar and Username -->
+                <div class="profile-header">
+                    <img id="profile-avatar" src="/static/images/avatar-placeholder.png" alt="Avatar">
+                    <h4 id="profile-username">Blakeandbake31</h4>
+                </div>
+        
+                <!-- Bio -->
+                <div class="profile-bio">
+                    <p id="profile-bio">"Building something awesome."</p>
+                    <button onclick="editBio()">Edit Bio</button>
+                </div>
+        
+                <!-- Status -->
+                <div class="profile-status">
+                    <p>Status: <strong id="profile-status">Online</strong></p>
+                </div>
+        
+                <!-- Preferences -->
+                <div class="profile-preferences">
+                    <h5>Preferences</h5>
+                    <label>
+                        🔔 Notifications:
+                        <input type="checkbox" id="profile-notifications" checked>
+                    </label>
+                    <label>
+                        🛡️ Privacy:
+                        <select id="profile-privacy">
+                            <option value="public">Public</option>
+                            <option value="private">Private</option>
+                        </select>
+                    </label>
+                </div>
+        
+                <!-- Account Management -->
+                <div class="profile-account">
+                    <h5>Account</h5>
+                    <button onclick="changePassword()">Change Password</button>
+                    <button onclick="deactivateAccount()">Deactivate Account</button>
+                </div>
+        
+                <!-- Actions -->
+                <div class="profile-actions">
+                    <button onclick="openSettings()">⚙️ Settings</button>
+                    <button onclick="logout()">⛔ Logout</button>
+                </div>
             </div>
         </div>
+        
 
         <div class="collapsible" data-toggle="tools-section">
             <h3>Tools <span class="toggle-icon">▼</span></h3>
@@ -57,17 +111,6 @@
             <div id="search-section" class="collapsible-content">
                 <input type="text" id="search-input" class="search-input" placeholder="Search users..." onclick="event.stopPropagation();">
                 <ul id="search-results" class="search-results"></ul>
-            </div>
-        </div>
-
-        <div class="collapsible" data-toggle="notifications-section">
-            <h3>Notifications <span class="toggle-icon">▼</span></h3>
-            <div id="notifications-section" class="collapsible-content">
-                <ul>
-                    <li>New message from Alex</li>
-                    <li>Topic Chat: Project Updates</li>
-                    <li>System Update: Scheduled Maintenance</li>
-                </ul>
             </div>
         </div>
     </aside>

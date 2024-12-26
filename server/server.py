@@ -277,6 +277,94 @@ def update_status():
         logging.error(f"❌ Error updating status: {e}")
         return jsonify({"success": False, "message": "An error occurred while updating status"}), 500
 
+# Update bio
+@app.route('/api/update-bio', methods=['POST'])
+def update_bio():
+    if 'user' not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+
+    try:
+        user_id = session['user']['id']
+        bio = request.json.get('bio')
+
+        if not bio:
+            return jsonify({"success": False, "message": "Bio is required"}), 400
+
+        # Update user_metadata in Supabase
+        response = supabase_admin.auth.admin.update_user_by_id(
+            user_id,
+            {
+                "user_metadata": {
+                    "bio": bio
+                }
+            }
+        )
+
+        if response.user:
+            return jsonify({"success": True, "message": "Bio updated successfully"}), 200
+        else:
+            return jsonify({"success": False, "message": "Failed to update bio"}), 500
+
+    except Exception as e:
+        logging.error(f"❌ Error updating bio: {e}")
+        return jsonify({"success": False, "message": "An error occurred while updating bio"}), 500
+
+# Change password
+@app.route('/api/change-password', methods=['POST'])
+def change_password():
+    if 'user' not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+
+    try:
+        user_id = session['user']['id']
+        new_password = request.json.get('password')
+
+        if not new_password or len(new_password) < 8:
+            return jsonify({"success": False, "message": "Password must be at least 8 characters"}), 400
+
+        # Update the password in Supabase
+        response = supabase_admin.auth.admin.update_user_by_id(
+            user_id,
+            {
+                "password": new_password
+            }
+        )
+
+        if response.user:
+            return jsonify({"success": True, "message": "Password updated successfully"}), 200
+        else:
+            return jsonify({"success": False, "message": "Failed to update password"}), 500
+
+    except Exception as e:
+        logging.error(f"❌ Error changing password: {e}")
+        return jsonify({"success": False, "message": "An error occurred while changing password"}), 500
+
+# Deactivate account
+@app.route('/api/deactivate-account', methods=['POST'])
+def deactivate_account():
+    if 'user' not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+
+    try:
+        user_id = session['user']['id']
+
+        # Mark the user as banned
+        response = supabase_admin.auth.admin.update_user_by_id(
+            user_id,
+            {
+                "ban": True
+            }
+        )
+
+        if response.user:
+            session.pop('user', None)  # Log out the user after deactivation
+            return jsonify({"success": True, "message": "Account deactivated successfully"}), 200
+        else:
+            return jsonify({"success": False, "message": "Failed to deactivate account"}), 500
+
+    except Exception as e:
+        logging.error(f"❌ Error deactivating account: {e}")
+        return jsonify({"success": False, "message": "An error occurred while deactivating the account"}), 500
 
 # Search Contacts (exclude self from Add Pals List)
 @app.route('/search_contacts', methods=['GET'])
@@ -488,6 +576,98 @@ def get_users_with_status():
 
 """def get_users_with_status():
     return [{'username': user, 'status': user_status[user]} for user in connected_users]"""
+
+# Get notifications
+@app.route('/api/get-notifications', methods=['GET'])
+def get_notifications():
+    if 'user' not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+
+    try:
+        user_id = session['user']['id']
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Fetch notifications for the user
+        cursor.execute('''
+            SELECT id, message, link, is_read, created_at
+            FROM public.notifications
+            WHERE user_id = %s
+            ORDER BY created_at DESC
+            LIMIT 10;
+        ''', (user_id,))
+
+        notifications = cursor.fetchall()
+
+        formatted_notifications = [
+            {
+                "id": notification['id'],
+                "message": notification['message'],
+                "link": notification['link'],
+                "is_read": notification['is_read'],
+                "created_at": notification['created_at'].isoformat()
+            }
+            for notification in notifications
+        ]
+
+        cursor.close()
+        conn.close()
+
+        return jsonify({"success": True, "notifications": formatted_notifications}), 200
+
+    except Exception as e:
+        logging.error(f"❌ Error fetching notifications: {e}")
+        return jsonify({"success": False, "message": "Failed to fetch notifications"}), 500
+
+# Mark notifications as read when done so
+@app.route('/api/mark-notification-read', methods=['POST'])
+def mark_notification_read():
+    if 'user' not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+
+    try:
+        data = request.get_json()
+        notification_id = data.get('id')
+
+        if not notification_id:
+            return jsonify({"success": False, "message": "Notification ID is required"}), 400
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute('''
+            UPDATE public.notifications
+            SET is_read = TRUE
+            WHERE id = %s AND user_id = %s;
+        ''', (notification_id, session['user']['id']))
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return jsonify({"success": True, "message": "Notification marked as read"}), 200
+
+    except Exception as e:
+        logging.error(f"❌ Error marking notification as read: {e}")
+        return jsonify({"success": False, "message": "Failed to mark notification as read"}), 500
+
+# Create notification
+def create_notification(user_id, message, link=None):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute('''
+            INSERT INTO public.notifications (user_id, message, link)
+            VALUES (%s, %s, %s);
+        ''', (user_id, message, link))
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+    except Exception as e:
+        logging.error(f"❌ Error creating notification: {e}")
 
 # Test broadcast: serious BUG
 @socketio.on('test_broadcast')
