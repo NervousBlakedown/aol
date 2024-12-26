@@ -246,15 +246,37 @@ def dashboard_test():
 # Online status changes
 @app.route('/api/update-status', methods=['POST'])
 def update_status():
+    if 'user' not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+
     data = request.get_json()
     user_status = data.get('status')
 
-    if user_status in ['online', 'away', 'do not disturb']:
-        current_user.status = user_status
-        db.session.commit()
-        return jsonify({"success": True, "status": user_status})
-    else:
+    if user_status not in ['online', 'away', 'do not disturb']:
         return jsonify({"success": False, "message": "Invalid status"}), 400
+
+    try:
+        user_id = session['user']['id']
+
+        # Update user status in Supabase
+        response = supabase_admin.auth.admin.update_user_by_id(
+            user_id,
+            {
+                "user_metadata": {
+                    "status": user_status
+                }
+            }
+        )
+
+        if response.user:
+            return jsonify({"success": True, "status": user_status})
+        else:
+            return jsonify({"success": False, "message": "Failed to update status"}), 500
+
+    except Exception as e:
+        logging.error(f"❌ Error updating status: {e}")
+        return jsonify({"success": False, "message": "An error occurred while updating status"}), 500
+
 
 # Search Contacts (exclude self from Add Pals List)
 @app.route('/search_contacts', methods=['GET'])
@@ -450,12 +472,13 @@ def handle_status_change(data):
     username = data.get('username')
     new_status = data.get('status')
 
-    if username:
-        user_status[username] = new_status  # Update the user's status
+    if username and new_status in ['online', 'away', 'do not disturb']:
+        user_status[username] = new_status  # Update status in memory
         logging.info(f"User {username} changed status to {new_status}")
 
-        # Broadcast the updated user list to all clients
+        # Broadcast to all clients
         emit('user_list', {'users': get_users_with_status()}, broadcast=True)
+
 
 # Helper function to get users with their statuses
 def get_users_with_status():
