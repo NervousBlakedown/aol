@@ -111,7 +111,7 @@ function setupSocketIO() {
     }
   });
 
-// Handle stop typing events
+  // Handle stop typing events
   socket.on('stop_typing', (data) => {
     const encodedRoomName = roomEncodings[data.room]; // Map room to encoded name
     const typingIndicator = document.getElementById(`typing-${encodedRoomName}`);
@@ -120,6 +120,12 @@ function setupSocketIO() {
     }
   });
 
+  // listen
+  socket.on('private_message', (data) => {
+    appendMessageToChat(data.room, data.username, data.msg, data.timestamp);
+  });
+
+  // user list
   socket.on('user_list', data => {
     console.log("Received user list:", data.users);
     userStatuses = {};
@@ -198,8 +204,52 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-  }
-});
+    //Avatar upload logic
+    const avatarButton = document.getElementById('change-avatar-button');
+    const avatarInput = document.getElementById('avatar-upload');
+    const avatarImage = document.getElementById('profile-avatar');
+    if (avatarButton && avatarInput) {
+      // Trigger file input when button is clicked
+      avatarButton.addEventListener('click', () => avatarInput.click());
+
+      // Handle file selection and upload
+      avatarInput.addEventListener('change', async () => {
+          const file = avatarInput.files[0];
+          if (!file) return;
+
+          // Validate file type
+          const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif'];
+          if (!allowedTypes.includes(file.type)) {
+              alert('Please upload a valid image file (PNG, JPEG, JPG, GIF).');
+              return;
+          }
+
+          const formData = new FormData();
+          formData.append('avatar', file);
+
+          try {
+              const response = await fetch('/upload_avatar', {
+                  method: 'POST',
+                  body: formData,
+                  credentials: 'include'
+              });
+
+              const data = await response.json();
+              if (response.ok && data.success) {
+                  // Update the avatar image dynamically
+                  avatarImage.src = `${data.avatar_url}?t=${new Date().getTime()}`;
+                  alert('Avatar updated successfully!');
+              } else {
+                  alert(data.message || 'Failed to upload avatar.');
+              }
+            } catch (error) {
+              console.error('Error uploading avatar:', error);
+              alert('An error occurred while uploading the avatar.');
+            }
+          });
+        }
+      }
+}); 
 
 // core features (dashboard-specific)
 // Fetch username for dashboard
@@ -383,6 +433,52 @@ function openTopicChat(topicName) {
   // activeChats[roomName] = chatBox;
 }
 
+// Open private chats
+function openPrivateChat(participants) {
+  const roomName = participants.sort().join('_'); // Consistent room naming
+
+  if (!activeChats[roomName]) {
+      // If this room hasn't been opened, create it and fetch history
+      activeChats[roomName] = []; // Initialize message storage
+      createChatBox(roomName, participants);
+
+      fetch(`/get_private_chat_history?room=${roomName}`)
+          .then(response => response.json())
+          .then(data => {
+              if (data.success) {
+                  activeChats[roomName] = data.messages || []; // Store history locally
+                  displayChatHistory(roomName); // Display the history in the UI
+              } else {
+                  console.error('Failed to load chat history:', data.message);
+              }
+          })
+          .catch(error => console.error('Error fetching chat history:', error));
+  } else {
+      // If the chat box already exists, just display the stored messages
+      createChatBox(roomName, participants);
+      displayChatHistory(roomName);
+  }
+}
+
+// send private message
+function sendPrivateMessage(roomName) {
+  const input = document.getElementById(`message-${roomName}`);
+  const message = input.value.trim();
+  if (!message) return;
+
+  const timestamp = new Date().toLocaleTimeString();
+
+  socket.emit('send_private_message', {
+      room: roomName,
+      username: username,
+      message: message,
+      timestamp: timestamp
+  });
+
+  appendMessageToChat(roomName, 'You', message, timestamp);
+  input.value = '';
+}
+
 // Load Topics table messages
 function loadTopicHistory(topicName) {
   console.log(`Fetching topic history for: ${topicName}`);
@@ -444,6 +540,23 @@ function loadTopicHistory(topicName) {
     .catch(error => {
       console.error('Error loading topic history:', error);
     });
+}
+
+// Display chat history
+function displayChatHistory(roomName) {
+  const messagesDiv = document.getElementById(`messages-${roomName}`);
+  if (!messagesDiv) return;
+
+  messagesDiv.innerHTML = ''; // Clear existing content
+
+  activeChats[roomName].forEach(msg => {
+      appendMessageToChat(
+          roomName,
+          msg.username,
+          msg.message,
+          new Date(msg.timestamp).toLocaleTimeString()
+      );
+  });
 }
 
 // Edit Bio
@@ -604,6 +717,45 @@ function initializeNotifications() {
   setInterval(fetchNotifications, 30000);
 }
 
+// Notify missed messages (@ in Topics)
+function notifyMissedTopicMessages(topicId, missedCount) {
+  if (isNaN(topicId)) {
+      console.error('❌ Invalid topic ID. Expected an integer.');
+      return;
+  }
+
+  fetch('/api/handle-missed-topic', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+          topic_id: parseInt(topicId, 10), // Ensure it's an integer
+          missed_messages: missedCount
+      }),
+      credentials: 'include'
+  })
+  .then(response => response.json())
+  .then(data => {
+      if (data.success) {
+          console.log('✅ Missed topic notification logged.');
+      } else {
+          console.error('❌ Failed to log missed topic notification:', data.message);
+      }
+  })
+  .catch(error => console.error('❌ Error:', error));
+}
+
+// Topics mention notification
+function sendTopicMessage(topicId, message) {
+  const mentionRegex = /@(\w+)/g;
+  const mentions = [...message.matchAll(mentionRegex)].map(match => match[1]);
+
+  fetch('/api/send-topic-message', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ topic_id: topicId, message, mentions }),
+      credentials: 'include'
+  });
+}
 
 // Send message (Private, not Topic)
 function sendMessage(roomName) {
@@ -827,38 +979,39 @@ function appendMessageToChat(roomName, sender, message, timestamp) {
       return;
   }
 
-  const formattedTimestamp = formatTimestamp(timestamp); // Ensure consistent formatting
+  // Ensure activeChats[roomName] is an array
+  if (!Array.isArray(activeChats[roomName])) {
+    console.warn(`activeChats[${roomName}] was not an array. Resetting to an empty array.`);
+    activeChats[roomName] = [];
+  }
 
+  // Ensure messages are stored locally
+  if (!activeChats[roomName]) activeChats[roomName] = [];
+  activeChats[roomName].push({
+      username: sender,
+      message: message,
+      timestamp: timestamp
+  });
+
+  // Format timestamp for display
+  const formattedTimestamp = formatTimestamp(timestamp); 
+
+  // Create message element
   const messageElement = document.createElement('div');
   messageElement.className = sender === 'You' ? 'message sender' : 'message receiver';
 
   messageElement.innerHTML = `
-    <div class="message-meta">
-        <span class="message-sender">${sender}</span>
-        <span class="message-timestamp">${formattedTimestamp}</span>
-    </div>
-    <span class="message-text">${message}</span>
+      <div class="message-meta">
+          <span class="message-sender">${sender}</span>
+          <span class="message-timestamp">${formattedTimestamp}</span>
+      </div>
+      <div class="message-text">${message}</div>
   `;
-  /*messageElement.innerHTML = `
-      //<span class="message-text">${message}</span>
-      //<span class="message-timestamp">${formattedTimestamp}</span>
-  `; */
 
+  // Append the message to the chat window
   messagesDiv.appendChild(messageElement);
-  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  messagesDiv.scrollTop = messagesDiv.scrollHeight; // Auto-scroll to bottom
 }
-
-// Append message
-/* function appendMessageToChat(roomName, sender, message, timestamp) {
-  const encodedRoomName = encodeRoomName(roomName); // Use encoded name
-  const messagesDiv = document.getElementById(`messages-${encodedRoomName}`);
-  if (!messagesDiv) return;
-
-  const messageElement = document.createElement('div');
-  messageElement.textContent = `[${timestamp}] ${sender}: ${message}`;
-  messagesDiv.appendChild(messageElement);
-  messagesDiv.scrollTop = messagesDiv.scrollHeight;
-} */
 
 // Logout
 function logout() {

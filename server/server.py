@@ -1,21 +1,22 @@
 # server/server.py
 import requests
-from flask import Flask, request, jsonify, session, redirect, render_template
+from flask import Flask, request, jsonify, session, redirect, render_template, send_from_directory
 from flask_socketio import SocketIO, emit, join_room, leave_room
 from collections import defaultdict
 import logging
 import json
 import os
 from dotenv import load_dotenv
+from werkzeug.utils import secure_filename
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from datetime import datetime, timedelta, timezone
-# from server.auth_utils import reset_password
-# from server.email_templates.password_reset import send_password_reset_email
 from supabase import create_client, Client
 from cryptography.fernet import Fernet
 logging.basicConfig(level=logging.DEBUG)
-base_dir = os.path.abspath(os.path.dirname(__name__))
+# Get the absolute path to the root directory (aol)
+base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..')) 
+# base_dir = os.path.abspath(os.path.dirname(__file__)) # __name__
 static_dir = os.path.join(base_dir, 'frontend', 'static')
 template_dir = os.path.join(base_dir, 'frontend', 'templates')
 load_dotenv()
@@ -24,10 +25,25 @@ SUPABASE_KEY = os.getenv('SUPABASE_KEY')
 SUPABASE_SERVICE_ROLE_KEY = os.getenv('SUPABASE_SERVICE_ROLE_KEY')
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 supabase_admin: Client = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-app = Flask(__name__, static_folder=static_dir, template_folder=template_dir)
+app = Flask(__name__, static_folder=static_dir, static_url_path = '/static', template_folder=template_dir)
+
+print(f"🟢 Base Directory: {base_dir}")
+print(f"🟢 Static Directory: {static_dir}")
+print(f"🟢 Template Directory: {template_dir}")
+
 socketio = SocketIO(app, cors_allowed_origins = "*")
-app.secret_key = 'my_secret_key'  # TODO: Replace with secure, randomly generated key
-app.permanent_session_lifetime = timedelta(minutes = 30)
+
+app.secret_key = os.getenv('SECRET_KEY', 'fallback_default_key')
+app.permanent_session_lifetime = timedelta(minutes = 60)
+# Additional Session Configuration
+app.config['SESSION_TYPE'] = 'filesystem'  # Store session data in files
+app.config['SESSION_FILE_DIR'] = os.path.join(base_dir, 'flask_sessions')
+app.config['SESSION_USE_SIGNER'] = True  # Sign session cookies for security
+app.config['SESSION_PERMANENT'] = True  # Make session permanent (follows `PERMANENT_SESSION_LIFETIME`)
+app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JavaScript access to session cookies
+app.config['SESSION_COOKIE_SECURE'] = False  # Set to True if using HTTPS (localhost is HTTP)
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Protect against CSRF
+
 gmail_address = os.getenv('GMAIL_ADDRESS')
 gmail_password = os.getenv('GMAIL_PASSWORD')
 if not gmail_address or not gmail_password:
@@ -54,6 +70,19 @@ def get_env():
         'SUPABASE_KEY': SUPABASE_KEY
     })
 
+# test sessions for Flask
+@app.route('/test_session')
+def test_session():
+    session['test_key'] = 'Session is working!'
+    return jsonify({"message": "Session set successfully!"})
+
+# test flask session read
+@app.route('/test_session_read')
+def test_session_read():
+    test_value = session.get('test_key', 'Session not found')
+    return jsonify({"session_value": test_value})
+
+
 # Begin
 connected_users = {}
 user_status = {}  # Store each user's status (Online, Away, Do Not Disturb)
@@ -79,6 +108,74 @@ def get_db_connection():
 @socketio.on('connect')
 def handle_connect():
     logging.info(f"Client connected: {request.sid}")
+
+# Store Private chats
+@socketio.on('send_private_message')
+def handle_private_message(data):
+    room = data['room']
+    message = data['message']
+    sender_email = data['username']
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Get sender's ID from email
+        cursor.execute('SELECT id FROM auth.users WHERE email = %s', (sender_email,))
+        sender_row = cursor.fetchone()
+        sender_id = sender_row['id'] if sender_row else None
+        
+        if not sender_id:
+            logging.error("Sender not found in auth.users.")
+            return
+
+        # Store message in the database
+        cursor.execute('''
+            INSERT INTO private_messages (room, sender_id, message, timestamp)
+            VALUES (%s, %s, %s, %s)
+        ''', (room, sender_id, message, timestamp))
+        conn.commit()
+
+        # Emit the message to the room
+        emit('private_message', {
+            'room': room,
+            'username': sender_email,
+            'msg': message,
+            'timestamp': timestamp
+        }, room=room)
+        
+    except Exception as e:
+        logging.error(f"Error storing private message: {e}")
+    finally:
+        cursor.close()
+        conn.close()
+
+# Get private chat history
+@app.route('/get_private_chat_history', methods=['GET'])
+def get_private_chat_history():
+    room = request.args.get('room')
+    if not room:
+        return jsonify({'success': False, 'message': 'Room parameter is missing'}), 400
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT auth.users.email AS username, message, timestamp
+            FROM private_messages
+            JOIN auth.users ON private_messages.sender_id = auth.users.id
+            WHERE room = %s
+            ORDER BY timestamp ASC
+        ''', (room,))
+        messages = cursor.fetchall()
+        return jsonify({'success': True, 'messages': messages}), 200
+    except Exception as e:
+        logging.error(f"Error fetching chat history: {e}")
+        return jsonify({'success': False, 'message': 'Failed to fetch chat history'}), 500
+    finally:
+        cursor.close()
+        conn.close()
 
 # log room membership
 @socketio.on('join_room')
@@ -112,6 +209,20 @@ def get_username_by_id(user_id):
         cursor.close()
         conn.close()
 
+# test: debug session for sessions
+@app.route('/debug_session')
+def debug_session():
+    return jsonify(session)
+
+# test: debug config
+@app.route('/debug_config')
+def debug_config():
+    return {
+        "SESSION_TYPE": app.config.get("SESSION_TYPE", "default"),
+        "SESSION_FILE_DIR": app.config.get("SESSION_FILE_DIR", "not set")
+    }
+
+
 # Default page
 @app.route('/', methods = ['GET'])
 def default():
@@ -121,6 +232,35 @@ def default():
 @app.route('/login', methods=['GET'])
 def login_page():
     return render_template('login.html', show_video_background = True)
+
+# Login page
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json()
+    email = data.get('email')
+    password = data.get('password')
+
+    if not email or not password:
+        return jsonify({'success': False, 'message': 'Email and password required.'}), 400
+
+    try:
+        # Authenticate user with Supabase
+        response = supabase.auth.sign_in_with_password({
+            "email": email,
+            "password": password
+        })
+
+        if response.user:
+            session['user'] = {
+                'id': response.user.id,
+                'email': response.user.email
+            }
+            return jsonify({'success': True, 'message': 'Login successful.'}), 200
+        else:
+            return jsonify({'success': False, 'message': 'Invalid email or password.'}), 401
+    except Exception as e:
+        logging.error(f"Login error: {e}")
+        return jsonify({'success': False, 'message': 'Error during login.'}), 500
 
 # Signup page after clicking 'don't have account? sign up'
 @app.route('/signup', methods=['GET'])
@@ -168,34 +308,14 @@ def signup():
         logging.error(f"Signup error: {e}")
         return jsonify({'success': False, 'message': 'Error during signup.'}), 500
 
-# Login page
-@app.route('/login', methods=['POST'])
-def login():
-    data = request.get_json()
-    email = data.get('email')
-    password = data.get('password')
+# test: video stuff
+@app.route('/test_video')
+def test_video():
+    video_path = os.path.join(static_dir, 'assets', 'videos')
+    print(f"🟢 Serving video from: {video_path}")
+    return send_from_directory(video_path, 'vintage_field.mp4')
 
-    if not email or not password:
-        return jsonify({'success': False, 'message': 'Email and password required.'}), 400
 
-    try:
-        # Authenticate user with Supabase
-        response = supabase.auth.sign_in_with_password({
-            "email": email,
-            "password": password
-        })
-
-        if response.user:
-            session['user'] = {
-                'id': response.user.id,  # Save user ID for future queries
-                'email': response.user.email
-            }
-            return jsonify({'success': True, 'message': 'Login successful.'}), 200
-        else:
-            return jsonify({'success': False, 'message': 'Invalid email or password.'}), 401
-    except Exception as e:
-        logging.error(f"Login error: {e}")
-        return jsonify({'success': False, 'message': 'Error during login.'}), 500
 
 
 # Get username
@@ -229,19 +349,15 @@ def dashboard():
             # Fetch username from raw_user_meta_data
             response = supabase_admin.auth.admin.get_user_by_id(user_id)
             username = response.user.user_metadata.get('username', 'User')
+            avatar_url = response.user.user_metadata.get('avatar_url', '/static/assets/avatars/41dcbb5b-ce7d-4a70-b684-3c2262df9f15_avatar.png')
 
-            return render_template('dashboard.html', username=username)
+            return render_template('dashboard.html', username=username, avatar_url=avatar_url)
         except Exception as e:
             logging.error(f"Error fetching username for dashboard: {e}")
             return redirect('/login')
     else:
         return redirect('/login')
     return render_template('dashboard.html', show_video_background = False)
-
-"""# dashboard test
-@app.route('/dashboard_test', methods = ['GET'])
-def dashboard_test():
-    return render_template('dashboard_test.html')"""
 
 # Online status changes
 @app.route('/api/update-status', methods=['POST'])
@@ -539,6 +655,94 @@ def handle_login(data):
         cursor.close()
         conn.close()
 
+# Handle notifications for Topics (must use @ with someone's name)
+@app.route('/api/handle-missed-topic', methods=['POST'])
+def handle_missed_topic():
+    if 'user' not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+
+    try:
+        data = request.json
+        topic_id = data.get('topic_id')
+        missed_messages = data.get('missed_messages', 0)
+
+        if not topic_id or missed_messages == 0:
+            return jsonify({"success": False, "message": "Invalid data"}), 400
+
+        user_id = session['user']['id']
+
+        # Validate UUID format
+        import uuid
+        try:
+            uuid.UUID(user_id)
+        except ValueError:
+            return jsonify({"success": False, "message": "Invalid user ID format"}), 400
+
+        # Log missed topic notification
+        create_notification(
+            user_id=user_id,
+            message=f"You missed {missed_messages} messages in Topic Chat.",
+            link=f"/topic/{topic_id}",
+            is_topic_activity=True
+        )
+
+        return jsonify({"success": True, "message": "Missed topic logged."}), 200
+
+    except Exception as e:
+        logging.error(f"❌ Error handling missed topic: {e}")
+        return jsonify({"success": False, "message": "Failed to handle missed topic"}), 500
+
+# notification for @ Topics chat
+def notify_user_mention_topic(user_id, sender_username, topic_id):
+    """
+    Handles notifications for mentions in topic chats.
+    """
+    try:
+        create_notification(
+            user_id=user_id,
+            message=f"You were mentioned by {sender_username} in a topic chat.",
+            link=f"/topic/{topic_id}",
+            is_mention=True
+        )
+
+        # Check last login timestamp
+        last_login = get_user_last_login(user_id)
+        if last_login and (datetime.now(timezone.utc) - last_login).days >= 1:
+            user_email = get_user_email(user_id)
+            if user_email:
+                subject = f"{sender_username} mentioned you in a topic chat"
+                body = f"""
+                <html>
+                    <body>
+                        <h2>{sender_username} mentioned you in a topic chat!</h2>
+                        <p>Click below to view the message:</p>
+                        <a href="https://blakeol.onrender.com/topic/{topic_id}" style="color: white; background: #002147; padding: 10px; text-decoration: none; border-radius: 5px;">View Topic</a>
+                    </body>
+                </html>
+                """
+                send_email(user_email, subject, body, is_html=True)
+
+    except Exception as e:
+        logging.error(f"❌ Error notifying user about topic mention: {e}")
+
+# Get user email
+def get_user_email(user_id):
+    try:
+        response = supabase_admin.auth.admin.get_user_by_id(user_id)
+        return response.user.email if response.user else None
+    except Exception as e:
+        logging.error(f"❌ Error fetching user email: {e}")
+        return None
+
+# Get user last login
+def get_user_last_login(user_id):
+    try:
+        response = supabase_admin.auth.admin.get_user_by_id(user_id)
+        return response.user.last_sign_in_at if response.user else None
+    except Exception as e:
+        logging.error(f"❌ Error fetching last login time: {e}")
+        return None
+
 # WebSocket handler for disconnecting users
 @socketio.on('disconnect')
 def handle_disconnect():
@@ -778,6 +982,103 @@ def get_topic_history():
     except Exception as e:
         logging.error(f"Error fetching topic messages: {e}")
         return jsonify({'error': 'Failed to fetch messages'}), 500
+
+# help avatar uploads   
+@app.route('/static/assets/<path:filename>')
+def serve_assets(filename):
+    return send_from_directory(os.path.join(static_dir, 'assets', 'videos'), filename)
+    # return send_from_directory('static/assets', filename)
+
+# help video play
+@app.route('/static/assets/videos/<path:filename>')
+def serve_video(filename):
+    video_path = os.path.join(static_dir, 'assets', 'videos')
+    print(f"🟢 Serving video from: {video_path}, File: {filename}")
+    return send_from_directory(video_path, filename)
+
+
+# test: avatar upload
+@app.route('/test_save_file', methods=['GET'])
+def test_save_file():
+    try:
+        avatar_directory = os.path.abspath(os.path.join(os.getcwd(), 'frontend', 'static', 'assets', 'avatars'))
+        os.makedirs(avatar_directory, exist_ok=True)
+        test_file_path = os.path.join(avatar_directory, 'test_file.txt')
+        
+        with open(test_file_path, 'w') as f:
+            f.write('Test file content')
+        
+        if os.path.exists(test_file_path):
+            logging.info(f'🟢 Test file saved at {test_file_path}')
+            return f'Test file saved at {test_file_path}', 200
+        else:
+            raise FileNotFoundError(f"Test file not found at {test_file_path}")
+    
+    except Exception as e:
+        logging.error(f'❌ Test save failed: {e}')
+        return str(e), 500
+
+# Upload avatar
+@app.route('/upload_avatar', methods=['POST'])
+def upload_avatar():
+    try:
+        # ✅ Check user session
+        if 'user' not in session:
+            logging.error('❌ Unauthorized: User not in session')
+            return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+
+        user_id = session['user']['id']
+        logging.info(f'🟢 User ID: {user_id}')
+
+        # ✅ Check if file exists in the request
+        if 'avatar' not in request.files:
+            logging.error('❌ No avatar file provided')
+            return jsonify({'success': False, 'message': 'No file provided'}), 400
+
+        avatar = request.files['avatar']
+        if avatar.filename == '':
+            logging.error('❌ Empty filename provided')
+            return jsonify({'success': False, 'message': 'No selected file'}), 400
+
+        # ✅ Validate file type
+        ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+        if '.' not in avatar.filename or avatar.filename.rsplit('.', 1)[1].lower() not in ALLOWED_EXTENSIONS:
+            logging.error('❌ Invalid file type')
+            return jsonify({'success': False, 'message': 'Invalid file type'}), 400
+
+        # ✅ Prepare file path (Correct frontend static folder)
+        filename = secure_filename(f"{user_id}_avatar.{avatar.filename.rsplit('.', 1)[1].lower()}")
+        avatar_directory = os.path.abspath(os.path.join(os.getcwd(), 'frontend', 'static', 'assets', 'avatars'))
+        os.makedirs(avatar_directory, exist_ok=True)  # Ensure the directory exists
+
+        avatar_path = os.path.join(avatar_directory, filename)
+        logging.info(f'🟢 Correct Avatar Path: {avatar_path}')
+
+        # ✅ Save the avatar file
+        try:
+            avatar.save(avatar_path)
+            logging.info(f'🟢 Avatar saved successfully at {avatar_path}')
+        except Exception as e:
+            logging.error(f'❌ Failed to save avatar: {e}')
+            return jsonify({'success': False, 'message': 'Failed to save file on server'}), 500
+
+        # ✅ Verify the file exists
+        if not os.path.exists(avatar_path):
+            raise FileNotFoundError(f"File was not saved at {avatar_path}")
+
+        # ✅ Generate public avatar URL
+        avatar_url = f"/static/assets/avatars/{filename}"
+        logging.info(f'🟢 Avatar URL: {avatar_url}')
+
+        # ✅ Update Supabase metadata
+        response = supabase.auth.update_user({"data": {"avatar_url": avatar_url}})
+        logging.info(f'🟢 Supabase update response: {response}')
+
+        return jsonify({'success': True, 'avatar_url': avatar_url}), 200
+
+    except Exception as e:
+        logging.error(f'❌ Error uploading avatar: {e}')
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 # Handles Topic messages, not private
 @app.route('/send_topic_message', methods=['POST'])

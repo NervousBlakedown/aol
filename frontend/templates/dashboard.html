@@ -13,7 +13,7 @@
                 <img src="/static/images/avatar-placeholder.png" alt="User Avatar">
             </div> -->
             <div class="user-details">
-                <h3>Welcome, <span id="username-display">{{ username }}</span></h3>
+                <h3>Hello, <span id="username-display">{{ username }}</span></h3>
                 <div class="user-status">
                     <!--<h4>Status</h4>-->
                     <div class="status-container">
@@ -43,8 +43,12 @@
             <div id="profile-section" class="collapsible-content">
                 <!-- Avatar and Username -->
                 <div class="profile-header">
-                    <img id="profile-avatar" src="/static/images/avatar-placeholder.png" alt="Avatar">
-                    <h4 id="profile-username">Blakeandbake31</h4>
+                    <div class="avatar-container">
+                        <img id="profile-avatar" src="{{ avatar_url }}" alt="Avatar" class="avatar-image">
+                        <button id ="change-avatar-button" class="btn-icon">Change Pic</button>
+                        <input type="file" id="avatar-upload" accept="image/*" style="display: none;">
+                    </div>
+                    <h4 id="profile-username">{{ username }}</h4>
                 </div>
         
                 <!-- Bio -->
@@ -76,15 +80,8 @@
         
                 <!-- Account Management -->
                 <div class="profile-account">
-                    <h5>Account</h5>
                     <button onclick="changePassword()">Change Password</button>
                     <button onclick="deactivateAccount()">Deactivate Account</button>
-                </div>
-        
-                <!-- Actions -->
-                <div class="profile-actions">
-                    <button onclick="openSettings()">⚙️ Settings</button>
-                    <button onclick="logout()">⛔ Logout</button>
                 </div>
             </div>
         </div>

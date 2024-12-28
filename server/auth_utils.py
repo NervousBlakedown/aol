@@ -4,6 +4,7 @@ import requests
 import logging
 from dotenv import load_dotenv
 from supabase import create_client
+from datetime import datetime, timedelta
 
 # Load environment variables
 load_dotenv()
@@ -54,3 +55,23 @@ def reset_password(reset_token: str, new_password: str) -> dict:
     except requests.RequestException as e:
         logger.error(f"Error resetting password: {e}")
         return {"success": False, "message": "Failed to reset password. Invalid or expired token."}
+
+# Get inactive users
+def get_inactive_users(inactivity_days=14):
+    """
+    Fetches users who have been inactive for a specified number of days.
+
+    Args:
+        inactivity_days (int): Number of days of inactivity to filter users.
+
+    Returns:
+        list: List of inactive users with their details.
+    """
+    try:
+        cutoff_date = (datetime.utcnow() - timedelta(days=inactivity_days)).isoformat()
+        response = supabase.table("users").select("id, email, last_login").lt("last_login", cutoff_date).execute()
+        inactive_users = response.data if response.data else []
+        return inactive_users
+    except Exception as e:
+        logging.error(f"Failed to fetch inactive users: {e}")
+        return []

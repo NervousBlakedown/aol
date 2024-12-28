@@ -7,7 +7,6 @@
     <title>{% block title %}BlakeOL{% endblock %}</title>
     <!-- Dynamically include the stylesheet -->
     <link rel="stylesheet" href="{% if page_style %}{{ url_for('static', filename=page_style) }}{% else %}{{ url_for('static', filename='css/styles.css') }}{% endif %}">
-    <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}"> -->
 
      <!-- Google Fonts -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap">

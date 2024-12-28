@@ -3,18 +3,13 @@ from email_templates.we_miss_you import send_we_miss_you_email
 from auth_utils import get_inactive_users
 import logging
 
-# Scheduler Job
-def send_periodic_we_miss_you_emails():
-    try:
-        inactive_users = get_inactive_users()
-        for user in inactive_users:
-            email = user['email']
-            username = user['username']
-            send_we_miss_you_email(email, username)
-        
-        logging.info(f"'We Miss You' emails sent to {len(inactive_users)} users.")
-    except Exception as e:
-        logging.error(f"Failed to send periodic 'We Miss You' emails: {e}")
+# 'We miss you' job
+def notify_inactive_users():
+    inactive_users = get_inactive_users()
+    for user in inactive_users:
+        email = user.get('email')
+        if email:
+            send_email(email, subject="We miss you!", body="It's been a while since we last saw you. Come back and check us out!")
 
 # Start Scheduler
 if __name__ == '__main__':
