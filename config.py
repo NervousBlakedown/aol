@@ -14,7 +14,7 @@ class Config:
     SUPABASE_SERVICE_ROLE_KEY = os.getenv('SUPABASE_SERVICE_ROLE_KEY', 'not in config')
     SECRET_KEY = os.getenv('SECRET_KEY', 'fallback_secret_key')
     SESSION_LIFETIME = int(os.getenv('SESSION_LIFETIME', 60)) * 60  # Default 60 minutes
-    DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
+    DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
     SUPABASE_JWT_SECRET = os.getenv('SUPABASE_JWT_SECRET', 'not in config')
 
     @classmethod
