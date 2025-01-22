@@ -40,6 +40,7 @@ body, html {
     background: rgba(168, 120, 120, 0.489);
 }
 
+
 /* Form Styling */
 form {
     width: 100%;
@@ -286,21 +287,6 @@ h1, h2, h3, .cta-button {
     margin-top: 20px;
 }
 
-.donate-now-button {
-    padding: 15px 30px;
-    font-size: 18px;
-    background-color: #002855;
-    color: #ffffff;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-.donate-now-button:hover {
-    background-color: gray;
-}
-
 .payment-text {
     font-size: 14px;
     color: #666666;
@@ -318,15 +304,31 @@ h1, h2, h3, .cta-button {
 
 .home-button {
     display: inline-block;
-    margin-top: 15px;
+    /* margin-top: 15px; */
     background-color: #002855; /* Maastricht Blue */
     color: white;
-    font-size: 16px;
-    padding: 10px 20px;
+    font-size: 18px;
+    padding: 15px 30px;
     border-radius: 5px;
     text-align: center;
     text-decoration: none;
     transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.donate-now-button {
+    display: inline-block;
+    padding: 15px 30px;
+    font-size: 18px;
+    background-color: #002855;
+    color: #ffffff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.donate-now-button:hover {
+    background-color: gray;
 }
 
 /* Feature Table Styling */

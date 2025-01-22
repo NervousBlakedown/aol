@@ -26,12 +26,10 @@
     </form>
 
      <div class="form-footer">
-        <a href="{{ url_for('login_page') }}" class="cta-button">Login</a>
-        <!--<p>Already on BlakeOL? <a href="{{ url_for('login_page') }}">Log in</a></p>-->
-        <a href="{{ url_for('about_page') }}" class="cta-button">Our Story</a>
-        <!--<a href = "{{ url_for('about_page') }}">Our Story</a> -->
-        <a href="{{ url_for('contact_page') }}" class="cta-button">Contact Us</a>
-        <a href="{{ url_for('handle_donate') }}" class="cta-button">Donate</a>
+        <a href="{{ url_for('auth.login') }}" class="cta-button">Login</a>
+        <a href="{{ url_for('misc.about_page') }}" class="cta-button">Our Story</a>
+        <a href="{{ url_for('misc.contact_page') }}" class="cta-button">Contact Us</a>
+        <a href="{{ url_for('misc.donation_page') }}" class="cta-button">Donate</a>
         <p><a href="#">Privacy Policy</a> and <a href="#">Terms and Conditions</a></p>
     </div>
 </div>
@@ -47,7 +45,7 @@
       }
   
       try {
-        const response = await fetch('/signup', {
+        const response = await fetch('/auth/signup', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email, username, password })
@@ -56,7 +54,7 @@
         const data = await response.json();
         if (response.ok && data.success) {
           alert(data.message);
-          window.location.href = '/login'; // Redirect to login page
+          window.location.href = '/auth/login'; // Redirect to login page
         } else {
           alert(data.message || 'Signup failed. Please try again.');
         }

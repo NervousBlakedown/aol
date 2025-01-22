@@ -16,7 +16,7 @@
 
   <button id="create-account-button">Create BlakeIM Account</button>
 
-  <p>Already have an account? <a href="{{ url_for('login_page') }}">Login</a></p>
+  <p>Already have an account? <a href="{{ url_for('auth.login') }}">Login</a></p>
 </div>
 
 <audio id="signup_sound" src="{{ url_for('static', filename='assets/sounds/retro_console_startup.mp3') }}" preload="auto"></audio>

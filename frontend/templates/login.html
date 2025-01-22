@@ -1,7 +1,5 @@
 {% extends 'base.html' %}
-
 {% block title %}Login - BlakeOL{% endblock %}
-
 {% set page_style = 'css/auth.css' %}
 
 {% block content %}
@@ -18,43 +16,12 @@
         <label for="password">Password</label>
         <input type="password" id="password" placeholder="Enter your password" required>
 
-        <button type="button" id="login-button" class="cta-button">Log In</button> <!-- primary-btn-->
+        <button type="button" id="login-button" class="cta-button">Log In</button>
     </form>
 
     <div class="form-footer">
-        <p>Don't have an account? <a href="{{ url_for('signup') }}">Sign Up</a></p>
-        <p><a href="{{ url_for('forgot_password') }}">Forgot Password?</a></p>
+        <p>Don't have an account? <a href="{{ url_for('auth.signup') }}">Sign Up</a></p>
+        <p><a href="{{ url_for('auth.forgot_password') }}">Forgot Password?</a></p>
     </div>
 </div>
-
-<script>
-    document.getElementById('login-button').addEventListener('click', async function () {
-        const email = document.getElementById('email').value.trim();
-        const password = document.getElementById('password').value.trim();
-
-        if (!email || !password) {
-            alert('Please fill out all fields.');
-            return;
-        }
-
-        try {
-            const response = await fetch('/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
-            });
-
-            const data = await response.json();
-            if (response.ok && data.success) {
-                alert(data.message);
-                window.location.href = '/dashboard'; // Redirect to the dashboard
-            } else {
-                alert(data.message || 'Login failed. Please try again.');
-            }
-        } catch (error) {
-            console.error('Login error:', error);
-            alert('An error occurred. Please try again.');
-        }
-    });
-</script>
 {% endblock %}

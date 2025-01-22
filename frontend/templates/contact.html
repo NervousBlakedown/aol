@@ -28,8 +28,8 @@
 
     <section class="contact-footer">
         <p>We aim to respond to all inquiries within 24-48 hours. Thank you for reaching out!</p>
-        <a href="/signup" class="cta-button">Join BlakeOL</a>
-        <a href="/login" class="cta-button">Login</a>
+        <a href="{{ url_for('auth.signup') }}" class="cta-button">Join BlakeOL</a>
+        <a href="{{ url_for('auth.login') }}" class="cta-button">Login</a>
 
     </section>
 </div>

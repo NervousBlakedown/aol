@@ -1,223 +1,228 @@
+<!-- frontend/templates/dashboard.html -->
 {% extends 'base.html' %}
-
 {% block title %}Dashboard - BlakeOL{% endblock %}
-
 {% set page_style = 'css/dashboard.css' %}
 
 {% block content %}
 <div class="dashboard-layout">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <div class="user-info-card">
-            <!--<div class="user-avatar">
-                <img src="/static/images/avatar-placeholder.png" alt="User Avatar">
-            </div> -->
-            <div class="user-details">
-                <h3>Hello, <span id="username-display">{{ username }}</span></h3>
-                <div class="user-status">
-                    <!--<h4>Status</h4>-->
-                    <div class="status-container">
-                        <span id="status-online" class="status-option active" onclick="updateStatus('online')">Online</span>
-                        <span id="status-away" class="status-option" onclick="updateStatus('away')">Away</span>
-                        <span id="status-dnd" class="status-option" onclick="updateStatus('do not disturb')">Do Not Disturb</span>
-                    </div>
-                    <div class="user-actions">
-                        <button id="settings-button" class="btn-icon">⚙️</button>
-                        <button id="logout-button" class="btn-icon btn-danger">Logout</button>
-                        <button id="notifications-button" class="btn-icon">
-                            🔔 <span id="notification-count" class="badge">3</span>
-                        </button>
-                    </div>
-                    <div id="notifications-dropdown" class="notifications-dropdown">
-                        <ul>
-                            <li onclick="navigateToNotification('message')">Alex sent you a message.</li>
-                            <li onclick="navigateToNotification('topic')">Topic: Tech has new activity.</li>
-                            <li onclick="navigateToNotification('status')">Your status was changed to Away.</li>
-                        </ul>
-                </div>                
-            </div>
-        </div>      
+  <!-- Sidebar -->
+  <aside class="sidebar">
 
-        <div class="collapsible" data-toggle="profile-section">
-            <h3>Profile <span class="toggle-icon">▼</span></h3>
-            <div id="profile-section" class="collapsible-content">
-                <!-- Avatar and Username -->
-                <div class="profile-header">
-                    <div class="avatar-container">
-                        <img id="profile-avatar" src="{{ avatar_url }}" alt="Avatar" class="avatar-image">
-                        <button id ="change-avatar-button" class="btn-icon">Change Pic</button>
-                        <input type="file" id="avatar-upload" accept="image/*" style="display: none;">
-                    </div>
-                    <h4 id="profile-username">{{ username }}</h4>
-                </div>
-        
-                <!-- Bio -->
-                <div class="profile-bio">
-                    <p id="profile-bio">"Building something awesome."</p>
-                    <button onclick="editBio()">Edit Bio</button>
-                </div>
-        
-                <!-- Status -->
-                <div class="profile-status">
-                    <p>Status: <strong id="profile-status">Online</strong></p>
-                </div>
-        
-                <!-- Preferences -->
-                <div class="profile-preferences">
-                    <h5>Preferences</h5>
-                    <label>
-                        🔔 Notifications:
-                        <input type="checkbox" id="profile-notifications" checked>
-                    </label>
-                    <label>
-                        🛡️ Privacy:
-                        <select id="profile-privacy">
-                            <option value="public">Public</option>
-                            <option value="private">Private</option>
-                        </select>
-                    </label>
-                </div>
-        
-                <!-- Account Management -->
-                <div class="profile-account">
-                    <button onclick="changePassword()">Change Password</button>
-                    <button onclick="deactivateAccount()">Deactivate Account</button>
-                </div>
-            </div>
-        </div>
-        
+    <!-- User Info Card: "Hello, user" -->
+    <div class="user-info-card">
+      <div class="user-details">
+        <h3>Hello, <span id="username-display">{{ username }}</span></h3>
+        <div class="user-status">
+          <div class="status-container">
+            <!-- Let your initStatusOptions() handle the “active” class -->
+            <span id="status-online" class="status-option">Online</span>
+            <span id="status-away" class="status-option">Away</span>
+            <span id="status-dnd" class="status-option">Do Not Disturb</span>
+          </div>
 
-        <div class="collapsible" data-toggle="tools-section">
-            <h3>Tools <span class="toggle-icon">▼</span></h3>
-            <div id="tools-section" class="collapsible-content">
-                <input type="text" id="tools-search-input" class="search-input" placeholder="Search chats, topics, pals..." onclick="event.stopPropagation();">
-                <button class="btn btn-primary">Notifications</button>
-                <button class="btn btn-secondary">Settings</button>
-            </div>
+          <div class="user-actions">
+            <button id="settings-button" class="btn-icon">⚙️</button>
+            <button id="logout-button" class="btn-icon btn-danger" onclick="window.location.href='/logout'">Logout</button>
+            <button id="notifications-button" class="btn-icon">
+              🔔 <span id="notification-count" class="badge">3</span>
+            </button>
+          </div>
+
+          <!-- Notification Dropdown -->
+          <div id="notifications-dropdown" class="notifications-dropdown">
+            <ul>
+              <li onclick="navigateToNotification('message')">Alex sent you a message.</li>
+              <li onclick="navigateToNotification('topic')">Topic: Tech has new activity.</li>
+              <li onclick="navigateToNotification('status')">Your status was changed to Away.</li>
+            </ul>
+          </div>
         </div>
-        <div class="collapsible" data-toggle="contacts-section">
-            <h3>Your Pals <span class="toggle-icon">▼</span></h3>
-            <div id="contacts-section" class="collapsible-content">
-                <ul id="contacts-list" class="contacts-list"></ul>
-                <button id="start-chat-button" class="btn btn-primary">Chat</button>
-            </div>
+      </div>
+    </div>
+
+    <!-- Collapsible: Profile -->
+    <div class="collapsible" data-toggle="profile-section">
+      <h3>Profile <span class="toggle-icon">▼</span></h3>
+      <div id="profile-section" class="collapsible-content">
+        <!-- Avatar + Username -->
+        <div class="profile-header">
+          <div class="avatar-container">
+            <img id="profile-avatar" src="{{ avatar_url }}" alt="Avatar" class="avatar-image">
+            <button id="change-avatar-button" class="btn-icon">Change Pic</button>
+            <input type="file" id="avatar-upload" accept="image/*" style="display: none;">
+          </div>
+          <h4 id="profile-username">{{ username }}</h4>
         </div>
 
-        <div class="collapsible" data-toggle="search-section">
-            <h3>Add Pals <span class="toggle-icon">▼</span></h3>
-            <div id="search-section" class="collapsible-content">
-                <input type="text" id="search-input" class="search-input" placeholder="Search users..." onclick="event.stopPropagation();">
-                <ul id="search-results" class="search-results"></ul>
-            </div>
+        <!-- Bio -->
+        <div class="profile-bio">
+          <p id="profile-bio">{{ bio }}</p>
+          <button id="edit-bio-button">Edit Bio</button>
         </div>
-    </aside>
 
-    <!-- Main Content -->
-    <main class="main-content">
-        <header class="dashboard-header">
-
-        </header>
-
-        <div class="chats-container-layout" style="display: flex; gap: 20px;">
-            <!-- Active Chats -->
-            <div class="collapsible" data-toggle="active-chats" style="flex: 2;">
-                <h3 class="section-title">Chats <span class="toggle-icon">▼</span></h3>
-                <div id="active-chats" class="collapsible-content">
-                    <div id="chats-container" class="chats-container"></div>
-                </div>
-            </div>
-
-            <!-- Topics Chat -->
-            <div class="collapsible" data-toggle="topics-chats" style="flex: 2;">
-                <h3 class="section-title">Topics<span class="toggle-icon">▼</span></h3>
-                <div id="topics-chats" class="collapsible-content">
-                    <div class="topics-buttons">
-                        <button class="cta-button topic-button" data-tooltip="Discuss current events" onclick="openTopicChat('News')">News</button>
-                        <button class="cta-button topic-button" data-tooltip= "Gaming, tech, etc." onclick="openTopicChat('Tech')">Tech</button>
-                        <button class="cta-button topic-button" data-tooltip= "Catholic teachings, Joel Osteen's teeth, etc." onclick="openTopicChat('Religion')">Religion</button>
-                        <button class="cta-button topic-button" data-tooltip= "Political views, political news, etc." onclick="openTopicChat('Politics')">Politics</button>
-                        <button class="cta-button topic-button" data-tooltip= "Let's go, sports team!" onclick="openTopicChat('Sports')">Sports</button>
-                        <button class="cta-button topic-button" data-tooltip= "Blue Steel, Safari, El Tigre-so many looks, so little time." onclick="openTopicChat('Fashion')">Fashion</button>
-                        <button class="cta-button topic-button" data-tooltip= "Miscellaneous hijinks" onclick="openTopicChat('Random')">Random</button>
-                        <button class="cta-button topic-button" data-tooltip="Plan events with friends, organize the Uber, etc." onclick="openTopicChat('Events')">Events</button>
-                        <button class="cta-button topic-button" data-tooltip="Learning resources, academic achievements, lifelong education, etc." onclick="openTopicChat('Education')">Education</button>
-                        <button class="cta-button topic-button" data-tooltip="Food and drink recipes, etc." onclick="openTopicChat('Cooking')">Cooking</button>
-                        <button class="cta-button topic-button" data-tooltip="Explore new genres, discuss favorite playlists and artists, etc." onclick="openTopicChat('Music')">Music</button>
-                        <button class="cta-button topic-button" data-tooltip="Author spotlights, reading challenges, book recommendations, etc." onclick="openTopicChat('Books')">Books</button>
-                        <button class="cta-button topic-button" data-tooltip="Plan events with friends, organize the Uber, etc." onclick="openTopicChat('Travel')">Travel</button>
-                        <button class="cta-button topic-button" data-tooltip="Financial literacy, stock market news, etc." onclick="openTopicChat('Business & Finance')">Business & Finance</button>
-                        <button class="cta-button topic-button" data-tooltip="Photography, visual arts, creative design, etc." onclick="openTopicChat('Art & Design')">Art & Design</button>
-                    </div>
-                    <!-- Topic Chats Container (Right Side) -->
-                    <div id="topics-container" class="topics-container">
-                </div>
-            </div>
+        <!-- Status -->
+        <div class="profile-status">
+          <p>Status: <strong id="profile-status">Online</strong></p>
         </div>
-    </main>
+
+        <!-- Preferences -->
+        <div class="profile-preferences">
+          <h5>Preferences</h5>
+          <label>
+            🔔 Notifications:
+            <input type="checkbox" id="profile-notifications" checked>
+          </label>
+          <label>
+            🛡️ Privacy:
+            <select id="profile-privacy">
+              <option value="public">Public</option>
+              <option value="private">Private</option>
+            </select>
+          </label>
+        </div>
+
+        <!-- Account Management -->
+        <div class="profile-account">
+          <button onclick="changePassword()">Change Password</button>
+          <button onclick="deactivateAccount()">Deactivate Account</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Collapsible: Music Player -->
+    <div class="collapsible" data-toggle="music-section">
+      <h3>Music Player <span class="toggle-icon">▼</span></h3>
+      <div id="music-section" class="collapsible-content">
+        <div id="dropdown-container" style="display: flex; align-items: center; gap: 10px;">
+          <button id="back-button" class="back-icon" style="display: none;">◀</button>
+          <select id="dynamic-selector"></select>
+        </div>
+
+        <div id="now-playing">
+          Now Playing: <span id="current-song">None</span>
+        </div>
+
+        <div class="audio-controls">
+          <button id="prev-track" aria-label="Previous Track">⏮️</button>
+          <audio id="audio-player" controls>
+            <source id="audio-source" src="" type="audio/mpeg">
+            Your browser does not support the audio element.
+          </audio>
+          <button id="next-track" aria-label="Next Track">⏭️</button>
+          <button id="volume-button" aria-label="Toggle Volume">🔊</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Collapsible: Tools -->
+    <div class="collapsible" data-toggle="tools-section">
+      <h3>Tools <span class="toggle-icon">▼</span></h3>
+      <div id="tools-section" class="collapsible-content">
+        <input
+          type="text"
+          id="tools-search-input"
+          class="search-input"
+          placeholder="Search chats, topics, pals..."
+          onclick="event.stopPropagation();"
+        >
+        <button class="btn btn-primary">Notifications</button>
+        <button class="btn btn-secondary">Settings</button>
+      </div>
+    </div>
+
+    <!-- Collapsible: Pals/Contacts List -->
+    <div class="collapsible" data-toggle="contacts-section">
+        <h3>Your Pals <span class="toggle-icon">▼</span></h3>
+        <div id="contacts-section" class="collapsible-content" style="flex: 1; max-height: 400px; overflow-y: auto;">
+          <ul id="contacts-list" class="contacts-list">
+            <!-- Example of dynamically generated pals -->
+            <!-- These will be added via JavaScript -->
+          </ul>
+        </div>
+        <button id="chat-button" class="btn btn-primary">Chat</button>
+      </div>
+
+    <!-- Collapsible: Search Pals -->
+    <div class="collapsible" data-toggle="search-section">
+      <h3>Add Pals <span class="toggle-icon">▼</span></h3>
+      <div id="search-section" class="collapsible-content">
+        <input
+          type="text"
+          id="search-input"
+          class="search-input"
+          placeholder="Search users..."
+          onclick="event.stopPropagation();"
+        >
+        <ul id="search-results" class="search-results"></ul>
+      </div>
+    </div>
+
+  </aside><!-- /sidebar -->
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <header class="dashboard-header"></header>
+
+    <div class="chats-container-layout" style="display: flex; gap: 20px;">
+      <!-- "Chats" Section -->
+      <div class="collapsible" data-toggle="active-chats" style="flex: 2;">
+        <h3 class="section-title">Chats <span class="toggle-icon">▼</span></h3>
+        <div id="active-chats" class="collapsible-content">
+          <div id="chats-container" class="chats-container"></div>
+        </div>
+      </div>
+
+      <!-- "Topics" Section -->
+      <div class="collapsible" data-toggle="topics-chats" style="flex: 2;">
+        <h3 class="section-title">Topics <span class="toggle-icon">▼</span></h3>
+        <div id="topics-chats" class="collapsible-content">
+          <div id="topics-container" class="topics-buttons">
+            <!-- Buttons generated here -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </main><!-- /main-content -->
+</div><!-- /dashboard-layout -->
+
+<!-- News Ticker Section -->
+<div class="news-ticker">
+  <div class="ticker-content" id="news-ticker">
+    Loading headlines...
+  </div>
+  <button class="change-feed-button">Change Feed</button>
+  <div class="rss-feed-popup">
+    <form id="rss-feed-form">
+      <label><input type="radio" id="bbc" name="rss-feed" value="bbc" checked> BBC</label>
+      <label><input type="radio" id="npr" name="rss-feed" value="npr"> NPR</label>
+      <label><input type="radio" id="saint" name="rss-feed" value="saint"> Saint of the Day</label>
+      <label><input type="radio" id="cna" name="rss-feed" value="cna"> Vatican</label>
+    </form>
+  </div>
 </div>
+{% endblock %}
 
+{% block scripts %}
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        document.querySelectorAll('.collapsible').forEach((section) => {
-            section.addEventListener('click', (event) => {
-                const isInputClicked = event.target.tagName === 'INPUT' || event.target.tagName === 'SELECT' || event.target.tagName === 'BUTTON';
-                if (isInputClicked) return;
+  // (Optional) Jinja-provided username, user_id
+  window.username = "{{ username | tojson }}";
+  window.user_id = "{{ session['user']['id'] if 'user' in session else 'null' | tojson }}";
 
-                const contentId = section.getAttribute('data-toggle');
-                const content = document.getElementById(contentId);
-                const icon = section.querySelector('.toggle-icon');
+  if (window.username) {
+    sessionStorage.setItem('username', window.username);
+    console.log('✅ Username set in sessionStorage:', window.username);
+  } else {
+    console.warn('⚠️ Username missing or not set in Jinja context.');
+  }
 
-                if (content.style.display === 'none' || !content.style.display) {
-                    content.style.display = 'block';
-                    icon.textContent = '▼';
-                } else {
-                    content.style.display = 'none';
-                    icon.textContent = '▶';
-                }
-            });
-        });
-        // begin
-        const statusOptions = document.querySelectorAll('.status-option');
-        statusOptions.forEach(option => {
-            option.addEventListener('click', () => {
-                // Remove active class from all status options
-                statusOptions.forEach(opt => opt.classList.remove('active'));
-
-                // Add active class to the clicked status option
-                option.classList.add('active');
-
-                // Optional: Send status change to the backend
-                const selectedStatus = option.textContent.trim().toLowerCase();
-                console.log(`User status changed to: ${selectedStatus}`);
-
-                // Example Backend Call (Optional)
-                fetch('/api/update-status', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ status: selectedStatus })
-                })
-                .then(response => {
-                    if (response.ok) {
-                        console.log('✅ Status updated successfully');
-                    } else {
-                        console.error('❌ Failed to update status');
-                    }
-                });
-
-                // Persist status in localStorage
-                localStorage.setItem('userStatus', selectedStatus);
-            });
-        });
-
-        // Load Status on Page Refresh (Optional)
-        const savedStatus = localStorage.getItem('userStatus');
-        if (savedStatus) {
-            const activeOption = document.getElementById(`status-${savedStatus}`);
-            if (activeOption) {
-                statusOptions.forEach(opt => opt.classList.remove('active'));
-                activeOption.classList.add('active');
-            }
-        }
-    });
+  if (window.user_id) {
+    sessionStorage.setItem('user_id', window.user_id);
+    console.log('✅ User ID set in sessionStorage:', window.user_id);
+  } else {
+    console.warn('⚠️ User ID missing or not set in Jinja context.');
+  }
 </script>
+
+<!-- Your main JS entry -->
+<script defer type="module" src="{{ url_for('static', filename='js/modules/app.js') }}"></script>
 {% endblock %}
