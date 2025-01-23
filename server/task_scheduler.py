@@ -1,4 +1,4 @@
-# server/scheduler.py
+# server/task_scheduler.py
 from apscheduler.schedulers.background import BackgroundScheduler
 from server.utils.db import supabase_client
 from server.utils.email_utils import send_email
@@ -8,14 +8,14 @@ from server.utils.auth_utils import get_inactive_users
 import logging
 from datetime import datetime, timedelta
 
+# create scheduler instance at module level
+scheduler = BackgroundScheduler()
 
-# 'We miss you' job
+# 'We miss you' job; send emails to people who haven't logged in for a week
 def notify_inactive_users():
     try:
         conn = supabase_client.get_db_connection()
         cursor = conn.cursor()
-
-        # SQL query to find users who haven't logged in for a week
         cursor.execute('''
             SELECT 
                 raw_user_meta_data->>'email' AS email, 
@@ -129,14 +129,14 @@ def check_and_notify_unread_messages():
         logging.error(f"❌ Error sending notifications: {e}")
 
 
+# add jobs to scheduler
+scheduler.add_job(delete_old_messages, 'interval', days=3)
+scheduler.add_job(notify_inactive_users, 'interval', weeks=1)
+scheduler.add_job(notify_missed_messages, 'interval', hours=1)
+scheduler.add_job(check_and_notify_unread_messages, 'interval', hours=24)
+
 # Start Scheduler
 if __name__ == '__main__':
-    scheduler = BackgroundScheduler()
-    scheduler.add_job(delete_old_messages, 'interval', days=3)
-    scheduler.add_job(notify_inactive_users, 'interval', weeks=1)
-    scheduler.add_job(notify_missed_messages, 'interval', hours=1)
-    scheduler.add_job(send_periodic_we_miss_you_emails, 'interval', weeks=1)
-    scheduler.add_job(check_and_notify_unread_messages, 'interval', hours=24)
     scheduler.start()
     print("Scheduler is running... Press Ctrl+C to stop.")
     # Prevent script from exiting
