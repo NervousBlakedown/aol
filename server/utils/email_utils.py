@@ -1,6 +1,6 @@
 # server/utils/email_utils.py
 import smtplib
-from config import GMAIL_ADDRESS, GMAIL_PASSWORD, Config
+from config import Config
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import os
