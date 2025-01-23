@@ -13,8 +13,6 @@ load_dotenv()
 SUPABASE_URL = Config.SUPABASE_URL
 SUPABASE_KEY = Config.SUPABASE_KEY
 SUPABASE_JWT_SECRET = Config.SUPABASE_JWT_SECRET
-if not SUPABASE_URL or not SUPABASE_KEY:
-    raise ValueError("SUPABASE_URL and SUPABASE_KEY must be set in your environment variables.")
 
 # Create Supabase client
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)

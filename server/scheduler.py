@@ -4,7 +4,7 @@ from server.utils.db import supabase_client
 from server.utils.email_utils import send_email
 from server.routes.notifications_routes import notify_missed_messages
 # from email_templates.we_miss_you import send_we_miss_you_email
-from auth_utils import get_inactive_users
+from server.utils.auth_utils import get_inactive_users
 import logging
 from datetime import datetime, timedelta
 
