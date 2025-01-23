@@ -1,6 +1,6 @@
 # server/utils/email_utils.py
 import smtplib
-from config import GMAIL_ADDRESS, GMAIL_PASSWORD
+from config import GMAIL_ADDRESS, GMAIL_PASSWORD, Config
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import os
@@ -10,30 +10,28 @@ from smtplib import SMTP
 from flask import url_for
 from dotenv import load_dotenv
 load_dotenv()
-GMAIL_ADDRESS = os.getenv('GMAIL_ADDRESS')
-GMAIL_PASSWORD = os.getenv('GMAIL_PASSWORD')
-if not GMAIL_ADDRESS or not GMAIL_PASSWORD:
-    raise ValueError("GMAIL_ADDRESS and GMAIL_PASSWORD must be set in your environment variables.")
-
-# Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Send email
-def send_email(to_email, subject, body):
-    try:
-        with SMTP('smtp.gmail.com', 587) as smtp:
-            smtp.starttls()
-            smtp.login(GMAIL_ADDRESS, GMAIL_PASSWORD)
-            msg = MIMEText(body, 'html')
-            msg['Subject'] = subject
-            msg['From'] = GMAIL_ADDRESS
-            msg['To'] = to_email
-            smtp.sendmail(GMAIL_ADDRESS, to_email, msg.as_string())
-        logging.info(f"Email sent to {to_email}")
-    except Exception as e:
-        logging.error(f"Failed to send email: {e}")
 
+# Send email
+def send_email(to_email, subject, message):
+    msg = MIMEText(message)
+    msg["Subject"] = subject
+    msg["From"] = Config.SMTP_FROM_EMAIL
+    msg["To"] = to_email
+
+    try:
+        with smtplib.SMTP(Config.SMTP_SERVER, Config.SMTP_PORT) as server:
+            server.starttls()
+            server.login(Config.SMTP_USERNAME, Config.SMTP_PASSWORD)
+            server.sendmail(Config.SMTP_FROM_EMAIL, to_email, msg.as_string())
+            print(f"📧 Email sent to {to_email}")
+    except Exception as e:
+        print(f"❌ Failed to send email: {e}")
+
+
+# send email notification
 def send_email_notification(to_email, subject, body):
     """
     Send an email notification.
