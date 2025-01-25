@@ -36,34 +36,8 @@ BlakeOL is a retro-inspired chat application that leverages Flask, Socket.IO, an
 
 ## Getting Started
 
-1. **Clone the repo:**
-   ```bash
-   git clone https://github.com/yourusername/BlakeOL.git
-   cd BlakeOL
-
-2. **Set up environment variables:**
-Create an .env file at the root of the project. Include:
-DATABASE_URL="your_supabase_database_url"
-SUPABASE_URL="your_supabase_url"
-SUPABASE_KEY="your_supabase_key"
-GMAIL_ADDRESS="your_gmail_address"
-GMAIL_PASSWORD="your_gmail_app_password"
-
-3. **Install Python dependencies:**
-cd server
-pip install -r requirements.txt
-
-4. **Initialize the Database: If you’re using the provided scripts and schema, run:**
-python db/init_db.py
-Or run SQL migrations on your Supabase/Postgres DB as needed.
-
-5. **Run the app:**
-cd server
-python server.py
-This will start the Flask server with Socket.IO. By default, it listens on http://0.0.0.0:5000.
-
-6. **Access the Application: Open your browser and go to:**
-http://localhost:5000
+**Access the Application: Open your browser and go to:**
+http://blakeol.onrender.com
 Sign up for a new account.
 Login from the /login page.
 Explore the dashboard, add contacts, and start chatting.
@@ -91,7 +65,4 @@ Pull requests are welcome. For major changes, please open an issue first to disc
 
 **License**
 MIT License. See LICENSE file for details.
-
-
-
 
