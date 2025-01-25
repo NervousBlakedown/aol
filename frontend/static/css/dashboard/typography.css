@@ -1,0 +1,13 @@
+/* frontend/static/css/dashboard/typography.css */
+/* 'Orbitron' font; Mirror's Edge 'Eurostile' equivalent */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+body, html {
+    font-family: 'Noto Sans', sans-serif;
+    color: #ffffff;
+}
+
+h1, h2, h3 {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: bold;
+}

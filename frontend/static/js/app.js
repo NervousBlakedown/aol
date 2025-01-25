@@ -120,7 +120,7 @@ try {
 }
 }
   
-  // This function will fetch the user's profile from /user/profile
+  // fetch the user's profile from /user/profile
   async function loadUserProfile() {
     try {
       console.log('Attempting to load profile via authenticatedFetch...');

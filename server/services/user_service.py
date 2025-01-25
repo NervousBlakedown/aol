@@ -1,9 +1,41 @@
 # server/services/user_service.py
 from flask import jsonify, session
-from server.utils.db import supabase_client
+from server.utils.db import supabase_client, mark_email_as_sent
+from server.services.email_service import (
+    trigger_thank_you_email, 
+    send_thank_you_signup_email)
 from werkzeug.utils import secure_filename
 import os
 import logging
+import threading
+logger = logging.getLogger(__name__)
+
+
+# handle 'thank you' email post-signup
+def handle_post_signup(user_data):
+    """
+    Handles post-signup actions such as sending a thank-you email.
+
+    Args:
+        user_data (dict): User data containing username and email.
+    """
+    try:
+        email = user_data.get('email')
+        username = user_data.get('username')
+        user_id = user_data.get('id')
+
+
+        if email and username and user_id:
+            if send_thank_you_signup_email(email, username):
+                mark_email_as_sent(user_id)
+                logger.info(f"✅ Thank you email sent and marked for {email}")
+            else:
+                logger.error(f"❌ Failed to send email to {email}")
+        else:
+            logger.error("❌ Missing email or username in user data.")
+    except Exception as e:
+        logger.error(f"❌ Failed to process post-signup actions: {e}")
+
 
 # Fetch User Profile
 def get_profile(user):

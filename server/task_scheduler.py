@@ -1,12 +1,28 @@
 # server/task_scheduler.py
 from apscheduler.schedulers.background import BackgroundScheduler
-from server.utils.db import supabase_client
+from server.utils.db import supabase_client, fetch_new_users
+from server.services.user_service import handle_post_signup
 from server.utils.email_utils import send_email
 from server.routes.notifications_routes import notify_missed_messages
 # from email_templates.we_miss_you import send_we_miss_you_email
 from server.utils.auth_utils import get_inactive_users
 import logging
+import time
 from datetime import datetime, timedelta
+logger = logging.getLogger(__name__)
+
+
+# check new users
+def check_new_users():
+    """
+    Checks for new users and triggers post-signup actions.
+    This runs a few times a day.
+    """
+    logger.info("🔍 Checking for new users...")
+    new_users = fetch_new_users()
+    for user in new_users:
+        handle_post_signup({'email': user['email'], 'username': user['username'], 'id': user['id']})
+
 
 # create scheduler instance at module level
 scheduler = BackgroundScheduler()
@@ -134,6 +150,8 @@ scheduler.add_job(delete_old_messages, 'interval', days=3)
 scheduler.add_job(notify_inactive_users, 'interval', weeks=1)
 scheduler.add_job(notify_missed_messages, 'interval', hours=1)
 scheduler.add_job(check_and_notify_unread_messages, 'interval', hours=24)
+scheduler.add_job(check_new_users, 'cron', hour='9,15,21', minute=0) # 9 AM, 3 PM, 9 PM
+
 
 # Start Scheduler
 if __name__ == '__main__':

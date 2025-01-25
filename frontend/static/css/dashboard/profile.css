@@ -1,0 +1,22 @@
+/* frontend/static/css/dashboard/profile.css */
+.user-info-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    background: #002855;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    border: 1px solid #004080;
+    max-width: 320px;
+    margin-bottom: 15px;
+}
+
+.avatar-container img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 3px solid #80deea;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}

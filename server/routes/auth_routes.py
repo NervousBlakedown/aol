@@ -11,6 +11,7 @@ import jwt
 from datetime import datetime, timedelta
 from urllib.parse import urlparse
 from config import Config
+from server.email_templates.thank_you_signup import send_thank_you_signup_email
 SUPABASE_URL = Config.SUPABASE_URL
 SUPABASE_KEY = Config.SUPABASE_KEY
 SUPABASE_JWT_SECRET = Config.SUPABASE_JWT_SECRET
@@ -53,7 +54,7 @@ def get_username_by_id():
         return jsonify({'success': False, 'message': f'Error fetching username: {str(e)}'}), 500
 
 
-# Root/Signup
+# Root/Signup/send 'thank you for signing up' email
 @auth_bp.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'GET':
@@ -89,6 +90,15 @@ def signup():
         else:
             logging.warning(f"Sign-up failed in Supabase for {email}: {response}")
             return jsonify({"success": False, "message": "Sign-up failed in Supabase"}), 400
+
+        """# Your existing user creation logic
+        success = create_user(email, username, data.get('password'))
+        
+        if success:
+            send_thank_you_signup_email(email, username)
+            return jsonify({"success": True, "message": "User registered successfully."})
+        else:
+            return jsonify({"success": False, "message": "Registration failed."}), 400"""
 
     except Exception as e:
         logging.exception(f"Error signing up user: {e}")

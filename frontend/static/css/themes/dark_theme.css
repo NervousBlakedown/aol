@@ -1,0 +1,40 @@
+/* frontend/static/css/themes/dark_theme.css */
+:root {
+    --primary-bg: #001c3d;
+    --primary-color: #ffffff;
+    --secondary-bg: #002244;
+    --accent-color: #80deea;
+    --text-color: #ffffff;
+    --button-bg: #004080;
+    --button-text: #ffffff;
+    --sidebar-bg: #002855;
+}
+
+/* Apply theme */
+body {
+    background-color: var(--primary-bg);
+    color: var(--text-color);
+}
+
+/* Sidebar */
+.sidebar {
+    background-color: var(--sidebar-bg);
+    color: var(--text-color);
+}
+
+/* Buttons */
+button {
+    background-color: var(--button-bg);
+    color: var(--button-text);
+}
+
+/* Inputs */
+input, select {
+    background-color: var(--secondary-bg);
+    color: var(--text-color);
+}
+
+/* Logo */
+.logo-container {
+    background-color: var(--primary-bg);
+}

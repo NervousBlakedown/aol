@@ -9,6 +9,8 @@ from server.utils.db import supabase_client
 from config import Config
 from server.utils.auth_utils import token_required
 user_bp = Blueprint('user', __name__)
+logger = logging.getLogger(__name__)
+
 
 # Profile route BEFORE authentication
 @user_bp.route('/dashboard', methods=['GET'])
@@ -62,17 +64,6 @@ def profile_data():
         return jsonify({"success": False, "message": "failed to load profile"}), 500
 
 
-# Debug .env
-@user_bp.route('/debug_env')
-def debug_env():
-    return jsonify({
-    "DATABASE_URL": Config.DATABASE_URL,
-    "SUPABASE_URL": Config.SUPABASE_URL,
-    "SUPABASE_KEY": Config.SUPABASE_KEY,
-    "SUPABASE_SERVICE_ROLE_KEY": Config.SUPABASE_SERVICE_ROLE_KEY
-})
-
-
 # Get usernames
 @user_bp.route('/api/user/get_username', methods=['GET'])
 def get_username():
@@ -92,29 +83,6 @@ def get_username():
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
   
-
-# Debug: user profile jwt token
-@user_bp.route('/debug_jwt', methods=['GET'])
-def debug_auth_header():
-    headers = dict(request.headers)
-    logging.info(f"Headers Received: {headers}")
-
-    auth_header = request.headers.get('Authorization')
-    if auth_header:
-        logging.info(f"✅ Received Authorization Header: {auth_header}")
-        return jsonify({
-            "success": True,
-            "message": "Authorization header received",
-            "authorization_header": auth_header
-        }), 200
-    else:
-        logging.warning("⚠️ No Authorization header received")
-        return jsonify({
-            "success": False,
-            "message": "Authorization header is missing or invalid",
-            "received_headers": headers
-        }), 400
-
 
 # Update Bio
 @user_bp.route('/update_bio', methods=['POST'])
@@ -279,20 +247,32 @@ def get_pals():
 def upload_avatar_route():
     user_id = request.user.get('sub')
     if 'avatar' not in request.files:
+        logging.error("❌ No avatar file provided in the request.")
         return jsonify({"success": False, "message": "no avatar file provided"}), 400
 
     avatar_file = request.files['avatar']
     if avatar_file.filename == '':
+        logging.error("❌ Empty filename received.")
         return jsonify({"success": False, "message": "empty filename"}), 400
 
-    # Example: build a unique filename, e.g. user_id + extension
-    # Or you could do something else like str(uuid.uuid4())
-    file_ext = os.path.splitext(avatar_file.filename)[1]
-    new_filename = f"{user_id}{file_ext}"
+    # Ensure avatars directory exists
+    avatar_dir = os.path.join(current_app.root_path, 'frontend', 'static', 'assets', 'avatars')
+    if not os.path.exists(avatar_dir):
+        os.makedirs(avatar_dir)
+        logging.info(f"✅ Created directory: {avatar_dir}")
 
-    # Path to store file
-    save_path = os.path.join(current_app.root_path, 
-                             'frontend', 'static', 'assets', 'avatars', new_filename)
+    # Get the file extension of the uploaded file
+    file_ext = os.path.splitext(avatar_file.filename)[1].lower()
+    new_filename = f"{user_id}{file_ext}"
+    save_path = os.path.join(avatar_dir, new_filename)
+
+    # Sanitize the file extension
+    allowed_extensions = {'.jpg', '.jpeg', '.png', '.gif'}
+    
+    if file_ext not in allowed_extensions:
+        logging.error(f"❌ Unsupported file extension: {file_ext}")
+        return jsonify({"success": False, "message": "Unsupported file format"}), 400    
+
     try:
         # 1) Save the file physically
         avatar_file.save(save_path)
@@ -307,14 +287,14 @@ def upload_avatar_route():
         # Use jsonb_set to update or add the "avatar_url" key in raw_user_meta_data
         cursor.execute('''
             UPDATE auth.users
-            SET raw_user_meta_data = jsonb_set(
-                raw_user_meta_data,
-                '{avatar_url}',
-                %s::text,
-                true
-            )
+            SET raw_user_meta_data = 
+                CASE 
+                    WHEN raw_user_meta_data ? 'avatar_url' 
+                    THEN jsonb_set(raw_user_meta_data, '{avatar_url}', to_jsonb(%s::text), true)
+                    ELSE raw_user_meta_data || jsonb_build_object('avatar_url', %s)::jsonb
+                END
             WHERE id = %s
-        ''', (avatar_url, user_id))
+        ''', (avatar_url, avatar_url, user_id))
 
         conn.commit()
         cursor.close()
@@ -327,7 +307,43 @@ def upload_avatar_route():
         current_app.logger.exception(f"❌ Error uploading avatar for user_id={user_id}: {e}")
         return jsonify({"success": False, "message": "Failed to upload avatar"}), 500
 
+# update user settings from 'settings' button
+@user_bp.route('/user/update_settings', methods=['POST'])
+def update_user_settings():
+    """
+    Updates user settings such as username, email, notifications, and privacy settings.
+    """
+    if 'user' not in session:
+        return jsonify({"success": False, "message": "User not logged in"}), 401
 
+    data = request.json
+    user_id = session['user']['id']
+    new_username = data.get('username')
+    new_email = data.get('email')
+    new_password = data.get('password')
+    notifications = data.get('notifications')
+    privacy = data.get('privacy')
+
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                UPDATE auth.users 
+                SET raw_user_meta_data = jsonb_set(raw_user_meta_data, '{username}', %s), 
+                    email = %s, 
+                    password = crypt(%s, gen_salt('bf')),
+                    raw_user_meta_data = jsonb_set(raw_user_meta_data, '{notifications}', %s),
+                    raw_user_meta_data = jsonb_set(raw_user_meta_data, '{privacy}', %s)
+                WHERE id = %s;
+            """, (new_username, new_email, new_password, str(notifications).lower(), privacy, user_id))
+            conn.commit()
+        conn.close()
+        return jsonify({"success": True, "message": "Settings updated successfully."})
+    except Exception as e:
+        logger.error(f"Error updating settings: {e}")
+        return jsonify({"success": False, "message": "Failed to update settings."}), 500
+
+        
 # Logout
 @user_bp.route('/logout', methods=['POST'])
 def logout():

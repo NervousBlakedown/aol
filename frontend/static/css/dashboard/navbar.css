@@ -1,0 +1,16 @@
+/* frontend/static/css/dashboard/navbar.css */
+.top-navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #001c3d;
+    padding: 10px 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.top-navbar .search-bar input {
+    border: none;
+    padding: 8px 12px;
+    border-radius: 20px;
+    width: 200px;
+}

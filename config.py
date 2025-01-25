@@ -14,7 +14,7 @@ class Config:
     SMTP_FROM_EMAIL = os.getenv('GMAIL_ADDRESS', 'not in config')
     SMTP_PORT = os.getenv('SMTP_PORT', 'not in config')
     SMTP_SERVER = os.getenv('SMTP_SERVER', 'not in config')
-    SMTP_USERNAME = os.getenv('GMAIL_ADDRESS', 'not in config')  # Your Gmail address from .env
+    SMTP_USERNAME = os.getenv('GMAIL_ADDRESS', 'not in config')  
     SMTP_PASSWORD = os.getenv('GMAIL_PASSWORD', 'not in config')
     SUPABASE_SERVICE_ROLE_KEY = os.getenv('SUPABASE_SERVICE_ROLE_KEY', 'not in config')
     SECRET_KEY = os.getenv('SECRET_KEY', 'fallback_secret_key')

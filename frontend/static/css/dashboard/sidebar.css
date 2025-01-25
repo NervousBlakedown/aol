@@ -1,0 +1,21 @@
+/* frontend/static/css/dashboard/sidebar.css */
+.sidebar {
+    width: 280px;
+    background-color: #002855;
+    color: #ffffff;
+    padding: 20px;
+    padding-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    border-right: 2px solid #004080;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+    overflow-y: auto;
+}
+
+.sidebar h2 {
+    font-size: 20px;
+    margin-bottom: 10px;
+    text-align: center;
+    color: #ffffff;
+}

@@ -40,6 +40,16 @@ export function initializeSocket() {
                 console.log('🔄 Ignoring message from self:', message);
                 return;
             }
+
+            // Ensure chatbox is opened when receiving a new message
+            let chatBox = document.getElementById(`chat-box-${room}`);
+            if (!chatBox) {
+                console.log(`🔓 Opening chatbox for room: ${room}`);
+                createChatBox(room, username);  // Ensure chatbox is created
+                chatBox = document.getElementById(`chat-box-${room}`);
+            }
+            
+            // add message
             appendMessageToChat(room, username, message, timestamp);
         });
 

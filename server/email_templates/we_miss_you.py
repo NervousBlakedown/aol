@@ -1,4 +1,4 @@
-# email_templates/we_miss_you.py
+# server/email_templates/we_miss_you.py
 from server.email_utils import send_email
 from jinja2 import Template
 import os

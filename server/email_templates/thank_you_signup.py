@@ -1,5 +1,5 @@
-# email_templates/thank_you_signup.py
-from server.email_utils import send_email
+# server/email_templates/thank_you_signup.py
+from server.utils.email_utils import send_email
 from jinja2 import Template
 import os
 import sys
@@ -81,18 +81,15 @@ html_template = """
         for people and not profit is part of that. Thanks for signing up for the product, let me 
         know how I can pray for you, and I look forward to seeing you on BlakeOL!</p>
         
-        <a href="https://blakeol.onrender.com/login" class="cta-button">Get Started</a>
+        <a href="https://blakeol.onrender.com/auth/login" class="cta-button">Get Started</a>
       </div>
    """
 
 # 📧 Send "Thank You for Signing Up" Email
 def send_thank_you_signup_email(recipient_email: str, username: str):
-    """
-    Sends a 'Thank You for Signing Up' email to a user.
-    """
     subject = f"Welcome to BlakeOL, {username}!"
     body = Template(html_template).render(username=username)
-    success = send_email(recipient_email, subject, body, is_html=True)
+    success = send_email(recipient_email, subject, body, is_html = True) #is_html=True
     
     if success:
         print(f"✅ Email successfully sent to {recipient_email}")
@@ -102,9 +99,6 @@ def send_thank_you_signup_email(recipient_email: str, username: str):
 
 # 🌐 Preview "Thank You for Signing Up" Email
 def preview_thank_you_signup_email(username: str):
-    """
-    Generates an HTML preview of the 'Thank You for Signing Up' email.
-    """
     rendered_email = Template(html_template).render(username=username)
 
     # Define the preview file path in the email_templates directory
@@ -114,7 +108,7 @@ def preview_thank_you_signup_email(username: str):
     with open(preview_file, "w") as file:
         file.write(rendered_email)
 
-    print(f"✅ Preview generated: Open '{preview_file}' in your browser.")
+    print(f"✅ Preview generated: Open '{preview_file}' in your browser")
 
 
 # Command-Line Interface

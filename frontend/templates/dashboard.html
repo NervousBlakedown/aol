@@ -10,14 +10,27 @@
 
     <!-- User Info Card: "Hello, user" -->
     <div class="user-info-card">
-      <div class="user-details">
-        <h3>Hello, <span id="username-display">{{ username }}</span></h3>
-        <div class="user-status">
+        <div class="logo-container">
+            <img src="{{ url_for('static', filename='assets/logos/text_logo_01.png') }}" 
+                 alt="BlakeOL Logo" 
+                 class="dashboard-logo">
+          </div>
+        <div class="user-details">
+            <h3>Hello, <span id="profile-username">{{ username }}</span></h3> <!--"username-display"-->
+            <div class="user-status">
+        <div class="avatar-container">
+                <img id="profile-avatar" src="{{ avatar_url }}" alt="Avatar" class="avatar-image">
+          </div>  
           <div class="status-container">
             <!-- Let your initStatusOptions() handle the “active” class -->
             <span id="status-online" class="status-option">Online</span>
             <span id="status-away" class="status-option">Away</span>
             <span id="status-dnd" class="status-option">Do Not Disturb</span>
+          </div>
+          <!-- Bio -->
+        <div class="profile-bio">
+            <p id="profile-bio"></p>
+            <!--<button id="edit-bio-button">Edit Bio</button> -->
           </div>
 
           <div class="user-actions">
@@ -48,85 +61,11 @@
         <div class="profile-header">
           <div class="avatar-container">
             <img id="profile-avatar" src="{{ avatar_url }}" alt="Avatar" class="avatar-image">
-            <button id="change-avatar-button" class="btn-icon">Change Pic</button>
+            <!--<button id="change-avatar-button" class="btn-icon">Change Pic</button> -->
             <input type="file" id="avatar-upload" accept="image/*" style="display: none;">
           </div>
           <h4 id="profile-username">{{ username }}</h4>
         </div>
-
-        <!-- Bio -->
-        <div class="profile-bio">
-          <p id="profile-bio">{{ bio }}</p>
-          <button id="edit-bio-button">Edit Bio</button>
-        </div>
-
-        <!-- Status -->
-        <div class="profile-status">
-          <p>Status: <strong id="profile-status">Online</strong></p>
-        </div>
-
-        <!-- Preferences -->
-        <div class="profile-preferences">
-          <h5>Preferences</h5>
-          <label>
-            🔔 Notifications:
-            <input type="checkbox" id="profile-notifications" checked>
-          </label>
-          <label>
-            🛡️ Privacy:
-            <select id="profile-privacy">
-              <option value="public">Public</option>
-              <option value="private">Private</option>
-            </select>
-          </label>
-        </div>
-
-        <!-- Account Management -->
-        <div class="profile-account">
-          <button onclick="changePassword()">Change Password</button>
-          <button onclick="deactivateAccount()">Deactivate Account</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Collapsible: Music Player -->
-    <div class="collapsible" data-toggle="music-section">
-      <h3>Music Player <span class="toggle-icon">▼</span></h3>
-      <div id="music-section" class="collapsible-content">
-        <div id="dropdown-container" style="display: flex; align-items: center; gap: 10px;">
-          <button id="back-button" class="back-icon" style="display: none;">◀</button>
-          <select id="dynamic-selector"></select>
-        </div>
-
-        <div id="now-playing">
-          Now Playing: <span id="current-song">None</span>
-        </div>
-
-        <div class="audio-controls">
-          <button id="prev-track" aria-label="Previous Track">⏮️</button>
-          <audio id="audio-player" controls>
-            <source id="audio-source" src="" type="audio/mpeg">
-            Your browser does not support the audio element.
-          </audio>
-          <button id="next-track" aria-label="Next Track">⏭️</button>
-          <button id="volume-button" aria-label="Toggle Volume">🔊</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Collapsible: Tools -->
-    <div class="collapsible" data-toggle="tools-section">
-      <h3>Tools <span class="toggle-icon">▼</span></h3>
-      <div id="tools-section" class="collapsible-content">
-        <input
-          type="text"
-          id="tools-search-input"
-          class="search-input"
-          placeholder="Search chats, topics, pals..."
-          onclick="event.stopPropagation();"
-        >
-        <button class="btn btn-primary">Notifications</button>
-        <button class="btn btn-secondary">Settings</button>
       </div>
     </div>
 
@@ -157,6 +96,49 @@
       </div>
     </div>
 
+    <!-- Collapsible: Music Player -->
+    <div class="collapsible" data-toggle="music-section">
+      <h3>Music Player <span class="toggle-icon">▼</span></h3>
+      <div id="music-section" class="collapsible-content">
+        <div id="dropdown-container" style="display: flex; align-items: center; gap: 10px;">
+          <button id="back-button" class="back-icon" style="display: none;">◀</button>
+          <select id="dynamic-selector"></select>
+        </div>
+
+        <div id="now-playing">
+          Now Playing: <span id="current-song">None</span>
+        </div>
+
+        <div class="audio-controls">
+          <button id="prev-track" aria-label="Previous Track">⏮️</button>
+          <audio id="audio-player" controls>
+            <source id="audio-source" src="" type="audio/mpeg">
+            Your browser does not support the audio element.
+          </audio>
+          <button id="next-track" aria-label="Next Track">⏭️</button>
+          <button id="volume-button" aria-label="Toggle Volume">🔊</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Collapsible: Tools 
+    <div class="collapsible" data-toggle="tools-section">
+      <h3>Tools <span class="toggle-icon">▼</span></h3>
+      <div id="tools-section" class="collapsible-content">
+        <input
+          type="text"
+          id="tools-search-input"
+          class="search-input"
+          placeholder="Search chats, topics, pals..."
+          onclick="event.stopPropagation();"
+        >
+        <button class="btn btn-primary">Notifications</button>
+        <button class="btn btn-secondary">Settings</button>
+      </div>
+    </div> -->
+
+    
+
   </aside><!-- /sidebar -->
 
   <!-- Main Content -->
@@ -185,6 +167,54 @@
   </main><!-- /main-content -->
 </div><!-- /dashboard-layout -->
 
+
+<!-- Settings Modal -->
+<div id="settings-modal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close-modal" id="close-settings">&times;</span>
+      <h2>User Settings</h2>
+  
+      <label for="settings-username">Username:</label>
+      <input type="text" id="settings-username" placeholder="Update your username" />
+  
+      <label for="settings-email">Email:</label>
+      <input type="email" id="settings-email" placeholder="Update your email" />
+  
+      <label for="settings-password">New Password:</label>
+      <input type="password" id="settings-password" placeholder="Enter new password" />
+  
+      <h3>Notification Preferences</h3>
+      <label>
+        <input type="checkbox" id="settings-notifications" checked />
+        Receive email notifications
+      </label>
+  
+      <h3>Privacy Settings</h3>
+      <label for="settings-privacy">Profile Visibility:</label>
+      <select id="settings-privacy">
+        <option value="public">Public</option>
+        <option value="private">Private</option>
+      </select>
+
+      <h3>Appearance</h3>
+        <label for="theme-selection">Theme:</label>
+        <button id="light-theme-btn" class="btn btn-secondary">Light Theme</button>
+        <button id="dark-theme-btn" class="btn btn-secondary">Dark Theme</button>
+
+        <label for="font-selection">Font:</label>
+        <select id="font-selection">
+            <option value="Arial">Arial</option>
+            <option value="Verdana">Verdana</option>
+            <option value="Courier New">Courier New</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Times New Roman">Times New Roman</option>
+        </select>
+  
+      <button id="save-settings" class="btn btn-primary">Save Changes</button>
+    </div>
+  </div>
+
+  
 <!-- News Ticker Section -->
 <div class="news-ticker">
   <div class="ticker-content" id="news-ticker">
@@ -205,7 +235,8 @@
 {% block scripts %}
 <script>
   // (Optional) Jinja-provided username, user_id
-  window.username = "{{ username | tojson }}";
+  window.username = "{{ username }}";
+  //window.username = "{{ username | tojson }}";
   window.user_id = "{{ session['user']['id'] if 'user' in session else 'null' | tojson }}";
 
   if (window.username) {

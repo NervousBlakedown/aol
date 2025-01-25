@@ -1,7 +1,26 @@
 # server/services/email_service.py
-from server.email_utils import send_email_notification
-from server.email_templates.added_to_pals_email import generate_added_to_pals_email
+from server.utils.email_utils import send_email_notification, send_email
+# from server.email_templates.added_to_pals_email import generate_added_to_pals_email
+from server.email_templates.thank_you_signup import send_thank_you_signup_email
+from jinja2 import Template
 import logging
+logger = logging.getLogger(__name__)
+
+
+# Wrapper function to send the thank-you email via service layer
+def trigger_thank_you_email(recipient_email: str, username: str):
+    """
+    Trigger the thank-you email by calling the existing email template function.
+
+    Args:
+        recipient_email (str): The user's email address.
+        username (str): The user's username.
+    """
+    try:
+        send_thank_you_signup_email(recipient_email, username)
+        logger.info(f"✅ Thank you email successfully sent to {recipient_email}")
+    except Exception as e:
+        logger.error(f"❌ Failed to send thank you email to {recipient_email}: {e}")
 
 
 # Send Notification Email

@@ -104,9 +104,10 @@ function openChatRoom(roomName, chatTitle) {
   }
 
   const encodedRoomName = encodeRoomName(roomName);
+
   if (activeChats[encodedRoomName]) {
   //if (document.getElementById(`chat-box-${encodedRoomName}`)) {
-    console.warn(`Chat box for room '${roomName}' is already open.`);
+    //console.warn(`Chat box for room '${roomName}' is already open.`);
     return;
   }
 
@@ -149,6 +150,7 @@ function fetchMessagesForRoom(roomName) {
     .catch(err => console.error('❌ Error fetching room history:', err));
 }
 
+
 // Append Message
 export function appendMessageToChat(roomName, sender, message, timestamp) {
   if (!roomName) {
@@ -185,8 +187,9 @@ export function createChatBox(roomName, chatTitle) {
   }
 
   const encodedRoomName = encodeRoomName(roomName);
+
   if (document.getElementById(`chat-box-${encodedRoomName}`)) {
-    console.warn(`Chat box for room '${roomName}' is already open.`);
+    // console.warn(`Chat box for room '${roomName}' is already open.`);
     return; // Prevent duplicate chat boxes
   }
 

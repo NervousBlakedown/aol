@@ -3,6 +3,7 @@ import { authenticatedFetch } from './utils.js';
 export { fetchPalsList };
 let palsList = [];
 
+
 // Fetch and display user profile data
 export async function fetchUserProfile() {
     try {
@@ -48,6 +49,7 @@ export function initializeUser() {
     }
 }
 
+
 // Upload Avatar Logic
 async function uploadAvatar(event) {
     // The 'change' event from <input type="file">
@@ -77,6 +79,8 @@ async function uploadAvatar(event) {
         console.log('✅ Avatar uploaded successfully:', result.avatar_url);
         // Update the DOM to show the new avatar
         const avatarImg = document.getElementById('profile-avatar');
+        avatarImg.src = `${result.avatar_url}?t=${new Date().getTime()}`;
+
         if (avatarImg) {
             avatarImg.src = result.avatar_url;
         }
@@ -140,6 +144,7 @@ async function fetchPalsList() {
         console.error('❌ Error fetching pals:', error);
     }
 }
+
 
 // handle user searching from chat_routes.py endpoint and chat_service.py
 document.addEventListener('DOMContentLoaded', () => {
@@ -254,7 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 
-// DISPLAY pals list in DOM/sidebar chat area
+// display pals list in DOM/sidebar chat area
 function displayPalsList(pals) {
     const palsContainer = document.getElementById('contacts-list');
     palsContainer.innerHTML = ''; 
@@ -273,6 +278,68 @@ function displayPalsList(pals) {
     });
 }
 
+// settings button popup
+document.addEventListener('DOMContentLoaded', () => {
+    const settingsButton = document.getElementById('settings-button');
+    const closeSettings = document.getElementById('close-settings');
+    const settingsModal = document.getElementById('settings-modal');
+    const saveSettingsBtn = document.getElementById('save-settings');
+
+    // Open settings modal
+    settingsButton.addEventListener('click', () => {
+        settingsModal.style.display = 'block';
+
+        // Load existing settings from sessionStorage (as example)
+        document.getElementById('settings-username').value = sessionStorage.getItem('username') || '';
+        document.getElementById('settings-email').value = 'user@example.com';  // Placeholder for actual data
+    });
+
+    // Close settings modal
+    closeSettings.addEventListener('click', () => {
+        settingsModal.style.display = 'none';
+    });
+
+    window.onclick = function(event) {
+        if (event.target === settingsModal) {
+            settingsModal.style.display = 'none';
+        }
+    };
+
+    // Save settings functionality
+    saveSettingsBtn.addEventListener('click', async () => {
+        const updatedUsername = document.getElementById('settings-username').value;
+        const updatedEmail = document.getElementById('settings-email').value;
+        const updatedPassword = document.getElementById('settings-password').value;
+        const notifications = document.getElementById('settings-notifications').checked;
+        const privacy = document.getElementById('settings-privacy').value;
+
+        const response = await fetch('/user/update_settings', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                username: updatedUsername,
+                email: updatedEmail,
+                password: updatedPassword,
+                notifications: notifications,
+                privacy: privacy
+            }),
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert('✅ Settings updated successfully!');
+            settingsModal.style.display = 'none';
+            sessionStorage.setItem('username', updatedUsername);
+            document.getElementById('username-display').textContent = updatedUsername;
+        } else {
+            alert('❌ Failed to update settings.');
+        }
+    });
+});
+
+
 // Logout
 document.addEventListener('DOMContentLoaded', () => {
     const logoutButton = document.getElementById('logout-button');
@@ -283,6 +350,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// logout user
 async function logoutUser() {
     try {
         const response = await fetch('/auth/logout', {

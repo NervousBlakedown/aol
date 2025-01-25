@@ -1,3 +1,31 @@
+/* frontend/static/css/dashboard.css */
+@import url('dashboard/layout.css');
+@import url('dashboard/typography.css');
+@import url('dashboard/sidebar.css');
+@import url('dashboard/navbar.css');
+@import url('dashboard/chats.css');
+@import url('dashboard/notifications.css');
+@import url('dashboard/profile.css');
+@import url('dashboard/animations.css');
+
+
+/* Fonts (Orbitron, etc.) */
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+
+
+/* dashboard logo in top-left corner */
+.logo-container {
+    text-align: center;
+    margin-bottom: 5px;
+    background-color: #001c3d;
+}
+
+.dashboard-logo {
+    max-width: 250px;  /* Adjust size as needed */
+    height: 50px;
+}
+
+
 /* Sidebar chat pals info */
 /* Style the pals list */
 .contacts-list {
@@ -40,7 +68,7 @@
 body, html {
     margin: 0;
     padding: 0;
-    font-family: 'Noto Sans', sans-serif;
+    font-family: 'Noto Sans', sans-serif; /* Orbitron
     background-color: #001c3d; /* Main dark blue background */
     color: #ffffff;
     height: 100%;
@@ -948,3 +976,52 @@ button:hover {
 .news-ticker:hover .ticker-content {
     animation-play-state: paused;
 }
+
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 20px;
+    top: 20px;
+    width: 300px;
+    height: auto;
+    background-color: rgba(0, 0, 0, 0.8);
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  }
+  
+  .modal-content {
+    background-color: #fff;
+    color: #333;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  }
+  
+  .modal-content h2 {
+    margin-top: 0;
+    font-size: 18px;
+    color: #333;
+  }
+  
+  .modal-content input,
+  .modal-content select {
+    width: 100%;
+    margin: 10px 0;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+  }
+  
+  .close-modal {
+    float: right;
+    font-size: 24px;
+    cursor: pointer;
+    color: #002147;
+  }
+  
+  .hidden {
+    display: none;
+  }

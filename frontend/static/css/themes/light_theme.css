@@ -1,0 +1,40 @@
+/* frontend/static/css/themes/light_theme.css */
+:root {
+    --primary-bg: #ffffff;
+    --primary-color: #001c3d;
+    --secondary-bg: #f0f0f0;
+    --accent-color: #004080;
+    --text-color: #001c3d;
+    --button-bg: #004080;
+    --button-text: #ffffff;
+    --sidebar-bg: #e0e0e0;
+}
+
+/* Apply theme */
+body {
+    background-color: var(--primary-bg);
+    color: var(--text-color);
+}
+
+/* Sidebar */
+.sidebar {
+    background-color: var(--sidebar-bg);
+    color: var(--text-color);
+}
+
+/* Buttons */
+button {
+    background-color: var(--button-bg);
+    color: var(--button-text);
+}
+
+/* Inputs */
+input, select {
+    background-color: var(--secondary-bg);
+    color: var(--text-color);
+}
+
+/* Logo */
+.logo-container {
+    background-color: var(--primary-color);
+}
